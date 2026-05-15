@@ -20,7 +20,7 @@ export default function ClubsPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Club Confidence</h1>
+        <h1 className="text-3xl font-black text-[#111]">Club Confidence</h1>
         <p className="text-gray-500 mt-1">Your real playing numbers — not what you think you hit</p>
       </div>
 
@@ -39,7 +39,7 @@ export default function ClubsPage() {
                 <div className="flex items-center gap-6">
                   {/* Club name */}
                   <div className="w-20">
-                    <div className="text-xl font-black text-white">{club.club_name}</div>
+                    <div className="text-xl font-black text-[#111]">{club.club_name}</div>
                     <div className="text-xs text-gray-500">{club.shot_count} shots</div>
                   </div>
                   {/* Real number */}

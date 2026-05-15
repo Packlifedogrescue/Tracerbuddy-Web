@@ -35,7 +35,7 @@ export default function ProfilePage() {
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Profile</h1>
+        <h1 className="text-3xl font-black text-[#111]">Profile</h1>
         <p className="text-gray-500 mt-1">Manage your account and preferences</p>
       </div>
 
@@ -45,13 +45,13 @@ export default function ProfilePage() {
           {name?.[0]?.toUpperCase() ?? '?'}
         </div>
         <div>
-          <div className="text-xl font-black text-white">{name || 'Golfer'}</div>
+          <div className="text-xl font-black text-[#111]">{name || 'Golfer'}</div>
           <div className="text-gray-500 text-sm">{user?.email}</div>
           <div className="mt-1">
             <span className={`text-xs font-bold px-2 py-1 rounded-full ${
               profile?.subscription === 'pro'
                 ? 'bg-[#FFD700]/20 text-[#FFD700]'
-                : 'bg-white/5 text-gray-400'
+                : 'bg-white/5 text-gray-500'
             }`}>
               {profile?.subscription === 'pro' ? '⭐ Pro' : 'Free'}
             </span>
@@ -72,17 +72,17 @@ export default function ProfilePage() {
           <div>
             <label className="text-xs text-gray-500 block mb-2">DISPLAY NAME</label>
             <input value={name} onChange={e => setName(e.target.value)}
-              className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FFD700]/40" />
+              className="w-full bg-[#0A0A0A] border border-[#F0EAE0] rounded-xl px-4 py-3 text-[#111] focus:outline-none focus:border-[#FFD700]/40" />
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-2">HOME COURSE</label>
             <input value={course} onChange={e => setCourse(e.target.value)}
               placeholder="Carlisle Barracks Golf Course"
-              className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#FFD700]/40" />
+              className="w-full bg-[#0A0A0A] border border-[#F0EAE0] rounded-xl px-4 py-3 text-[#111] placeholder-gray-600 focus:outline-none focus:border-[#FFD700]/40" />
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-2">EMAIL</label>
-            <div className="bg-[#0A0A0A] border border-[#1F1F1F] rounded-xl px-4 py-3 text-gray-500">
+            <div className="bg-[#0A0A0A] border border-[#F0EAE0] rounded-xl px-4 py-3 text-gray-500">
               {user?.email}
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-500">Member since</span>
-            <span className="text-white">{user?.created_at ? new Date(user.created_at).getFullYear() : '—'}</span>
+            <span className="text-[#111]">{user?.created_at ? new Date(user.created_at).getFullYear() : '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Subscription</span>
@@ -109,10 +109,10 @@ export default function ProfilePage() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Platform</span>
-            <span className="text-white">iOS + Web</span>
+            <span className="text-[#111]">iOS + Web</span>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-[#1F1F1F]">
+        <div className="mt-4 pt-4 border-t border-[#F0EAE0]">
           <a href="https://apps.apple.com" className="text-[#FFD700] text-sm font-bold hover:underline">
             → Download iOS App
           </a>

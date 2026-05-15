@@ -38,7 +38,7 @@ export default function BuddiesPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Buddy Battles</h1>
+        <h1 className="text-3xl font-black text-[#111]">Buddy Battles</h1>
         <p className="text-gray-500 mt-1">Challenge your friends — who has the better game?</p>
       </div>
 
@@ -60,7 +60,7 @@ export default function BuddiesPage() {
           <input
             type="email" value={email} onChange={e => setEmail(e.target.value)}
             placeholder="friend@email.com"
-            className="flex-1 bg-[#0A0A0A] border border-[#1F1F1F] rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#FFD700]/40"
+            className="flex-1 bg-[#0A0A0A] border border-[#F0EAE0] rounded-xl px-4 py-3 text-[#111] placeholder-gray-600 focus:outline-none focus:border-[#FFD700]/40"
           />
           <button type="submit" disabled={sending}
             className="bg-[#FFD700] text-black font-black px-6 py-3 rounded-xl hover:bg-yellow-400 disabled:opacity-50">
@@ -72,18 +72,18 @@ export default function BuddiesPage() {
 
       {/* Connections */}
       <div className="card">
-        <div className="stat-label p-5 border-b border-[#1F1F1F]">YOUR BUDDIES ({connections.length})</div>
+        <div className="stat-label p-5 border-b border-[#F0EAE0]">YOUR BUDDIES ({connections.length})</div>
         {connections.length === 0 ? (
           <div className="p-12 text-center text-gray-600">
             No buddies yet. Invite friends to start competing!
           </div>
         ) : connections.map((c: any) => (
-          <div key={c.id} className="flex items-center gap-4 p-5 border-b border-[#1F1F1F] last:border-0">
+          <div key={c.id} className="flex items-center gap-4 p-5 border-b border-[#F0EAE0] last:border-0">
             <div className="w-10 h-10 rounded-full bg-[#FFD700]/20 flex items-center justify-center text-[#FFD700] font-black">
               {c.buddy?.email?.[0]?.toUpperCase() ?? '?'}
             </div>
             <div className="flex-1">
-              <div className="font-bold text-white">{c.buddy?.email ?? 'Unknown'}</div>
+              <div className="font-bold text-[#111]">{c.buddy?.email ?? 'Unknown'}</div>
               <div className={`text-xs ${c.status === 'accepted' ? 'text-[#00E578]' : 'text-yellow-400'}`}>
                 {c.status === 'accepted' ? '● Connected' : '○ Pending'}
               </div>

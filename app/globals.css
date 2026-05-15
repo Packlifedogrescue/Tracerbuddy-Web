@@ -15,11 +15,11 @@ html { scroll-behavior: smooth; }
 
 @layer components {
   .card {
-    @apply bg-[#111111] border border-[#1F1F1F] rounded-xl;
+    @apply bg-white rounded-xl shadow-[0_2px_16px_rgba(0,0,0,0.055)];
   }
 
   .stat-label {
-    @apply text-[10px] font-black tracking-[0.15em] text-[#666] uppercase;
+    @apply text-[10px] font-semibold tracking-[0.13em] text-gray-400 uppercase;
   }
 
   .premium-btn-primary {

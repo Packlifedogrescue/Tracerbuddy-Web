@@ -33,7 +33,7 @@ export default function PracticePage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Practice Sessions</h1>
+        <h1 className="text-3xl font-black text-[#111]">Practice Sessions</h1>
         <p className="text-gray-500 mt-1">{sessions.length} range shots tracked</p>
       </div>
 
@@ -44,7 +44,7 @@ export default function PracticePage() {
         </div>
         <div className="card p-5 text-center">
           <div className="stat-label mb-2">CLUBS PRACTICED</div>
-          <div className="text-4xl font-black text-white">{Object.keys(byClub).length}</div>
+          <div className="text-4xl font-black text-[#111]">{Object.keys(byClub).length}</div>
         </div>
         <div className="card p-5 text-center">
           <div className="stat-label mb-2">THIS WEEK</div>
@@ -77,9 +77,9 @@ export default function PracticePage() {
             <div className="stat-label p-4">RECENT PRACTICE SHOTS</div>
             {sessions.slice(0, 20).map((s: any) => (
               <div key={s.id} className="flex items-center gap-4 px-5 py-3">
-                <div className="w-12 font-black text-white">{s.club}</div>
+                <div className="w-12 font-black text-[#111]">{s.club}</div>
                 <div className="flex-1">
-                  <div className="text-sm text-gray-400">{s.notes || 'Range shot'}</div>
+                  <div className="text-sm text-gray-500">{s.notes || 'Range shot'}</div>
                 </div>
                 <div className="text-[#FFD700] font-black">{s.yards ? `${Math.round(s.yards)}y` : '—'}</div>
                 <div className="text-xs text-gray-600">{format(new Date(s.created_at), 'M/d')}</div>

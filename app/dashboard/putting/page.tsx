@@ -34,17 +34,17 @@ export default function PuttingPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">PuttBuddy</h1>
+        <h1 className="text-3xl font-black text-[#111]">PuttBuddy</h1>
         <p className="text-gray-500 mt-1">Stop counting putts. Start fixing them.</p>
       </div>
 
       {/* Key stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'HOLES TRACKED', value: data.length,      color: 'text-white' },
-          { label: '3-PUTTS',       value: threePutts,        color: threePutts > 5 ? 'text-red-400' : 'text-white' },
+          { label: 'HOLES TRACKED', value: data.length,      color: 'text-[#111]' },
+          { label: '3-PUTTS',       value: threePutts,        color: threePutts > 5 ? 'text-red-400' : 'text-[#111]' },
           { label: '1-PUTTS',       value: onePutts,          color: 'text-[#00E578]' },
-          { label: 'TOTAL PUTTS',   value: totalPutts,        color: 'text-white' },
+          { label: 'TOTAL PUTTS',   value: totalPutts,        color: 'text-[#111]' },
         ].map(s => (
           <div key={s.label} className="card p-5 text-center">
             <div className="stat-label mb-2">{s.label}</div>
@@ -95,8 +95,8 @@ export default function PuttingPage() {
             ].map(m => (
               <div key={m.label} className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ background: m.color }} />
-                <span className="text-sm text-gray-400">{m.label}:</span>
-                <span className="text-sm font-bold text-white">{m.count}</span>
+                <span className="text-sm text-gray-500">{m.label}:</span>
+                <span className="text-sm font-bold text-[#111]">{m.count}</span>
               </div>
             ))}
           </div>
@@ -110,7 +110,7 @@ export default function PuttingPage() {
           ) : topCauses.map(([cause, count]) => (
             <div key={cause} className="mb-4">
               <div className="flex justify-between mb-1">
-                <span className="text-sm text-white">{cause}</span>
+                <span className="text-sm text-[#111]">{cause}</span>
                 <span className="text-sm font-bold text-orange-400">x{count}</span>
               </div>
               <div className="h-2 bg-[#1F1F1F] rounded-full overflow-hidden">
@@ -125,7 +125,7 @@ export default function PuttingPage() {
           {/* Biggest problem */}
           <div className="mt-6 p-4 bg-red-500/5 border border-red-500/15 rounded-xl">
             <div className="stat-label text-red-400 mb-2">YOUR PUTTING ISSUE</div>
-            <div className="text-sm text-white font-bold">
+            <div className="text-sm text-[#111] font-bold">
               {shortMisses > longMisses + leftMisses + rightMisses
                 ? `Leaving putts short (${shortMisses} times). "Never up, never in."`
                 : threePutts > 3

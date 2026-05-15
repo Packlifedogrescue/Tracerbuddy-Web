@@ -15,7 +15,7 @@ export default function RoundsPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">All Rounds</h1>
+        <h1 className="text-3xl font-black text-[#111]">All Rounds</h1>
         <p className="text-gray-500 mt-1">{rounds.length} rounds tracked</p>
       </div>
 
@@ -33,13 +33,13 @@ export default function RoundsPage() {
               {/* Date block */}
               <div className="w-16 text-center shrink-0">
                 <div className="text-xs text-gray-500 uppercase">{format(new Date(r.created_at),'MMM')}</div>
-                <div className="text-3xl font-black text-white leading-tight">{format(new Date(r.created_at),'d')}</div>
+                <div className="text-3xl font-black text-[#111] leading-tight">{format(new Date(r.created_at),'d')}</div>
                 <div className="text-xs text-gray-600">{format(new Date(r.created_at),'yyyy')}</div>
               </div>
 
               {/* Course + stats */}
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-white truncate">{r.course_name || 'Unknown Course'}</div>
+                <div className="font-bold text-[#111] truncate">{r.course_name || 'Unknown Course'}</div>
                 <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                   <span>{r.gir_count ?? 0} GIR</span>
                   <span>·</span>
@@ -54,7 +54,7 @@ export default function RoundsPage() {
 
               {/* Score */}
               <div className="text-right shrink-0">
-                <div className="text-4xl font-black text-white">{r.total_score}</div>
+                <div className="text-4xl font-black text-[#111]">{r.total_score}</div>
                 {diff != null && (
                   <div className="text-xs text-gray-500">+{diff.toFixed(1)} diff</div>
                 )}

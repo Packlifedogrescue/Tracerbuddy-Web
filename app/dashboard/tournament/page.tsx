@@ -23,7 +23,7 @@ export default function TournamentPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Tournament Results</h1>
+        <h1 className="text-3xl font-black text-[#111]">Tournament Results</h1>
         <p className="text-gray-500 mt-1">Match play, Stableford, and tournament history</p>
       </div>
 
@@ -55,20 +55,20 @@ export default function TournamentPage() {
                 {r.result === 'Won' ? '🏆' : r.result === 'Lost' ? '😤' : '🤝'}
               </div>
               <div className="flex-1">
-                <div className="font-bold text-white">{r.rounds?.course_name || 'Unknown'}</div>
+                <div className="font-bold text-[#111]">{r.rounds?.course_name || 'Unknown'}</div>
                 <div className="text-xs text-gray-500">
                   {r.round_mode} · {format(new Date(r.created_at), 'MMM d, yyyy')}
                 </div>
               </div>
               <div className="text-right">
                 {r.round_mode === 'Match Play' ? (
-                  <div className="font-bold text-white">
+                  <div className="font-bold text-[#111]">
                     {r.match_holes_won}W / {r.match_holes_lost}L / {r.match_holes_tied}H
                   </div>
                 ) : (
                   <div className="font-black text-[#FFD700]">{r.stableford_points} pts</div>
                 )}
-                <div className={`text-sm font-bold ${r.result === 'Won' ? 'text-[#00E578]' : r.result === 'Lost' ? 'text-red-400' : 'text-gray-400'}`}>
+                <div className={`text-sm font-bold ${r.result === 'Won' ? 'text-[#00E578]' : r.result === 'Lost' ? 'text-red-400' : 'text-gray-500'}`}>
                   {r.result}
                 </div>
               </div>

@@ -22,7 +22,7 @@ export default function CoachCardsPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Coach Cards</h1>
+        <h1 className="text-3xl font-black text-[#111]">Coach Cards</h1>
         <p className="text-gray-500 mt-1">AI-powered round analysis — why you shot that score</p>
       </div>
 
@@ -40,7 +40,7 @@ export default function CoachCardsPage() {
           >
             <div className="text-3xl">🧠</div>
             <div className="flex-1">
-              <div className="font-black text-white">
+              <div className="font-black text-[#111]">
                 {card.rounds?.course_name || 'Unknown Course'}
               </div>
               <div className="text-sm text-gray-500 mt-0.5">
@@ -59,25 +59,25 @@ export default function CoachCardsPage() {
 
           {/* Expanded content */}
           {expanded === card.id && (
-            <div className="border-t border-[#1F1F1F] divide-y divide-[#1F1F1F]">
+            <div className="border-t border-[#F0EAE0] divide-y divide-[#1F1F1F]">
               {/* Biggest leak */}
               <div className="p-5 bg-red-500/5">
                 <div className="text-xs font-black text-red-400 tracking-widest mb-2">TODAY'S BIGGEST LEAK</div>
-                <div className="font-bold text-white">{card.biggest_leak}</div>
+                <div className="font-bold text-[#111]">{card.biggest_leak}</div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-[#1F1F1F]">
                 {/* Club misfiring */}
                 <div className="p-5">
                   <div className="stat-label mb-2">CLUB REPORT</div>
-                  <div className="text-sm text-white mb-1">⚠️ {card.club_misfiring}</div>
-                  <div className="text-sm text-gray-400">↔️ {card.miss_pattern}</div>
+                  <div className="text-sm text-[#111] mb-1">⚠️ {card.club_misfiring}</div>
+                  <div className="text-sm text-gray-500">↔️ {card.miss_pattern}</div>
                   {card.hot_club && <div className="text-sm text-[#FFD700] mt-1">⭐ {card.hot_club}</div>}
                 </div>
                 {/* Putting */}
                 <div className="p-5">
                   <div className="stat-label mb-2">PUTTING</div>
-                  <div className="text-sm text-white">{card.putts_analysis}</div>
+                  <div className="text-sm text-[#111]">{card.putts_analysis}</div>
                 </div>
               </div>
 
@@ -87,11 +87,11 @@ export default function CoachCardsPage() {
                 <div className="space-y-2">
                   <div className="flex gap-3">
                     <div className="w-6 h-6 rounded-full bg-[#FFD700] flex items-center justify-center text-black text-xs font-black shrink-0">1</div>
-                    <div className="text-sm text-white">{card.next_round_focus}</div>
+                    <div className="text-sm text-[#111]">{card.next_round_focus}</div>
                   </div>
                   <div className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-black shrink-0">2</div>
-                    <div className="text-sm text-white">{card.practice_target}</div>
+                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[#111] text-xs font-black shrink-0">2</div>
+                    <div className="text-sm text-[#111]">{card.practice_target}</div>
                   </div>
                 </div>
               </div>
@@ -100,7 +100,7 @@ export default function CoachCardsPage() {
               {card.ai_coach_text && (
                 <div className="p-5 bg-yellow-500/5">
                   <div className="text-xs font-black text-yellow-400 tracking-widest mb-3">CLAUDE'S ANALYSIS</div>
-                  <p className="text-sm text-white leading-relaxed">{card.ai_coach_text}</p>
+                  <p className="text-sm text-[#111] leading-relaxed">{card.ai_coach_text}</p>
                 </div>
               )}
             </div>

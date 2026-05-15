@@ -36,7 +36,7 @@ export default function GoalsPage() {
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Goals</h1>
+        <h1 className="text-3xl font-black text-[#111]">Goals</h1>
         <p className="text-gray-500 mt-1">Set your target handicap and track your path there</p>
       </div>
 
@@ -45,7 +45,7 @@ export default function GoalsPage() {
         <div className="grid grid-cols-3 gap-4 mb-6 text-center">
           <div>
             <div className="stat-label mb-2">CURRENT</div>
-            <div className="text-5xl font-black text-white">{current.toFixed(1)}</div>
+            <div className="text-5xl font-black text-[#111]">{current.toFixed(1)}</div>
           </div>
           <div className="flex items-center justify-center">
             <div className="text-3xl text-gray-600">→</div>
@@ -76,7 +76,7 @@ export default function GoalsPage() {
           <input
             type="number" value={target} onChange={e => setTarget(e.target.value)}
             placeholder="e.g. 10.0" step="0.1" min="0" max="54"
-            className="flex-1 bg-[#0A0A0A] border border-[#1F1F1F] rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#FFD700]/40 text-xl font-black"
+            className="flex-1 bg-[#0A0A0A] border border-[#F0EAE0] rounded-xl px-4 py-3 text-[#111] placeholder-gray-600 focus:outline-none focus:border-[#FFD700]/40 text-xl font-black"
           />
           <button type="submit" disabled={saving}
             className="bg-[#FFD700] text-black font-black px-6 py-3 rounded-xl hover:bg-yellow-400 disabled:opacity-50">
@@ -92,7 +92,7 @@ export default function GoalsPage() {
             <span className="text-xl">🧠</span>
             <div className="stat-label text-[#FFD700]">YOUR AI COACHING PLAN</div>
           </div>
-          <p className="text-white leading-relaxed">{goal.ai_coaching_plan}</p>
+          <p className="text-[#111] leading-relaxed">{goal.ai_coaching_plan}</p>
         </div>
       ) : (
         <div className="card p-6 text-center text-gray-600">
