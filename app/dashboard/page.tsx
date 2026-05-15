@@ -98,17 +98,10 @@ export default function DashboardPage() {
     setRounds(r)
     setHandicapHistory((h as any[]).map((x: any) => parseFloat(x.handicap?.toFixed(1))))
     setClubs(c)
-    const profileName = (p as any)?.display_name || ''
-    const isEmailLike = (s: string) => s.includes('@')
-    const metaName = user?.user_metadata?.full_name || user?.user_metadata?.name || ''
-    const resolved =
-      (profileName && !isEmailLike(profileName) ? profileName : null) ||
-      metaName ||
-      (user?.email
-        ? user.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-        : null) ||
-      'Golfer'
-    setUserName(resolved)
+    const m = user?.user_metadata ?? {}
+    const candidates = [(p as any)?.display_name, m.display_name, m.full_name, m.name]
+    const resolved = candidates.find(c => c && c.trim() && !c.includes('@')) || 'Golfer'
+    setUserName(resolved.trim())
     setLoading(false)
   }
 
