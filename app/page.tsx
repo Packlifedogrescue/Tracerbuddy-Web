@@ -164,115 +164,57 @@ export default function HomePage() {
           </div>
         </Reveal>
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-px bg-black/[0.06] rounded-2xl overflow-hidden border border-black/[0.06]">
           {[
             {
-              label: 'SCORING & ROUNDS',
+              num: '01', label: 'SCORING & ROUNDS',
               title: 'Digital Scorecards',
-              desc: 'Beautiful hole-by-hole scoring with stroke play, stableford, match play, and skins modes.',
-              features: [
-                'Auto-fill par and handicap strokes',
-                'Stableford & match play scoring',
-                'Skins game tracking',
-                'Best ball & scramble modes',
-                'Round history & stats per course',
-                'Export PDF scorecards',
-              ],
-              accent: '#B8860B',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><rect x="7" y="4" width="18" height="24" rx="3"/><line x1="11" y1="11" x2="21" y2="11"/><line x1="11" y1="16" x2="21" y2="16"/><line x1="11" y1="21" x2="17" y2="21"/></svg>,
+              desc: 'Stroke play, stableford, match play, skins, best ball — every format covered.',
+              features: ['Auto-fill par & handicap', 'Stableford & match play', 'Skins & best ball modes', 'Round history per course', 'Export PDF scorecards'],
             },
             {
-              label: 'SHOT TRACKING',
+              num: '02', label: 'SHOT TRACKING',
               title: 'Precision Shot Tracking',
-              desc: 'Auto-detect every shot with GPS accuracy. See every landing position, distance, and club choice.',
-              features: [
-                'GPS shot detection & distance',
-                'Club selection per shot',
-                'Miss direction tracking',
-                'Fairway & GIR tracking',
-                'Penalty & chip logging',
-                'Shot-by-shot round replay',
-              ],
-              accent: '#B8860B',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="5"/><circle cx="16" cy="16" r="1.5" fill="#B8860B"/><line x1="16" y1="4" x2="16" y2="8"/><line x1="16" y1="24" x2="16" y2="28"/><line x1="4" y1="16" x2="8" y2="16"/><line x1="24" y1="16" x2="28" y2="16"/></svg>,
+              desc: 'GPS accuracy on every shot. Distance, club, landing position — all automatic.',
+              features: ['GPS shot detection', 'Club selection per shot', 'Miss direction tracking', 'Fairway & GIR tracking', 'Shot-by-shot replay'],
             },
             {
-              label: 'COURSE MAPS',
+              num: '03', label: 'COURSE MAPS',
               title: 'Satellite Course Maps',
-              desc: 'Real aerial satellite imagery with hole routing, hazards, and live GPS distances to every target.',
-              features: [
-                'Satellite & aerial imagery',
-                'Live GPS distance to pin',
-                'Hazard & layup distances',
-                'Wind speed & direction overlay',
-                'Weather at your course',
-                'GolfAPI course database',
-              ],
-              accent: '#B8860B',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><path d="M4 6L12 4L20 6L28 4V26L20 28L12 26L4 28V6Z"/><line x1="12" y1="4" x2="12" y2="26"/><line x1="20" y1="6" x2="20" y2="28"/></svg>,
+              desc: 'Real aerial imagery with live GPS distances, hazards, and weather at your course.',
+              features: ['Satellite aerial imagery', 'Live distance to pin', 'Hazard & layup yardages', 'Wind & weather overlay', '40,000+ courses'],
             },
             {
-              label: 'PERFORMANCE INSIGHTS',
-              title: 'Real Stats That Matter',
-              desc: 'The analytics that actually move the needle — strokes gained, putting trends, and club distance profiles.',
-              features: [
-                'Strokes gained vs. handicap',
-                'GIR % and fairway %',
-                'Putting average per round',
-                '3-putt % and 1-putt %',
-                'Scoring avg by hole type',
-                'Club Confidence™ distances',
-              ],
-              accent: '#B8860B',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><rect x="5" y="18" width="5" height="10"/><rect x="13" y="12" width="5" height="16"/><rect x="21" y="6" width="5" height="22"/></svg>,
+              num: '04', label: 'PERFORMANCE INSIGHTS',
+              title: 'Stats That Move the Needle',
+              desc: 'The numbers that actually tell you where you\'re losing strokes every round.',
+              features: ['Strokes gained breakdown', 'GIR % and fairway %', 'Putting averages', '3-putt & 1-putt rates', 'Club Confidence™ distances'],
             },
             {
-              label: 'AI COACH',
+              num: '05', label: 'AI COACH',
               title: 'AI Coach Cards',
-              desc: 'After every round, get a personalized breakdown: biggest leak, club report, putting analysis, and a practice plan.',
-              features: [
-                'Post-round AI analysis',
-                'Biggest strokes-lost leak',
-                'Club misfiring detection',
-                'Putting miss pattern ID',
-                'Custom practice targets',
-                'Goal & handicap tracking',
-              ],
-              accent: '#B8860B',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="16" cy="12" r="7"/><path d="M8 26c0-4.4 3.6-8 8-8s8 3.6 8 8"/><path d="M20 10l-3 3-2-2" strokeLinecap="round"/></svg>,
+              desc: 'After every round: your biggest leak, club report, and a custom practice plan.',
+              features: ['Post-round AI analysis', 'Biggest strokes-lost leak', 'Club misfiring detection', 'Putting miss pattern ID', 'Goal & handicap tracking'],
             },
             {
-              label: 'SOCIAL & COMPETITION',
-              title: 'Buddy Battles & Tournaments',
-              desc: 'Track match play results, compete with friends, and compare your handicap against your whole group.',
-              features: [
-                'Buddy Battles — head-to-head',
-                'Match play W/L tracking',
-                'Stableford tournament history',
-                'Group handicap leaderboard',
-                'Invite friends via email',
-                'Round share & compare',
-              ],
-              accent: '#B8860B',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="11" cy="11" r="5"/><circle cx="21" cy="11" r="5"/><path d="M4 26c0-3.9 3.1-7 7-7h10c3.9 0 7 3.1 7 7"/></svg>,
+              num: '06', label: 'SOCIAL & COMPETITION',
+              title: 'Buddy Battles',
+              desc: 'Head-to-head match play, tournaments, and a full leaderboard against your group.',
+              features: ['Buddy Battles head-to-head', 'Match play W/L record', 'Stableford tournaments', 'Group leaderboard', 'Round share & compare'],
             },
           ].map((cat, i) => (
-            <Reveal key={cat.label} delay={i * 70}>
-              <div className="group h-full bg-white/60 backdrop-blur border border-black/[0.04] rounded-2xl p-7 hover:bg-white hover:border-black/[0.08] hover:-translate-y-1 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${cat.accent}14` }}>
-                    {cat.icon}
-                  </div>
-                  <div className="text-[10px] font-bold tracking-[0.2em] text-[#999]">{cat.label}</div>
+            <Reveal key={cat.num} delay={i * 60}>
+              <div className="group h-full bg-[#F5EFE0] hover:bg-white transition-colors duration-300 p-7 md:p-8">
+                <div className="flex items-start justify-between mb-5">
+                  <span className="font-serif text-[42px] font-medium text-black/[0.07] leading-none select-none">{cat.num}</span>
+                  <span className="text-[10px] font-bold tracking-[0.18em] text-[#B8860B] mt-1">{cat.label}</span>
                 </div>
-                <h3 className="text-[16px] font-bold mb-2 text-[#1A1A1A]">{cat.title}</h3>
-                <p className="text-[13px] text-[#666] leading-[1.6] mb-5">{cat.desc}</p>
-                <ul className="space-y-1.5">
+                <h3 className="text-[17px] font-bold text-[#1A1A1A] mb-2 leading-snug">{cat.title}</h3>
+                <p className="text-[13px] text-[#777] leading-[1.6] mb-5">{cat.desc}</p>
+                <ul className="space-y-2">
                   {cat.features.map(f => (
-                    <li key={f} className="flex items-center gap-2 text-[12.5px] text-[#555]">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
-                        <path d="M2 6L4.5 8.5L9 3.5" stroke={cat.accent} strokeWidth="1.8" strokeLinecap="round"/>
-                      </svg>
+                    <li key={f} className="flex items-center gap-2.5 text-[12.5px] text-[#444]">
+                      <span className="w-1 h-1 rounded-full bg-[#B8860B] shrink-0" />
                       {f}
                     </li>
                   ))}
