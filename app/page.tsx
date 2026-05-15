@@ -160,8 +160,8 @@ export default function HomePage() {
                 'Penalty & chip logging',
                 'Shot-by-shot round replay',
               ],
-              accent: '#0A8F4F',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#0A8F4F" strokeWidth="1.6"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="5"/><circle cx="16" cy="16" r="1.5" fill="#0A8F4F"/><line x1="16" y1="4" x2="16" y2="8"/><line x1="16" y1="24" x2="16" y2="28"/><line x1="4" y1="16" x2="8" y2="16"/><line x1="24" y1="16" x2="28" y2="16"/></svg>,
+              accent: '#B8860B',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="5"/><circle cx="16" cy="16" r="1.5" fill="#B8860B"/><line x1="16" y1="4" x2="16" y2="8"/><line x1="16" y1="24" x2="16" y2="28"/><line x1="4" y1="16" x2="8" y2="16"/><line x1="24" y1="16" x2="28" y2="16"/></svg>,
             },
             {
               label: 'COURSE MAPS',
@@ -175,8 +175,8 @@ export default function HomePage() {
                 'Weather at your course',
                 'GolfAPI course database',
               ],
-              accent: '#5B7FA6',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#5B7FA6" strokeWidth="1.6"><path d="M4 6L12 4L20 6L28 4V26L20 28L12 26L4 28V6Z"/><line x1="12" y1="4" x2="12" y2="26"/><line x1="20" y1="6" x2="20" y2="28"/></svg>,
+              accent: '#B8860B',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><path d="M4 6L12 4L20 6L28 4V26L20 28L12 26L4 28V6Z"/><line x1="12" y1="4" x2="12" y2="26"/><line x1="20" y1="6" x2="20" y2="28"/></svg>,
             },
             {
               label: 'PERFORMANCE INSIGHTS',
@@ -205,8 +205,8 @@ export default function HomePage() {
                 'Custom practice targets',
                 'Goal & handicap tracking',
               ],
-              accent: '#9B6FE8',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#9B6FE8" strokeWidth="1.6"><circle cx="16" cy="12" r="7"/><path d="M8 26c0-4.4 3.6-8 8-8s8 3.6 8 8"/><path d="M20 10l-3 3-2-2" strokeLinecap="round"/></svg>,
+              accent: '#B8860B',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="16" cy="12" r="7"/><path d="M8 26c0-4.4 3.6-8 8-8s8 3.6 8 8"/><path d="M20 10l-3 3-2-2" strokeLinecap="round"/></svg>,
             },
             {
               label: 'SOCIAL & COMPETITION',
@@ -220,8 +220,8 @@ export default function HomePage() {
                 'Invite friends via email',
                 'Round share & compare',
               ],
-              accent: '#E87830',
-              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#E87830" strokeWidth="1.6"><circle cx="11" cy="11" r="5"/><circle cx="21" cy="11" r="5"/><path d="M4 26c0-3.9 3.1-7 7-7h10c3.9 0 7 3.1 7 7"/></svg>,
+              accent: '#B8860B',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="11" cy="11" r="5"/><circle cx="21" cy="11" r="5"/><path d="M4 26c0-3.9 3.1-7 7-7h10c3.9 0 7 3.1 7 7"/></svg>,
             },
           ].map((cat, i) => (
             <Reveal key={cat.label} delay={i * 70}>
