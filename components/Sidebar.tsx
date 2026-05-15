@@ -2,19 +2,19 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Home, FileText, Flag, Activity, Watch, Wrench,
-  BarChart2, Settings, Star, Gift, ChevronRight,
+  Home, FileText, Map, Activity, Watch, Wrench,
+  BarChart2, Settings2, Star, Gift, ChevronRight,
 } from 'lucide-react'
 
 const nav = [
-  { href: '/dashboard',        icon: Home,      label: 'Dashboard'   },
-  { href: '/dashboard/rounds', icon: FileText,  label: 'Rounds'      },
-  { href: '/dashboard/stats',  icon: Flag,      label: 'Courses'     },
-  { href: '/dashboard/swing',  icon: Activity,  label: 'SwingTrace'  },
-  { href: '/dashboard/clubs',  icon: Watch,     label: 'Apple Watch' },
-  { href: '/dashboard/clubs',  icon: Wrench,    label: 'Clubs'       },
-  { href: '/dashboard/stats',  icon: BarChart2, label: 'Insights'    },
-  { href: '/dashboard/profile',icon: Settings,  label: 'Settings'    },
+  { href: '/dashboard',         icon: Home,      label: 'Dashboard'   },
+  { href: '/dashboard/rounds',  icon: FileText,  label: 'Rounds'      },
+  { href: '/dashboard/courses', icon: Map,       label: 'Courses'     },
+  { href: '/dashboard/swing',   icon: Activity,  label: 'SwingTrace'  },
+  { href: '/dashboard/watch',   icon: Watch,     label: 'Apple Watch' },
+  { href: '/dashboard/clubs',   icon: Wrench,    label: 'Clubs'       },
+  { href: '/dashboard/stats',   icon: BarChart2, label: 'Insights'    },
+  { href: '/dashboard/profile', icon: Settings2, label: 'Settings'    },
 ]
 
 export default function Sidebar() {
@@ -26,7 +26,9 @@ export default function Sidebar() {
       <aside className="hidden md:flex w-[210px] bg-white border-r border-gray-100 flex-col shrink-0 overflow-y-auto">
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {nav.map(item => {
-            const active = path === item.href
+            const active = item.href === '/dashboard'
+              ? path === '/dashboard'
+              : path.startsWith(item.href)
             const Icon = item.icon
             return (
               <Link
