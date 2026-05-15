@@ -7,6 +7,7 @@ import {
   Calendar, ChevronRight, MapPin, Trophy, Flag,
   ArrowDown, ArrowUp, TrendingUp, TrendingDown, Watch,
   BarChart2, Clock, ClipboardList, Target, Smartphone,
+  X, Search, Map,
 } from 'lucide-react'
 import {
   supabase,
@@ -76,14 +77,21 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
 }
 
 // ─── Get Started banner ───────────────────────────────────────────────────────
-function GetStarted() {
+function GetStarted({ onClose }: { onClose: () => void }) {
   return (
-    <div className="bg-gradient-to-br from-[#FFFBF2] to-white rounded-xl border border-[#EDD98A]/40 shadow-[0_2px_16px_rgba(201,168,76,0.08)] p-5">
+    <div className="bg-gradient-to-br from-[#FFFBF2] to-white rounded-xl border border-[#EDD98A]/40 shadow-[0_2px_16px_rgba(201,168,76,0.08)] p-5 relative">
+      <button
+        onClick={onClose}
+        aria-label="Dismiss"
+        className="absolute top-3.5 right-3.5 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-[#F0EAE0] transition-colors"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
       <div className="flex items-start gap-4">
         <div className="w-10 h-10 rounded-xl bg-[#FEF3E8] flex items-center justify-center shrink-0 mt-0.5">
           <Target className="w-5 h-5 text-[#C9A84C]" />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-6">
           <h3 className="text-[15px] font-black text-[#111] leading-tight mb-1">
             Get started with TracerBuddy
           </h3>
@@ -116,17 +124,118 @@ function GetStarted() {
   )
 }
 
+// ─── Course Map Modal ─────────────────────────────────────────────────────────
+function CourseMapModal({
+  courseName,
+  onClose,
+}: {
+  courseName: string
+  onClose: () => void
+}) {
+  const query = encodeURIComponent(courseName + ' golf course')
+  const mapSrc = `https://maps.google.com/maps?q=${query}&output=embed&t=k`
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#F0EAE0]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#F5EFE0] flex items-center justify-center">
+              <Map className="w-4 h-4 text-[#C9A84C]" />
+            </div>
+            <div>
+              <div className="text-[14.5px] font-black text-[#111] leading-tight">{courseName}</div>
+              <div className="text-[11px] text-gray-400">Satellite preview</div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-[#F0EAE0] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {/* Map */}
+        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            src={mapSrc}
+            className="absolute inset-0 w-full h-full border-0"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title={`${courseName} map`}
+          />
+        </div>
+        <div className="px-5 py-3 bg-[#FAF7F2] text-[11px] text-gray-400 flex items-center gap-1.5">
+          <MapPin className="w-3 h-3 text-[#C9A84C]" />
+          Satellite imagery via Google Maps · Click map to explore
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Course Explorer (search any course) ─────────────────────────────────────
+function CourseExplorer() {
+  const [query,  setQuery]  = useState('')
+  const [preview, setPreview] = useState('')
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    if (query.trim()) setPreview(query.trim())
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Map className="w-3.5 h-3.5 text-[#C9A84C]" />
+        <span className="text-[13px] font-bold text-[#111]">Explore a Course</span>
+      </div>
+      <p className="text-[11.5px] text-gray-400 mb-3 leading-relaxed">
+        Preview any course before you play — search by name to see a satellite view.
+      </p>
+      <form onSubmit={handleSearch} className="flex gap-2">
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="e.g. Augusta National"
+          className="flex-1 min-w-0 bg-[#F8F4EE] border border-[#EDE8DC] rounded-lg px-3 py-2 text-[12.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition"
+        />
+        <button
+          type="submit"
+          className="bg-[#C9A84C] text-white rounded-lg px-3 py-2 flex items-center gap-1 hover:bg-[#A07828] transition-colors shrink-0"
+        >
+          <Search className="w-3.5 h-3.5" />
+        </button>
+      </form>
+      {preview && (
+        <CourseMapModal courseName={preview} onClose={() => setPreview('')} />
+      )}
+    </Card>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const router = useRouter()
-  const [loading,         setLoading]         = useState(true)
-  const [userName,        setUserName]        = useState('')
-  const [profile,         setProfile]         = useState<any>(null)
-  const [rounds,          setRounds]          = useState<any[]>([])
-  const [handicapHistory, setHandicapHistory] = useState<number[]>([])
-  const [clubs,           setClubs]           = useState<any[]>([])
+  const [loading,          setLoading]         = useState(true)
+  const [userName,         setUserName]        = useState('')
+  const [profile,          setProfile]         = useState<any>(null)
+  const [rounds,           setRounds]          = useState<any[]>([])
+  const [handicapHistory,  setHandicapHistory] = useState<number[]>([])
+  const [clubs,            setClubs]           = useState<any[]>([])
+  const [bannerDismissed,  setBannerDismissed] = useState(false)
+  const [mapCourse,        setMapCourse]       = useState<string | null>(null)
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setBannerDismissed(localStorage.getItem('tb_banner_dismissed') === '1')
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/auth/login'); return }
       load()
@@ -165,6 +274,11 @@ export default function DashboardPage() {
   const latestHcp   = totalRounds > 0 ? ((profile as any)?.handicap_index ?? null) : null
   const latestRound = rounds[0] ?? null
   const firstName   = userName.split(' ')[0] || 'Golfer'
+
+  function dismissBanner() {
+    setBannerDismissed(true)
+    localStorage.setItem('tb_banner_dismissed', '1')
+  }
 
   // Courses visited
   const courseMap: Record<string, { name: string; count: number; scores: number[]; lastPlayed: string }> = {}
@@ -247,8 +361,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Get Started banner (only when no data) ── */}
-      {totalRounds === 0 && <GetStarted />}
+      {/* ── Get Started banner (only when no data and not dismissed) ── */}
+      {totalRounds === 0 && !bannerDismissed && <GetStarted onClose={dismissBanner} />}
+
+      {/* ── Course map modal ── */}
+      {mapCourse && <CourseMapModal courseName={mapCourse} onClose={() => setMapCourse(null)} />}
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -378,13 +495,20 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={course.name}
+                      onClick={() => setMapCourse(course.name)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={e => e.key === 'Enter' && setMapCourse(course.name)}
                       className="bg-[#F8F4EE] rounded-xl p-4 hover:bg-[#F0E8D8] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer shadow-none hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)]"
                     >
                       <div className="flex items-start justify-between mb-2.5">
                         <div className="w-8 h-8 rounded-lg shrink-0" style={{ background: courseColor(course.name) }} />
-                        <span className="text-[10.5px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded-full">
-                          {course.count}×
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <Map className="w-3 h-3 text-gray-300" />
+                          <span className="text-[10.5px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded-full">
+                            {course.count}×
+                          </span>
+                        </div>
                       </div>
                       <div className="text-[13px] font-bold text-[#111] leading-tight mb-2.5">{course.name}</div>
                       {(best || avg) && (
@@ -582,6 +706,9 @@ export default function DashboardPage() {
               <Empty icon={BarChart2} title="No club data yet" sub="Club distances sync from the app after your rounds." />
             )}
           </Card>
+
+          {/* Course Explorer */}
+          <CourseExplorer />
 
           {/* Apple Watch */}
           <Card className="p-4">
