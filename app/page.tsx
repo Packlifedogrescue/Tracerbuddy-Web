@@ -179,7 +179,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="md:col-span-3 flex justify-center">
-            <img src="/images/golfer.png" alt="Golfer swing" className="max-h-[200px] w-auto" style={{ mixBlendMode: 'multiply' }} />
+            <img src="/images/golfer.png" alt="Golfer swing" className="max-h-[200px] w-auto" />
           </div>
         </div>
       </section>
