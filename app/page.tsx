@@ -101,10 +101,10 @@ export default function HomePage() {
           <div className="border-y border-black/[0.06] py-7">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { stat: '4.9', label: 'App Store Rating', sub: '★★★★★' },
-                { stat: '50K+', label: 'Shots Tracked', sub: 'and counting' },
-                { stat: '18', label: 'Performance Metrics', sub: 'per round' },
-                { stat: '100%', label: 'Built for iOS', sub: 'iPhone + Watch' },
+                { stat: '4.9★', label: 'App Store Rating', sub: 'Rated by golfers' },
+                { stat: '50+', label: 'Tracked Features', sub: 'across 6 categories' },
+                { stat: '18', label: 'Metrics Per Round', sub: 'GIR, putts, SG & more' },
+                { stat: '0', label: 'Strokes Excused', sub: 'data doesn\'t lie' },
               ].map(s => (
                 <div key={s.label}>
                   <div className="font-serif text-[32px] md:text-[40px] font-medium text-[#1A1A1A] leading-none">{s.stat}</div>
@@ -125,35 +125,161 @@ export default function HomePage() {
             <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1]">
               The complete performance<br />system for serious golfers.
             </h2>
+            <p className="text-[14.5px] text-[#666] mt-5 max-w-[520px] mx-auto leading-[1.65]">
+              50+ features across every part of your game — from the first tee to the post-round debrief.
+            </p>
           </div>
         </Reveal>
 
         <div className="grid md:grid-cols-3 gap-5">
           {[
-            { icon: <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="6"/><circle cx="16" cy="16" r="2" fill="#B8860B"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="16" y1="26" x2="16" y2="30"/><line x1="2" y1="16" x2="6" y2="16"/><line x1="26" y1="16" x2="30" y2="16"/></svg>,
-              title: 'Precision Shot Tracking', desc: 'Auto-detect every shot. Record distance, club, and landing position in real time.' },
-            { icon: <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><path d="M4 6L12 4L20 6L28 4V26L20 28L12 26L4 28V6Z"/><line x1="12" y1="4" x2="12" y2="26"/><line x1="20" y1="6" x2="20" y2="28"/></svg>,
-              title: 'Satellite Course Maps', desc: 'Beautiful aerial views with hole-by-hole distances and hazard awareness.' },
-            { icon: <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><rect x="9" y="6" width="14" height="20" rx="3"/><line x1="13" y1="3" x2="13" y2="6"/><line x1="19" y1="3" x2="19" y2="6"/></svg>,
-              title: 'Apple Watch SwingTrace', desc: 'Automatic swing detection from your wrist. Speed, tempo, and motion data.' },
-            { icon: <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><rect x="5" y="18" width="5" height="10"/><rect x="13" y="12" width="5" height="16"/><rect x="21" y="6" width="5" height="22"/></svg>,
-              title: 'Real Game Insights', desc: 'GIR, fairways, putting trends. Stop guessing — see exactly where you lose strokes.' },
-            { icon: <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><circle cx="16" cy="16" r="11"/><path d="M10 16l4 4 8-9" strokeLinecap="round"/></svg>,
-              title: 'Club Confidence™', desc: 'Your real playing distances — not what you think you hit. Built from every shot.' },
-            { icon: <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><path d="M16 4v8m0 0l-4-4m4 4l4-4M6 18v8h20v-8M10 22h12" strokeLinecap="round"/></svg>,
-              title: 'AI Coach Cards', desc: 'After every round, get a personalized breakdown of why you scored what you did.' },
-          ].map((f, i) => (
-            <Reveal key={f.title} delay={i * 60}>
+            {
+              label: 'SCORING & ROUNDS',
+              title: 'Digital Scorecards',
+              desc: 'Beautiful hole-by-hole scoring with stroke play, stableford, match play, and skins modes.',
+              features: [
+                'Auto-fill par and handicap strokes',
+                'Stableford & match play scoring',
+                'Skins game tracking',
+                'Best ball & scramble modes',
+                'Round history & stats per course',
+                'Export PDF scorecards',
+              ],
+              accent: '#B8860B',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><rect x="7" y="4" width="18" height="24" rx="3"/><line x1="11" y1="11" x2="21" y2="11"/><line x1="11" y1="16" x2="21" y2="16"/><line x1="11" y1="21" x2="17" y2="21"/></svg>,
+            },
+            {
+              label: 'SHOT TRACKING',
+              title: 'Precision Shot Tracking',
+              desc: 'Auto-detect every shot with GPS accuracy. See every landing position, distance, and club choice.',
+              features: [
+                'GPS shot detection & distance',
+                'Club selection per shot',
+                'Miss direction tracking',
+                'Fairway & GIR tracking',
+                'Penalty & chip logging',
+                'Shot-by-shot round replay',
+              ],
+              accent: '#0A8F4F',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#0A8F4F" strokeWidth="1.6"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="5"/><circle cx="16" cy="16" r="1.5" fill="#0A8F4F"/><line x1="16" y1="4" x2="16" y2="8"/><line x1="16" y1="24" x2="16" y2="28"/><line x1="4" y1="16" x2="8" y2="16"/><line x1="24" y1="16" x2="28" y2="16"/></svg>,
+            },
+            {
+              label: 'COURSE MAPS',
+              title: 'Satellite Course Maps',
+              desc: 'Real aerial satellite imagery with hole routing, hazards, and live GPS distances to every target.',
+              features: [
+                'Satellite & aerial imagery',
+                'Live GPS distance to pin',
+                'Hazard & layup distances',
+                'Wind speed & direction overlay',
+                'Weather at your course',
+                'GolfAPI course database',
+              ],
+              accent: '#5B7FA6',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#5B7FA6" strokeWidth="1.6"><path d="M4 6L12 4L20 6L28 4V26L20 28L12 26L4 28V6Z"/><line x1="12" y1="4" x2="12" y2="26"/><line x1="20" y1="6" x2="20" y2="28"/></svg>,
+            },
+            {
+              label: 'PERFORMANCE INSIGHTS',
+              title: 'Real Stats That Matter',
+              desc: 'The analytics that actually move the needle — strokes gained, putting trends, and club distance profiles.',
+              features: [
+                'Strokes gained vs. handicap',
+                'GIR % and fairway %',
+                'Putting average per round',
+                '3-putt % and 1-putt %',
+                'Scoring avg by hole type',
+                'Club Confidence™ distances',
+              ],
+              accent: '#B8860B',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#B8860B" strokeWidth="1.6"><rect x="5" y="18" width="5" height="10"/><rect x="13" y="12" width="5" height="16"/><rect x="21" y="6" width="5" height="22"/></svg>,
+            },
+            {
+              label: 'AI COACH',
+              title: 'AI Coach Cards',
+              desc: 'After every round, get a personalized breakdown: biggest leak, club report, putting analysis, and a practice plan.',
+              features: [
+                'Post-round AI analysis',
+                'Biggest strokes-lost leak',
+                'Club misfiring detection',
+                'Putting miss pattern ID',
+                'Custom practice targets',
+                'Goal & handicap tracking',
+              ],
+              accent: '#9B6FE8',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#9B6FE8" strokeWidth="1.6"><circle cx="16" cy="12" r="7"/><path d="M8 26c0-4.4 3.6-8 8-8s8 3.6 8 8"/><path d="M20 10l-3 3-2-2" strokeLinecap="round"/></svg>,
+            },
+            {
+              label: 'SOCIAL & COMPETITION',
+              title: 'Buddy Battles & Tournaments',
+              desc: 'Track match play results, compete with friends, and compare your handicap against your whole group.',
+              features: [
+                'Buddy Battles — head-to-head',
+                'Match play W/L tracking',
+                'Stableford tournament history',
+                'Group handicap leaderboard',
+                'Invite friends via email',
+                'Round share & compare',
+              ],
+              accent: '#E87830',
+              icon: <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#E87830" strokeWidth="1.6"><circle cx="11" cy="11" r="5"/><circle cx="21" cy="11" r="5"/><path d="M4 26c0-3.9 3.1-7 7-7h10c3.9 0 7 3.1 7 7"/></svg>,
+            },
+          ].map((cat, i) => (
+            <Reveal key={cat.label} delay={i * 70}>
               <div className="group h-full bg-white/60 backdrop-blur border border-black/[0.04] rounded-2xl p-7 hover:bg-white hover:border-black/[0.08] hover:-translate-y-1 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)]">
-                <div className="w-12 h-12 rounded-xl bg-[#B8860B]/[0.08] flex items-center justify-center mb-5 group-hover:bg-[#B8860B]/[0.12] transition-colors">
-                  {f.icon}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${cat.accent}14` }}>
+                    {cat.icon}
+                  </div>
+                  <div className="text-[10px] font-bold tracking-[0.2em] text-[#999]">{cat.label}</div>
                 </div>
-                <h3 className="text-[16px] font-bold mb-2 text-[#1A1A1A]">{f.title}</h3>
-                <p className="text-[13.5px] text-[#666] leading-[1.6]">{f.desc}</p>
+                <h3 className="text-[16px] font-bold mb-2 text-[#1A1A1A]">{cat.title}</h3>
+                <p className="text-[13px] text-[#666] leading-[1.6] mb-5">{cat.desc}</p>
+                <ul className="space-y-1.5">
+                  {cat.features.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-[12.5px] text-[#555]">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                        <path d="M2 6L4.5 8.5L9 3.5" stroke={cat.accent} strokeWidth="1.8" strokeLinecap="round"/>
+                      </svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </Reveal>
           ))}
         </div>
+
+        {/* Apple Watch feature highlight */}
+        <Reveal delay={100}>
+          <div className="mt-5 bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-7 md:p-10 grid md:grid-cols-2 gap-8 items-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #F5EFE0 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+            <div className="relative z-10">
+              <div className="text-[10px] font-bold text-[#B8860B] tracking-[0.25em] mb-3">APPLE WATCH · SWINGTRACE</div>
+              <h3 className="font-serif text-[28px] md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
+                Your wrist knows<br />your swing better<br className="hidden md:block"/> than you do.
+              </h3>
+              <p className="text-[13.5px] text-[#aaa] leading-[1.65] max-w-[380px]">
+                Wear your Apple Watch on the course and every swing is captured automatically — speed, tempo, backswing duration, and miss patterns, all without touching your phone.
+              </p>
+            </div>
+            <div className="relative z-10 grid grid-cols-3 gap-3">
+              {[
+                { label: 'Swing Speed', value: '94', unit: 'MPH' },
+                { label: 'Tempo',       value: '3:1', unit: 'RATIO' },
+                { label: 'Backswing',   value: '0.9', unit: 'SEC' },
+                { label: 'Driver Avg',  value: '89', unit: 'MPH' },
+                { label: 'Swings',      value: '847', unit: 'LOGGED' },
+                { label: 'Last Round',  value: '+4', unit: 'MPH' },
+              ].map(m => (
+                <div key={m.label} className="text-center bg-white/[0.05] border border-white/[0.07] rounded-xl p-3.5">
+                  <div className="text-[9px] text-[#777] mb-1.5 tracking-wide font-semibold">{m.label}</div>
+                  <div className="font-serif text-[24px] font-medium text-[#F5EFE0] leading-none">{m.value}</div>
+                  <div className="text-[9px] text-[#666] mt-1.5 tracking-wider font-bold">{m.unit}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
       </section>
 
       {/* ════════════════════════ HOW IT WORKS ════════════════════════ */}
