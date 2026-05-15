@@ -35,7 +35,7 @@ export default function HomePage() {
           <Reveal className="relative z-10">
             <h1 className="font-serif text-[48px] md:text-[76px] font-medium leading-[1.02] tracking-[-0.025em] mb-7">
               Track Every Shot.<br />
-              Understand <span className="italic text-[#B8860B]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
+              Understand <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
             </h1>
             <p className="text-[17px] text-[#444] leading-[1.7] max-w-[480px] mb-9">
               Most golfers finish a round with no idea where they lost strokes.
@@ -66,7 +66,7 @@ export default function HomePage() {
               </a>
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
-                  <svg key={i} width="13" height="13" viewBox="0 0 14 14" fill="#B8860B"><path d="M7 1l1.8 4 4.2.4-3.2 2.8 1 4.3L7 10.3l-3.8 2.2 1-4.3L1 5.4 5.2 5z"/></svg>
+                  <svg key={i} width="13" height="13" viewBox="0 0 14 14" fill="#DF9905"><path d="M7 1l1.8 4 4.2.4-3.2 2.8 1 4.3L7 10.3l-3.8 2.2 1-4.3L1 5.4 5.2 5z"/></svg>
                 ))}
                 <span className="text-[12px] text-[#666] ml-1.5">4.9 · App Store</span>
               </div>
@@ -93,7 +93,7 @@ export default function HomePage() {
             <div className="relative flex items-center justify-center min-h-[520px]">
               {/* Ambient glow */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-[400px] h-[400px] rounded-full bg-gradient-radial from-[#B8860B]/15 via-[#B8860B]/5 to-transparent blur-3xl" style={{ background: 'radial-gradient(circle, rgba(184,134,11,0.18) 0%, rgba(184,134,11,0.05) 40%, transparent 70%)' }} />
+                <div className="w-[400px] h-[400px] rounded-full bg-gradient-radial from-[#DF9905]/15 via-[#DF9905]/5 to-transparent blur-3xl" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.18) 0%, rgba(223,153,5,0.05) 40%, transparent 70%)' }} />
               </div>
               <img
                 src="/images/hero-phone.png"
@@ -131,7 +131,7 @@ export default function HomePage() {
       <section id="features" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="text-center mb-10">
-            <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-4">EVERYTHING YOU NEED</div>
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">EVERYTHING YOU NEED</div>
             <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1]">
               The complete performance<br />system for serious golfers.
             </h2>
@@ -199,14 +199,14 @@ export default function HomePage() {
               <div className="group h-full bg-[#F5EFE0] hover:bg-white transition-colors duration-300 p-7 md:p-8">
                 <div className="flex items-start justify-between mb-5">
                   <span className="font-serif text-[42px] font-medium text-black/[0.07] leading-none select-none">{cat.num}</span>
-                  <span className="text-[10px] font-bold tracking-[0.18em] text-[#B8860B] mt-1">{cat.label}</span>
+                  <span className="text-[10px] font-bold tracking-[0.18em] text-[#DF9905] mt-1">{cat.label}</span>
                 </div>
                 <h3 className="text-[17px] font-bold text-[#1A1A1A] mb-2 leading-snug">{cat.title}</h3>
                 <p className="text-[13px] text-[#777] leading-[1.6] mb-5">{cat.desc}</p>
                 <ul className="space-y-2">
                   {cat.features.map(f => (
                     <li key={f} className="flex items-center gap-2.5 text-[12.5px] text-[#444]">
-                      <span className="w-1 h-1 rounded-full bg-[#B8860B] shrink-0" />
+                      <span className="w-1 h-1 rounded-full bg-[#DF9905] shrink-0" />
                       {f}
                     </li>
                   ))}
@@ -221,7 +221,7 @@ export default function HomePage() {
           <div className="mt-5 bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-7 md:p-10 grid md:grid-cols-2 gap-8 items-center relative overflow-hidden">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #F5EFE0 1px, transparent 0)', backgroundSize: '28px 28px' }} />
             <div className="relative z-10">
-              <div className="text-[10px] font-bold text-[#B8860B] tracking-[0.25em] mb-3">APPLE WATCH · SWINGTRACE</div>
+              <div className="text-[10px] font-bold text-[#DF9905] tracking-[0.25em] mb-3">APPLE WATCH · SWINGTRACE</div>
               <h3 className="font-serif text-[28px] md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
                 Your wrist knows<br />your swing better<br className="hidden md:block"/> than you do.
               </h3>
@@ -253,7 +253,7 @@ export default function HomePage() {
       <section id="how" className="px-6 md:px-12 py-24 md:py-28 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="text-center mb-16">
-            <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-4">HOW IT WORKS</div>
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">HOW IT WORKS</div>
             <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1]">
               Better data.<br />Better decisions. <span className="italic">Better golf.</span>
             </h2>
@@ -284,7 +284,7 @@ export default function HomePage() {
       <section id="testimonials" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="text-center mb-14">
-            <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-4">LOVED BY GOLFERS</div>
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">LOVED BY GOLFERS</div>
             <h2 className="font-serif text-3xl md:text-[44px] font-medium tracking-[-0.02em] leading-[1.1]">
               From scratch players<br />to weekend warriors.
             </h2>
@@ -299,14 +299,14 @@ export default function HomePage() {
           ].map((t, i) => (
             <Reveal key={t.name} delay={i * 80}>
               <div className="h-full bg-white border border-black/[0.05] rounded-2xl p-7 hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-shadow">
-                <div className="flex gap-1 mb-4 text-[#B8860B]">
+                <div className="flex gap-1 mb-4 text-[#DF9905]">
                   {[...Array(5)].map((_, j) => (
                     <svg key={j} width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 1l1.8 4 4.2.4-3.2 2.8 1 4.3L7 10.3l-3.8 2.2 1-4.3L1 5.4 5.2 5z"/></svg>
                   ))}
                 </div>
                 <p className="text-[14.5px] text-[#1A1A1A] leading-[1.65] mb-6 font-serif italic">&ldquo;{t.quote}&rdquo;</p>
                 <div className="flex items-center gap-3 pt-5 border-t border-black/[0.06]">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#B8860B]/20 to-[#1A1A1A]/10 flex items-center justify-center font-bold text-[#1A1A1A]">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#DF9905]/20 to-[#1A1A1A]/10 flex items-center justify-center font-bold text-[#1A1A1A]">
                     {t.name[0]}
                   </div>
                   <div>
@@ -325,9 +325,9 @@ export default function HomePage() {
         <Reveal>
           <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl p-8 md:p-16 grid md:grid-cols-2 gap-10 items-center overflow-hidden relative">
             {/* Decorative gradient orb */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(184,134,11,0.12) 0%, transparent 60%)' }} />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.12) 0%, transparent 60%)' }} />
             <div className="relative z-10">
-              <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-5">iPHONE + APPLE WATCH</div>
+              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">iPHONE + APPLE WATCH</div>
               <h2 className="font-serif text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mb-8">
                 Everything you need.<br />Right on your wrist.
               </h2>
@@ -339,7 +339,7 @@ export default function HomePage() {
                   'Syncs seamlessly between iPhone and Watch',
                 ].map(item => (
                   <div key={item} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-[#B8860B] flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-[#DF9905] flex items-center justify-center flex-shrink-0">
                       <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
                     </div>
                     <span className="text-[14.5px] text-[#1A1A1A]">{item}</span>
@@ -361,7 +361,7 @@ export default function HomePage() {
             {/* Decorative grid */}
             <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(245,239,224,1) 1px, transparent 1px), linear-gradient(90deg, rgba(245,239,224,1) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
             <div className="md:col-span-4 relative z-10">
-              <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-5">SWINGTRACE</div>
+              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">SWINGTRACE</div>
               <h2 className="font-serif text-3xl md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
                 See your swing.<br />Fix what's broken.
               </h2>
@@ -380,7 +380,7 @@ export default function HomePage() {
                   <div className="font-serif text-[36px] md:text-[44px] font-medium text-[#F5EFE0] leading-none">{m.value}</div>
                   {m.unit && <div className="text-[10px] text-[#777] font-semibold mt-2 tracking-wider">{m.unit}</div>}
                   {m.tag && <span className="inline-block text-[10px] text-[#0A8F4F] bg-[#0A8F4F]/15 px-2.5 py-0.5 rounded-full mt-2 font-semibold">{m.tag}</span>}
-                  <svg width="100%" height="20" viewBox="0 0 100 20" className="mt-3"><path d="M0,12 Q15,4 30,10 T60,6 T90,8 T100,5" stroke="#B8860B" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7"/></svg>
+                  <svg width="100%" height="20" viewBox="0 0 100 20" className="mt-3"><path d="M0,12 Q15,4 30,10 T60,6 T90,8 T100,5" stroke="#DF9905" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7"/></svg>
                 </div>
               ))}
             </div>
@@ -395,7 +395,7 @@ export default function HomePage() {
       <section id="pricing" className="px-6 md:px-12 py-20 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="text-center mb-12">
-            <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-4">PRICING</div>
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">PRICING</div>
             <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1] mb-4">
               Simple pricing.<br />Full access.
             </h2>
@@ -427,9 +427,9 @@ export default function HomePage() {
           </Reveal>
 
           <Reveal delay={150}>
-            <div className="h-full bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-8 relative shadow-[0_20px_60px_rgba(184,134,11,0.18)] border border-[#B8860B]/40">
-              <div className="absolute -top-3 right-6 bg-[#B8860B] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE $99</div>
-              <div className="text-[13px] font-bold text-[#B8860B] mb-3 tracking-wide">YEARLY</div>
+            <div className="h-full bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-8 relative shadow-[0_20px_60px_rgba(223,153,5,0.18)] border border-[#DF9905]/40">
+              <div className="absolute -top-3 right-6 bg-[#DF9905] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE $99</div>
+              <div className="text-[13px] font-bold text-[#DF9905] mb-3 tracking-wide">YEARLY</div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="font-serif text-[48px] font-medium leading-none">$199.99</span>
                 <span className="text-[14px] text-[#888]">/ year</span>
@@ -438,7 +438,7 @@ export default function HomePage() {
               <div className="space-y-3 mb-8">
                 {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Tournament & match-play modes'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#B8860B" strokeWidth="2" strokeLinecap="round"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#DF9905" strokeWidth="2" strokeLinecap="round"/></svg>
                     <span className="text-[13.5px] text-[#ddd]">{item}</span>
                   </div>
                 ))}
@@ -453,7 +453,7 @@ export default function HomePage() {
       <section className="px-6 md:px-12 py-16 max-w-3xl mx-auto">
         <Reveal>
           <div className="text-center mb-12">
-            <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-4">FAQ</div>
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">FAQ</div>
             <h2 className="font-serif text-3xl md:text-[40px] font-medium tracking-[-0.02em]">
               Common questions
             </h2>
@@ -484,11 +484,11 @@ export default function HomePage() {
       <section className="px-6 md:px-12 py-8 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="relative rounded-3xl overflow-hidden bg-[#1A1A1A]">
-            <div className="absolute inset-0 opacity-30" style={{ background: 'radial-gradient(circle at 20% 50%, rgba(184,134,11,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(10,143,79,0.2) 0%, transparent 50%)' }} />
+            <div className="absolute inset-0 opacity-30" style={{ background: 'radial-gradient(circle at 20% 50%, rgba(223,153,5,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(10,143,79,0.2) 0%, transparent 50%)' }} />
             <div className="relative z-10 px-8 md:px-16 py-14 md:py-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
               <div>
                 <h3 className="font-serif text-white text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] max-w-[500px]">
-                  Every round should<br />make you <span className="italic text-[#B8860B]">better.</span>
+                  Every round should<br />make you <span className="italic text-[#DF9905]">better.</span>
                 </h3>
                 <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Join the golfers already using TracerBuddy to drop strokes every week.</p>
               </div>

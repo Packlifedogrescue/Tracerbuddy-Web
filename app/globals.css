@@ -27,7 +27,7 @@ html { scroll-behavior: smooth; }
   }
 
   .premium-btn-gold {
-    @apply inline-flex items-center justify-center gap-2 bg-[#B8860B] text-white px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-[#A07509] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(184,134,11,0.35)] active:translate-y-0;
+    @apply inline-flex items-center justify-center gap-2 bg-[#DF9905] text-white px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-[#A07509] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(184,134,11,0.35)] active:translate-y-0;
   }
 
   .premium-btn-ghost {
@@ -41,7 +41,7 @@ html { scroll-behavior: smooth; }
 }
 
 .shimmer-text {
-  background: linear-gradient(90deg, #1A1A1A 0%, #1A1A1A 40%, #B8860B 50%, #1A1A1A 60%, #1A1A1A 100%);
+  background: linear-gradient(90deg, #1A1A1A 0%, #1A1A1A 40%, #DF9905 50%, #1A1A1A 60%, #1A1A1A 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
