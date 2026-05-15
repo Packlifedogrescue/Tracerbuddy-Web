@@ -31,6 +31,9 @@ export default function Sidebar() {
     <>
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-[210px] bg-white border-r border-gray-100 flex-col shrink-0 overflow-y-auto">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-8 w-auto" />
+        </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {nav.map(item => {
             const active = item.href === '/dashboard'
@@ -92,7 +95,7 @@ export default function Sidebar() {
 
       {/* ── Mobile top bar ── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100">
-        <span className="font-black text-[15px] text-[#111]">TracerBuddy</span>
+        <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-7 w-auto" />
         <button className="p-1.5 rounded-lg hover:bg-gray-100">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <line x1="2" y1="5" x2="16" y2="5" stroke="#333" strokeWidth="1.5" strokeLinecap="round"/>
