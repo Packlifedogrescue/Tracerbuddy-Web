@@ -55,17 +55,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right: phone over course image */}
-          <div className="relative">
-            <img
-              src="/images/hero-course.jpg"
-              alt=""
-              className="w-full h-[500px] object-cover rounded-2xl opacity-95"
-            />
+          {/* Right: phone floating on beige background */}
+          <div className="relative flex items-center justify-center min-h-[500px]">
             <img
               src="/images/hero-phone.png"
               alt="TracerBuddy iPhone app"
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] md:w-[340px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.3)]"
+              className="w-[280px] md:w-[380px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
+              style={{ mixBlendMode: 'multiply' }}
             />
           </div>
         </div>
