@@ -7,16 +7,8 @@ export default function HomePage() {
 
       {/* ════ NAV ════ */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-5 max-w-[1400px] mx-auto">
-        <div className="flex items-center gap-2.5">
-          <svg width="34" height="34" viewBox="0 0 34 34">
-            <circle cx="17" cy="17" r="17" fill="#1A1A1A"/>
-            <circle cx="17" cy="17" r="6" fill="#F5EFE0"/>
-            <circle cx="11" cy="11" r="1.4" fill="#F5EFE0"/>
-            <circle cx="23" cy="11" r="1.4" fill="#F5EFE0"/>
-            <circle cx="11" cy="23" r="1.4" fill="#F5EFE0"/>
-            <circle cx="23" cy="23" r="1.4" fill="#F5EFE0"/>
-          </svg>
-          <span className="text-[19px] font-bold tracking-tight">TracerBuddy</span>
+        <div className="flex items-center">
+          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-9 w-auto" />
         </div>
         <div className="hidden md:flex items-center gap-10">
           <a href="#features" className="text-[14px] text-[#333] hover:text-black">Features</a>

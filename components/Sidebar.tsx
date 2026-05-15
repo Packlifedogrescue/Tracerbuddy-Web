@@ -52,9 +52,8 @@ export default function Sidebar({ name }: { name?: string }) {
       {/* Desktop */}
       <aside className="hidden md:flex w-60 min-h-screen bg-[#0D0D0D] border-r border-[#1F1F1F] flex-col shrink-0">
         <div className="px-6 py-5 border-b border-[#1F1F1F]">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⛳</span>
-            <span className="font-black text-lg">TracerBuddy</span>
+          <div className="flex items-center">
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-8 w-auto brightness-0 invert" />
           </div>
           {name && <p className="text-gray-500 text-xs mt-1 truncate">{name}</p>}
         </div>
@@ -68,7 +67,7 @@ export default function Sidebar({ name }: { name?: string }) {
 
       {/* Mobile topbar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-[#0D0D0D] border-b border-[#1F1F1F]">
-        <div className="flex items-center gap-2"><span>⛳</span><span className="font-black">TracerBuddy</span></div>
+        <div className="flex items-center"><img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-7 w-auto brightness-0 invert" /></div>
         <button onClick={() => setOpen(!open)} className="text-white text-xl p-1">{open ? '✕' : '☰'}</button>
       </div>
 

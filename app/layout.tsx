@@ -4,6 +4,10 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'TracerBuddy',
   description: 'Know your shot. Know your miss. Know what to fix.',
+  icons: {
+    icon: '/images/logo-icon.png',
+    apple: '/images/logo-icon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
