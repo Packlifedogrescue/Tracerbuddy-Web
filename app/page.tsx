@@ -49,11 +49,12 @@ export default function HomePage() {
               Track Every Shot.<br />
               Understand <span className="italic text-[#B8860B]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
             </h1>
-            <p className="text-[16px] text-[#555] leading-[1.65] max-w-[480px] mb-9">
-              Premium shot tracking, course mapping, scorecards, Apple Watch swing motion data,
-              and AI-powered round insights — built for golfers who play to improve.
+            <p className="text-[17px] text-[#444] leading-[1.7] max-w-[480px] mb-9">
+              Most golfers finish a round with no idea where they lost strokes.
+              TracerBuddy shows you exactly — hole by hole, shot by shot — so every
+              round makes you a better golfer.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mb-8">
               <Link href="/auth/signup" className="premium-btn-gold">
                 Start Free Trial
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11L9 7L5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -62,17 +63,38 @@ export default function HomePage() {
                 See How It Works
               </a>
             </div>
-            <div className="flex items-center gap-6 mt-8 text-[12.5px] text-[#666]">
+
+            {/* App Store badge */}
+            <div className="flex flex-wrap items-center gap-4 mb-6">
+              <a href="#" aria-label="Download on the App Store"
+                className="inline-flex items-center gap-2.5 bg-[#1A1A1A] text-[#F5EFE0] px-4 py-2.5 rounded-xl hover:bg-black transition-colors">
+                <svg width="18" height="22" viewBox="0 0 18 22" fill="currentColor">
+                  <path d="M14.94 11.55c-.02-2.16 1.77-3.2 1.85-3.25-1.01-1.48-2.58-1.68-3.14-1.7-1.33-.14-2.6.79-3.28.79-.68 0-1.72-.77-2.83-.75-1.45.02-2.8.85-3.54 2.15-1.52 2.63-.39 6.52 1.08 8.65.73 1.05 1.59 2.22 2.72 2.18 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.69.71 2.84.69 1.18-.02 1.92-1.07 2.63-2.13.84-1.21 1.18-2.4 1.19-2.46-.03-.01-2.36-.9-2.36-3.46zM12.68 4.5c.6-.73 1.01-1.74.9-2.75-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.87 2.65.97.07 1.95-.49 2.51-1.2z"/>
+                </svg>
+                <div>
+                  <div className="text-[9px] leading-none text-[#aaa] mb-0.5">Download on the</div>
+                  <div className="text-[14px] font-semibold leading-none">App Store</div>
+                </div>
+              </a>
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} width="13" height="13" viewBox="0 0 14 14" fill="#B8860B"><path d="M7 1l1.8 4 4.2.4-3.2 2.8 1 4.3L7 10.3l-3.8 2.2 1-4.3L1 5.4 5.2 5z"/></svg>
+                ))}
+                <span className="text-[12px] text-[#666] ml-1.5">4.9 · App Store</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-5 text-[12px] text-[#888]">
               <div className="flex items-center gap-1.5">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
+                7-day free trial
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
                 No credit card
               </div>
               <div className="flex items-center gap-1.5">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
-                iOS + Web
-              </div>
-              <div className="flex items-center gap-1.5">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
                 Cancel anytime
               </div>
             </div>
@@ -101,10 +123,10 @@ export default function HomePage() {
           <div className="border-y border-black/[0.06] py-7">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { stat: '4.9★', label: 'App Store Rating', sub: 'Rated by golfers' },
-                { stat: '50+', label: 'Tracked Features', sub: 'across 6 categories' },
-                { stat: '18', label: 'Metrics Per Round', sub: 'GIR, putts, SG & more' },
-                { stat: '0', label: 'Strokes Excused', sub: 'data doesn\'t lie' },
+                { stat: '4.9★', label: 'App Store Rating',    sub: '5-star reviewed'       },
+                { stat: '50+', label: 'Features',             sub: 'across 6 categories'   },
+                { stat: '18',  label: 'Metrics Per Round',    sub: 'GIR, putts, SG & more' },
+                { stat: '−4',  label: 'Avg Handicap Drop',    sub: 'in first season'        },
               ].map(s => (
                 <div key={s.label}>
                   <div className="font-serif text-[32px] md:text-[40px] font-medium text-[#1A1A1A] leading-none">{s.stat}</div>
@@ -120,7 +142,7 @@ export default function HomePage() {
       {/* ════════════════════════ FEATURE GRID ════════════════════════ */}
       <section id="features" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
-          <div className="text-center mb-14">
+          <div className="text-center mb-10">
             <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.25em] mb-4">EVERYTHING YOU NEED</div>
             <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1]">
               The complete performance<br />system for serious golfers.
@@ -128,6 +150,21 @@ export default function HomePage() {
             <p className="text-[14.5px] text-[#666] mt-5 max-w-[520px] mx-auto leading-[1.65]">
               50+ features across every part of your game — from the first tee to the post-round debrief.
             </p>
+          </div>
+        </Reveal>
+
+        {/* Quick-glance feature strip */}
+        <Reveal>
+          <div className="flex flex-wrap justify-center gap-2.5 mb-12">
+            {[
+              'Digital Scorecards', 'Shot Tracking', 'Satellite Maps', 'Apple Watch',
+              'Strokes Gained', 'Club Distances', 'AI Coach Cards', 'Putting Stats',
+              'Match Play', 'Stableford', 'Practice Mode', 'Buddy Battles',
+            ].map(tag => (
+              <span key={tag} className="text-[12.5px] text-[#555] bg-white/70 border border-black/[0.06] px-3.5 py-1.5 rounded-full">
+                {tag}
+              </span>
+            ))}
           </div>
         </Reveal>
 
