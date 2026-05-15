@@ -61,7 +61,6 @@ export default function HomePage() {
               src="/images/hero-phone.png"
               alt="TracerBuddy iPhone app"
               className="w-[280px] md:w-[380px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
-              style={{ mixBlendMode: 'multiply' }}
             />
           </div>
         </div>
