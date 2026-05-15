@@ -1,5 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-html, body { background: #F5EFE0; color: #1A1A1A; -webkit-font-smoothing: antialiased; }
+
+html, body {
+  -webkit-font-smoothing: antialiased;
+}
+
 ::selection { background: #1A1A1A; color: #F5EFE0; }
+
+@layer components {
+  .card {
+    @apply bg-[#111111] border border-[#1F1F1F] rounded-xl;
+  }
+
+  .stat-label {
+    @apply text-[10px] font-black tracking-[0.15em] text-[#666] uppercase;
+  }
+}
