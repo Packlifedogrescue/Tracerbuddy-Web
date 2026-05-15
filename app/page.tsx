@@ -41,10 +41,6 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left: text */}
           <Reveal className="relative z-10">
-            <div className="inline-flex items-center gap-2 bg-white/70 backdrop-blur border border-black/[0.06] px-3.5 py-1.5 rounded-full mb-7">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0A8F4F] animate-pulse" />
-              <span className="text-[12px] font-semibold text-[#444]">New: SwingTrace on Apple Watch</span>
-            </div>
             <h1 className="font-serif text-[48px] md:text-[76px] font-medium leading-[1.02] tracking-[-0.025em] mb-7">
               Track Every Shot.<br />
               Understand <span className="italic text-[#B8860B]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
