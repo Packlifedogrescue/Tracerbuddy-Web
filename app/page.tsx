@@ -52,7 +52,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-3 mb-8">
               <Link href="/auth/signup" className="premium-btn-gold">
-                Start Free Trial
+                Start Free — 2 Rounds
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11L9 7L5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
               </Link>
               <a href="#features" className="premium-btn-ghost">
@@ -83,7 +83,7 @@ export default function HomePage() {
             <div className="flex items-center gap-5 text-[12px] text-[#888]">
               <div className="flex items-center gap-1.5">
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
-                7-day free trial
+                2 rounds free
               </div>
               <div className="flex items-center gap-1.5">
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -479,7 +479,7 @@ export default function HomePage() {
                 <span className="font-serif text-[48px] font-medium text-[#1A1A1A] leading-none">$24.99</span>
                 <span className="text-[14px] text-[#888]">/ month</span>
               </div>
-              <p className="text-[13px] text-[#888] mb-6">Best for trying TracerBuddy</p>
+              <p className="text-[13px] text-[#888] mb-6">First 2 rounds free, then $24.99/mo</p>
               <div className="space-y-3 mb-8">
                 {['Full app access on iOS + Web', 'Apple Watch SwingTrace', 'AI Coach Cards every round', 'Cancel anytime'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
@@ -488,7 +488,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <Link href="/auth/signup" className="premium-btn-ghost w-full">Start Monthly</Link>
+              <Link href="/auth/signup" className="premium-btn-ghost w-full">Try Free — 2 Rounds</Link>
             </div>
           </Reveal>
 
@@ -509,7 +509,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <Link href="/auth/signup" className="premium-btn-gold w-full">Start Yearly</Link>
+              <Link href="/auth/signup" className="premium-btn-gold w-full">Try Free — 2 Rounds</Link>
             </div>
           </Reveal>
         </div>
@@ -531,7 +531,7 @@ export default function HomePage() {
             { q: 'Do I need an Apple Watch?', a: 'No. The iPhone app works on its own — but the Apple Watch unlocks automatic swing detection, tempo, and motion data.' },
             { q: 'Does my data sync between iOS and the web?', a: 'Yes. Sign in with the same Apple ID or email and everything is instantly available on both.' },
             { q: 'Can I cancel anytime?', a: 'Yes. Cancel from your iPhone Settings → Apple ID → Subscriptions. No questions asked.' },
-            { q: 'Is there a free trial?', a: 'Yes — 7 days free on either plan. No credit card required to start.' },
+            { q: 'Is there a free trial?', a: 'Yes — your first 2 rounds are completely free on either plan. No credit card required to start.' },
           ].map((item, i) => (
             <Reveal key={item.q} delay={i * 50}>
               <details className="group bg-white/60 border border-black/[0.05] rounded-xl overflow-hidden hover:bg-white transition-colors">
@@ -559,7 +559,7 @@ export default function HomePage() {
                 <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Join the golfers already using TracerBuddy to drop strokes every week.</p>
               </div>
               <Link href="/auth/signup" className="premium-btn-gold shrink-0">
-                Start Free Trial
+                Start Free — 2 Rounds
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11L9 7L5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
               </Link>
             </div>
