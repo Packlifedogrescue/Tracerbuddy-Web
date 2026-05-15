@@ -179,7 +179,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="md:col-span-3 flex justify-center">
-            <img src="/images/golfer.png" alt="Golfer swing" className="max-h-[200px] w-auto" />
+            <img src="/images/golfer.png" alt="Golfer swing" className="max-h-[200px] w-auto" style={{ mixBlendMode: 'multiply' }} />
           </div>
         </div>
       </section>
@@ -241,7 +241,7 @@ export default function HomePage() {
       <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <div className="relative rounded-2xl overflow-hidden h-[150px]">
           <img src="/images/cta-banner.jpg" alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a1a14]/95 via-[#0a1a14]/70 to-[#0a1a14]/20" />
+          <div className="absolute inset-0 bg-[#0a1a14]/85" />
           <div className="absolute inset-0 flex items-center justify-between px-8 md:px-14">
             <h3 className="text-white text-2xl md:text-[32px] font-bold leading-tight max-w-[400px]" style={{ fontFamily: 'Georgia, serif' }}>
               Every round should<br />make you better.
