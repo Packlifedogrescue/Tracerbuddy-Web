@@ -255,7 +255,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative z-10 flex justify-center">
-              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="max-w-full h-auto drop-shadow-2xl" style={{ mixBlendMode: 'multiply' }} />
+              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="max-w-full h-auto drop-shadow-2xl" />
             </div>
           </div>
         </Reveal>
