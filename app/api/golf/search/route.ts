@@ -6,8 +6,8 @@ const GOLF_KEY  = process.env.GOLF_API_KEY!
 const CACHE_TTL_DAYS = 7
 
 const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL      ?? 'https://mmwxbpqviqtitxptfiog.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td3hicHF2aXF0aXR4cHRmaW9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjgwOTUsImV4cCI6MjA5NDEwNDA5NX0.tTUHcNpSaWzH6WkOm5wx4xT-W9f-qRv9_wDllbwZ2dU',
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 )
 
 function normalise(q: string) {

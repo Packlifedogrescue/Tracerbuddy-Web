@@ -10,6 +10,7 @@ import {
   X, Map,
 } from 'lucide-react'
 import CourseMapPremium from '@/components/CourseMapPremium'
+import WeatherWidget    from '@/components/WeatherWidget'
 import {
   supabase,
   fetchRounds,
@@ -158,6 +159,7 @@ export default function DashboardPage() {
   const [bannerDismissed,  setBannerDismissed] = useState(false)
   const [mapOpen,          setMapOpen]         = useState(false)
   const [mapInitialName,   setMapInitialName]  = useState<string | undefined>()
+  const [weatherPos,       setWeatherPos]      = useState<{ lat: number; lng: number } | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -167,6 +169,13 @@ export default function DashboardPage() {
       if (!session) { router.push('/auth/login'); return }
       load()
     })
+    // Get location for weather widget
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => setWeatherPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        ()  => {}, // user denied — widget stays hidden
+      )
+    }
   }, [])
 
   async function load() {
@@ -638,6 +647,17 @@ export default function DashboardPage() {
               <Empty icon={BarChart2} title="No club data yet" sub="Club distances sync from the app after your rounds." />
             )}
           </Card>
+
+          {/* Weather */}
+          {weatherPos && (
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[13px]">⛳</span>
+                <span className="text-[13px] font-bold text-[#111]">Playing Conditions</span>
+              </div>
+              <WeatherWidget lat={weatherPos.lat} lng={weatherPos.lng} />
+            </Card>
+          )}
 
           {/* Course Explorer */}
           <CourseExplorerCard onOpen={() => { setMapInitialName(undefined); setMapOpen(true) }} />
