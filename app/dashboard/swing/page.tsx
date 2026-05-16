@@ -68,10 +68,10 @@ export default function SwingPage() {
           { label: 'Best Swing', value: maxSpeed || '—',   unit: 'mph', icon: Zap,        color: '#22A06B' },
           { label: 'Avg Driver', value: avgDriver,         unit: 'mph', icon: TrendingUp, color: '#111'    },
         ].map(({ label, value, unit, icon: Icon, color }) => (
-          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">{label}</div>
-            <div className="text-[36px] font-black leading-none" style={{ color }}>{value}</div>
-            <div className="text-[11px] text-gray-400 mt-1">{unit}</div>
+          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 md:p-5 text-center">
+            <div className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider md:tracking-widest text-gray-400 mb-1.5 md:mb-2 truncate">{label}</div>
+            <div className="text-[24px] md:text-[36px] font-black leading-none" style={{ color }}>{value}</div>
+            <div className="text-[10px] md:text-[11px] text-gray-400 mt-1">{unit}</div>
           </div>
         ))}
       </div>
