@@ -35,16 +35,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#FAFAF7] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center gap-2.5">
-            <svg width="32" height="32" viewBox="0 0 28 28">
-              <circle cx="14" cy="14" r="14" fill="#0A0A0A" />
-              <circle cx="14" cy="14" r="5" fill="#FAFAF7" />
-              <circle cx="9" cy="9" r="1.3" fill="#FAFAF7" />
-              <circle cx="19" cy="9" r="1.3" fill="#FAFAF7" />
-              <circle cx="9" cy="19" r="1.3" fill="#FAFAF7" />
-              <circle cx="19" cy="19" r="1.3" fill="#FAFAF7" />
-            </svg>
-            <span className="text-xl font-bold tracking-tight text-[#0A0A0A]">TracerBuddy</span>
+          <Link href="/">
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-10 w-auto mx-auto" style={{ mixBlendMode: 'multiply' }} />
           </Link>
           <h1 className="text-2xl font-light text-[#0A0A0A] mt-6 tracking-tight">Welcome back</h1>
           <p className="text-sm text-[#666] mt-1.5">Sign in to your account</p>
