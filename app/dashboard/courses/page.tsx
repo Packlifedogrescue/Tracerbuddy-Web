@@ -32,6 +32,17 @@ interface GolfHole {
   GreenLongitude?: string | number
 }
 
+interface GolfTee {
+  teeID: string
+  teeName: string
+  teeColor: string
+  courseRatingMen?: number | string
+  slopeMen?: number | string
+  courseRatingWomen?: number | string
+  slopeWomen?: number | string
+  [key: string]: any // length1–length18
+}
+
 interface CourseDetail {
   CourseID?: string
   ClubName?: string
@@ -43,8 +54,11 @@ interface CourseDetail {
   Par?: number
   Holes?: GolfHole[]
   holes?: GolfHole[]
+  Tees?: GolfTee[]
   Latitude?: string | number
   Longitude?: string | number
+  website?: string
+  telephone?: string
 }
 
 interface VisitedCourse {
@@ -130,54 +144,113 @@ function CourseMap({ lat, lng, holes }: { lat: number; lng: number; holes: GolfH
 }
 
 // ── Scorecard ─────────────────────────────────────────────────────────────────
-function Scorecard({ holes }: { holes: GolfHole[] }) {
-  const sorted = [...holes].sort((a, b) => holeNum(a) - holeNum(b))
-  const front  = sorted.filter(h => holeNum(h) <= 9)
-  const back   = sorted.filter(h => holeNum(h) > 9)
+function Scorecard({ holes, tees = [] }: { holes: GolfHole[]; tees?: GolfTee[] }) {
+  const [teeIdx, setTeeIdx] = useState(0)
+  const activeTee = tees[teeIdx]
 
-  function TotalsRow({ label, hs }: { label: string; hs: GolfHole[] }) {
+  function getYards(holeNo: number, fallback: GolfHole): number | null {
+    if (activeTee) {
+      const v = activeTee[`length${holeNo}`]
+      if (v != null && Number(v) > 0) return Number(v)
+    }
+    return holeYards(fallback)
+  }
+
+  const sorted     = [...holes].sort((a, b) => holeNum(a) - holeNum(b))
+  const front      = sorted.filter(h => holeNum(h) <= 9)
+  const back       = sorted.filter(h => holeNum(h) > 9)
+  const frontYards = front.reduce((s, h) => s + (getYards(holeNum(h), h) ?? 0), 0)
+  const backYards  = back.reduce((s,  h) => s + (getYards(holeNum(h), h) ?? 0), 0)
+  const totalPar   = holes.reduce((s, h) => s + (h.Par ?? 0), 0)
+
+  const rating = activeTee?.courseRatingMen
+  const slope  = activeTee?.slopeMen
+
+  function HoleRow({ h }: { h: GolfHole }) {
+    const n   = holeNum(h)
+    const yds = getYards(n, h)
+    const par = h.Par ?? 0
     return (
-      <tr className="bg-[#F8F4EE]">
-        <td className="py-1.5 pl-3 text-[11px] font-black text-[#111] uppercase tracking-wide">{label}</td>
-        <td className="py-1.5 text-center text-[12px] font-bold">{hs.reduce((s, h) => s + (h.Par ?? 0), 0) || '—'}</td>
-        <td className="py-1.5 text-center text-[12px] font-bold text-gray-500">{hs.reduce((s, h) => s + (holeYards(h) ?? 0), 0) || '—'}</td>
+      <tr className="hover:bg-[#F8F4EE] transition-colors border-b border-[#F8F4EE] last:border-0">
+        <td className="py-1.5 pl-3">
+          <span className="text-[12px] font-bold text-[#111]">{n}</span>
+        </td>
+        <td className="py-1.5 text-center">
+          <span className={`text-[12px] font-bold ${par === 3 ? 'text-blue-500' : par === 5 ? 'text-[#22A06B]' : 'text-[#111]'}`}>
+            {h.Par ?? '—'}
+          </span>
+        </td>
+        <td className="py-1.5 text-center text-[12px] text-gray-600 font-medium">{yds ?? '—'}</td>
+        <td className="py-1.5 pr-3 text-center text-[11px] text-gray-400">{h.Handicap ?? '—'}</td>
+      </tr>
+    )
+  }
+
+  function TotalsRow({ label, par, yards }: { label: string; par: number; yards: number }) {
+    return (
+      <tr className="bg-[#F8F4EE] border-t border-[#E8E0D0]">
+        <td className="py-2 pl-3 text-[11px] font-black text-[#111] uppercase tracking-wide">{label}</td>
+        <td className="py-2 text-center text-[12px] font-black text-[#111]">{par || '—'}</td>
+        <td className="py-2 text-center text-[12px] font-black text-[#C9A84C]">{yards || '—'}</td>
         <td />
       </tr>
     )
   }
 
   return (
-    <table className="w-full border-collapse text-left">
-      <thead>
-        <tr className="border-b border-[#F0EAE0]">
-          <th className="py-2 pl-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hole</th>
-          <th className="py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Par</th>
-          <th className="py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Yds</th>
-          <th className="py-2 pr-3 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">HCP</th>
-        </tr>
-      </thead>
-      <tbody>
-        {front.map(h => (
-          <tr key={holeNum(h)} className="hover:bg-[#F8F4EE] transition-colors border-b border-[#F8F4EE] last:border-0">
-            <td className="py-1.5 pl-3 text-[12px] font-bold text-[#111]">{holeNum(h)}</td>
-            <td className="py-1.5 text-center text-[12px] text-[#111]">{h.Par ?? '—'}</td>
-            <td className="py-1.5 text-center text-[12px] text-gray-500">{holeYards(h) ?? '—'}</td>
-            <td className="py-1.5 pr-3 text-center text-[11px] text-gray-400">{h.Handicap ?? '—'}</td>
+    <div>
+      {/* Tee selector */}
+      {tees.length > 0 && (
+        <div className="px-3 pt-3 pb-2 border-b border-[#F0EAE0]">
+          <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2">Select Tee</div>
+          <div className="flex flex-wrap gap-1.5">
+            {tees.map((tee, i) => (
+              <button
+                key={tee.teeID ?? i}
+                onClick={() => setTeeIdx(i)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all border ${
+                  teeIdx === i
+                    ? 'bg-white border-gray-300 text-[#111] shadow-sm'
+                    : 'border-transparent text-gray-400 hover:text-[#111] hover:bg-[#F8F4EE]'
+                }`}
+              >
+                <div
+                  className="w-3 h-3 rounded-full border border-black/15 shrink-0"
+                  style={{ background: tee.teeColor || '#999' }}
+                />
+                {tee.teeName}
+              </button>
+            ))}
+          </div>
+          {/* Rating / slope for selected tee */}
+          {(rating || slope) && (
+            <div className="flex gap-4 mt-2 text-[11px] text-gray-400">
+              {rating ? <span>Rating <span className="font-bold text-[#111]">{rating}</span></span> : null}
+              {slope  ? <span>Slope <span className="font-bold text-[#111]">{slope}</span></span> : null}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Table */}
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="border-b border-[#F0EAE0]">
+            <th className="py-2 pl-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hole</th>
+            <th className="py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Par</th>
+            <th className="py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Yds</th>
+            <th className="py-2 pr-3 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">HCP</th>
           </tr>
-        ))}
-        {front.length > 0 && <TotalsRow label="Out" hs={front} />}
-        {back.map(h => (
-          <tr key={holeNum(h)} className="hover:bg-[#F8F4EE] transition-colors border-b border-[#F8F4EE] last:border-0">
-            <td className="py-1.5 pl-3 text-[12px] font-bold text-[#111]">{holeNum(h)}</td>
-            <td className="py-1.5 text-center text-[12px] text-[#111]">{h.Par ?? '—'}</td>
-            <td className="py-1.5 text-center text-[12px] text-gray-500">{holeYards(h) ?? '—'}</td>
-            <td className="py-1.5 pr-3 text-center text-[11px] text-gray-400">{h.Handicap ?? '—'}</td>
-          </tr>
-        ))}
-        {back.length > 0 && <TotalsRow label="In" hs={back} />}
-        {holes.length > 0 && <TotalsRow label="Total" hs={holes} />}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {front.map(h => <HoleRow key={holeNum(h)} h={h} />)}
+          {front.length > 0 && <TotalsRow label="Out" par={front.reduce((s,h) => s+(h.Par??0),0)} yards={frontYards} />}
+          {back.map(h => <HoleRow key={holeNum(h)} h={h} />)}
+          {back.length > 0 && <TotalsRow label="In" par={back.reduce((s,h) => s+(h.Par??0),0)} yards={backYards} />}
+          {holes.length > 0 && <TotalsRow label="Total" par={totalPar} yards={frontYards + backYards} />}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -471,6 +544,11 @@ export default function CoursesPage() {
                         {detail?.Rating && <span>Rating {detail.Rating}</span>}
                         {detail?.Slope  && <span>Slope {detail.Slope}</span>}
                         {holes.length > 0 && <span>{holes.length} holes</span>}
+                        {(detail?.Tees?.length ?? 0) > 0 && <span>{detail!.Tees!.length} tees</span>}
+                        {detail?.website && (
+                          <a href={detail.website} target="_blank" rel="noopener noreferrer"
+                            className="text-[#C9A84C] hover:underline">Website ↗</a>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -527,7 +605,7 @@ export default function CoursesPage() {
                 <div className="w-[280px] shrink-0 bg-white border-l border-[#F0EAE0] overflow-auto">
                   {activeTab === 'scorecard' ? (
                     holes.length > 0 ? (
-                      <Scorecard holes={holes} />
+                      <Scorecard holes={holes} tees={detail?.Tees ?? []} />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full py-10 px-5 text-center">
                         <Trophy className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
