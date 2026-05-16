@@ -139,65 +139,6 @@ export default function PrivacyPage() {
         </div>
       </footer>
 
-      <style jsx>{`
-        .prose-custom h2 {
-          font-size: 20px;
-          font-weight: 700;
-          color: #1A1A1A;
-          margin-bottom: 12px;
-          margin-top: 0;
-        }
-        .prose-custom h3 {
-          font-size: 15px;
-          font-weight: 700;
-          color: #333;
-          margin-bottom: 8px;
-          margin-top: 16px;
-        }
-        .prose-custom p {
-          font-size: 14.5px;
-          color: #444;
-          line-height: 1.75;
-          margin-bottom: 12px;
-        }
-        .prose-custom ul {
-          list-style: none;
-          padding: 0;
-          margin: 0 0 12px;
-          space-y: 8px;
-        }
-        .prose-custom ul li {
-          font-size: 14.5px;
-          color: #444;
-          line-height: 1.75;
-          padding-left: 20px;
-          position: relative;
-          margin-bottom: 8px;
-        }
-        .prose-custom ul li::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 10px;
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: #DF9905;
-        }
-        .prose-custom a {
-          color: #DF9905;
-          text-decoration: none;
-        }
-        .prose-custom a:hover {
-          text-decoration: underline;
-        }
-        .prose-custom section {
-          padding: 32px;
-          background: white;
-          border-radius: 20px;
-          border: 1px solid rgba(0,0,0,0.05);
-        }
-      `}</style>
     </div>
   )
 }
