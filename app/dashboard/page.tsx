@@ -669,22 +669,24 @@ export default function DashboardPage() {
                 <Watch className="w-3.5 h-3.5 text-[#C9A84C]" />
                 <span className="text-[13px] font-bold text-[#111]">Apple Watch</span>
               </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3E8] text-[#C9A84C]">Coming Soon</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F0FFF4] text-[#22A06B]">Live</span>
             </div>
-            <div className="space-y-2.5">
-              {[
-                { icon: '⌚', label: 'Live shot tracking', desc: 'Auto-detect and log shots from your wrist' },
-                { icon: '📍', label: 'GPS yardages',       desc: 'See front, middle, back on every hole' },
-                { icon: '🏌️', label: 'Score entry',        desc: 'Quick score input between shots' },
-              ].map(f => (
-                <div key={f.label} className="flex items-start gap-3 p-2.5 bg-[#F8F4EE] rounded-xl">
-                  <span className="text-[16px] mt-0.5 shrink-0">{f.icon}</span>
-                  <div>
-                    <div className="text-[12px] font-semibold text-[#111]">{f.label}</div>
-                    <div className="text-[11px] text-gray-400 mt-0.5">{f.desc}</div>
-                  </div>
-                </div>
-              ))}
+            <p className="text-[11.5px] text-gray-400 leading-relaxed mb-3">
+              Swing speed, shot detection, and GPS yardages — all tracked from your wrist without touching your phone.
+            </p>
+            <div className="flex gap-2">
+              <Link
+                href="/dashboard/swing"
+                className="flex-1 text-center text-[12px] font-semibold bg-[#F8F4EE] hover:bg-[#F0E8D8] text-[#111] py-2 rounded-xl transition-colors"
+              >
+                SwingTrace
+              </Link>
+              <Link
+                href="/dashboard/watch"
+                className="flex-1 text-center text-[12px] font-semibold bg-[#C9A84C] hover:bg-[#A07828] text-white py-2 rounded-xl transition-colors"
+              >
+                Watch Setup
+              </Link>
             </div>
           </Card>
 
