@@ -547,15 +547,15 @@ export default function HomePage() {
             <div className="text-[12px] font-bold text-[#1A1A1A] mb-4 tracking-wider">COMPANY</div>
             <div className="space-y-2.5 text-[13px] text-[#666]">
               <a href="#waitlist" className="block hover:text-black transition-colors">Early Access</a>
-              <span className="block hover:text-black cursor-pointer transition-colors">About</span>
-              <span className="block hover:text-black cursor-pointer transition-colors">Contact</span>
+              <Link href="/about" className="block hover:text-black transition-colors">About</Link>
+              <Link href="/contact" className="block hover:text-black transition-colors">Contact</Link>
             </div>
           </div>
           <div>
             <div className="text-[12px] font-bold text-[#1A1A1A] mb-4 tracking-wider">LEGAL</div>
             <div className="space-y-2.5 text-[13px] text-[#666]">
-              <span className="block hover:text-black cursor-pointer transition-colors">Privacy</span>
-              <span className="block hover:text-black cursor-pointer transition-colors">Terms</span>
+              <Link href="/privacy" className="block hover:text-black transition-colors">Privacy</Link>
+              <Link href="/terms" className="block hover:text-black transition-colors">Terms</Link>
             </div>
           </div>
         </div>
