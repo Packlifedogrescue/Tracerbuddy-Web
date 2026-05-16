@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import WeatherWidget from '@/components/WeatherWidget'
+import type { TeeData } from '@/components/CourseMapbox'
 
 const CourseMapbox = dynamic(() => import('@/components/CourseMapbox'), { ssr: false })
 
@@ -312,6 +313,15 @@ export default function CoursesPage() {
   const name    = detail?.CourseName ?? detail?.ClubName ?? selected?.CourseName ?? selected?.ClubName ?? ''
   const loc     = [detail?.City ?? selected?.City, detail?.StateCode ?? selected?.StateCode].filter(Boolean).join(', ')
 
+  const processedTees: TeeData[] = (detail?.Tees ?? []).map(t => ({
+    name:     t.teeName  ?? 'Tee',
+    color:    t.teeColor ?? undefined,
+    yardages: Array.from({ length: 18 }, (_, i) => {
+      const v = t[`length${i + 1}`]
+      return v != null && Number(v) > 0 ? Number(v) : null
+    }),
+  }))
+
   return (
     <div className="flex flex-col h-full">
 
@@ -552,6 +562,7 @@ export default function CoursesPage() {
                       lat={lat} lng={lng} holes={holes} courseName={name}
                       selectedHole={selectedHole}
                       onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
+                      tees={processedTees.length > 0 ? processedTees : undefined}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE] rounded-2xl">
