@@ -490,8 +490,11 @@ export default function CoursesPage() {
                         {holes.length > 0 && <span>{holes.length} holes</span>}
                         {(detail?.Tees?.length ?? 0) > 0 && <span>{detail!.Tees!.length} tees</span>}
                         {detail?.website && (
-                          <a href={detail.website} target="_blank" rel="noopener noreferrer"
-                            className="text-[#C9A84C] hover:underline">Website ↗</a>
+                          <a
+                            href={detail.website.startsWith('http') ? detail.website : `https://${detail.website}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="text-[#C9A84C] hover:underline"
+                          >Website ↗</a>
                         )}
                       </div>
                     </div>

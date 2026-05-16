@@ -46,7 +46,7 @@ export default function CourseMapbox({
       const lats = pts.map(p => p[1])
       mapRef.current.fitBounds(
         [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-        { padding: 64, duration: 1200, maxZoom: 17 },
+        { padding: { top: 48, bottom: 48, left: 48, right: 48 }, duration: 1200, maxZoom: 18 },
       )
     }
   }, [holes])
@@ -71,7 +71,7 @@ export default function CourseMapbox({
       ref={mapRef}
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
       initialViewState={{ latitude: lat, longitude: lng, zoom: 15 }}
-      mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+      mapStyle="mapbox://styles/mapbox/satellite-v9"
       style={{ width: '100%', height: '100%' }}
       attributionControl={false}
       onLoad={onLoad}
@@ -84,8 +84,8 @@ export default function CourseMapbox({
           id="fairway-lines"
           type="line"
           paint={{
-            'line-color': 'rgba(255,255,255,0.42)',
-            'line-width': 1.5,
+            'line-color': 'rgba(255,255,255,0.55)',
+            'line-width': 2,
           }}
         />
       </Source>
