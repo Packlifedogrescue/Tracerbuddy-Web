@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase, fetchClubProfiles } from '@/lib/supabase'
 import { Plus, Trash2 } from 'lucide-react'
+import { track } from '@/lib/analytics'
 
 const BRANDS = [
   'TaylorMade', 'Callaway', 'Titleist', 'Ping', 'Cleveland',
@@ -84,7 +85,10 @@ export default function ClubsPage() {
       .insert({ brand: brand.trim(), club_type: clubType, display_name: `${brand.trim()} ${clubType}` })
       .select()
       .single()
-    if (data) setBagClubs(prev => [...prev, data])
+    if (data) {
+      setBagClubs(prev => [...prev, data])
+      track('club_added', { brand: brand.trim(), club_type: clubType })
+    }
     setBrand('')
     setClubType('')
     setAdding(false)
@@ -93,8 +97,10 @@ export default function ClubsPage() {
 
   async function removeClub(id: string) {
     setRemoving(id)
+    const club = bagClubs.find(c => c.id === id)
     await supabase.from('user_bag').delete().eq('id', id)
     setBagClubs(prev => prev.filter(c => c.id !== id))
+    track('club_removed', { club_type: club?.club_type })
     setRemoving(null)
   }
 

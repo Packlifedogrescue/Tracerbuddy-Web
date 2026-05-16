@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, fetchUserProfile } from '@/lib/supabase'
 import { Users, Send, Clock, Check } from 'lucide-react'
+import { track } from '@/lib/analytics'
 
 export default function BuddiesPage() {
   const [connections, setConnections] = useState<any[]>([])
@@ -53,6 +54,7 @@ export default function BuddiesPage() {
       setMsg({ text: 'Could not send invite. Already connected?', ok: false })
     } else {
       setMsg({ text: `Invite sent to ${user.display_name || email}!`, ok: true })
+      track('buddy_invited')
       setEmail('')
     }
     setSending(false)

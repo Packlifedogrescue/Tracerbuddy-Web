@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, fetchUserProfile } from '@/lib/supabase'
 import { Target, Brain, TrendingDown, Check } from 'lucide-react'
+import { track } from '@/lib/analytics'
 
 export default function GoalsPage() {
   const [goal,    setGoal]    = useState<any>(null)
@@ -27,6 +28,7 @@ export default function GoalsPage() {
     e.preventDefault()
     setSaving(true)
     await supabase.from('goal_settings').upsert({ target_handicap: parseFloat(target) })
+    track('goal_updated', { target_handicap: parseFloat(target) })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)

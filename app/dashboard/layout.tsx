@@ -1,13 +1,22 @@
 'use client'
 import type { ReactNode } from 'react'
 import { useRef, useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import UserInfo from '@/components/UserInfo'
 import { Search, Bell } from 'lucide-react'
+import { track } from '@/lib/analytics'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [bellOpen, setBellOpen] = useState(false)
   const bellRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
+
+  // Auto page-view tracking on every navigation
+  useEffect(() => {
+    const page = pathname.replace('/dashboard', '') || 'home'
+    track('page_view', { page })
+  }, [pathname])
 
   useEffect(() => {
     function handle(e: MouseEvent) {

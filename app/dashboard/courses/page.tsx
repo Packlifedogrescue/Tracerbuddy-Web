@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { format } from 'date-fns'
+import { track } from '@/lib/analytics'
 import {
   Search, MapPin, Flag, Loader2, AlertCircle,
   ChevronRight, Clock, Trophy, X, CloudSun,
@@ -256,6 +257,7 @@ export default function CoursesPage() {
       const data = await res.json()
       const list: GolfCourse[] = data.courses ?? []
       setResults(list)
+      track('course_searched', { query: q, state: st, results: list.length })
       if (list.length === 1) pickCourse(list[0])
     } catch { setError('Search failed — please try again.') }
     finally  { setSearching(false) }
@@ -263,6 +265,7 @@ export default function CoursesPage() {
 
   async function pickCourse(course: GolfCourse) {
     setSelected(course); setResults([]); setDetail(null); setLoadingDetail(true); setError('')
+    track('course_viewed', { course_id: course.CourseID, course_name: course.CourseName || course.ClubName, city: course.City, state: course.StateCode })
     try {
       const res  = await fetch(`/api/golf/course/${course.CourseID}`)
       const data: CourseDetail = await res.json()
