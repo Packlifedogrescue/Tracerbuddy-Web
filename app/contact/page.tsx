@@ -67,12 +67,12 @@ export default function ContactPage() {
           <div className="md:col-span-2 space-y-4">
             <div className="bg-white rounded-2xl border border-black/[0.05] p-6">
               <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">Email us directly</div>
-              <a href="mailto:hello@tracerbuddy.app" className="flex items-center gap-3 text-[#1A1A1A] hover:text-[#DF9905] transition-colors group">
+              <a href="mailto:contact@tracerbuddy.com" className="flex items-center gap-3 text-[#1A1A1A] hover:text-[#DF9905] transition-colors group">
                 <div className="w-9 h-9 rounded-xl bg-[#F8F4EE] flex items-center justify-center group-hover:bg-[#DF9905]/10 transition-colors">
                   <Mail className="w-4 h-4 text-[#DF9905]" />
                 </div>
                 <div>
-                  <div className="text-[13.5px] font-bold">hello@tracerbuddy.app</div>
+                  <div className="text-[13.5px] font-bold">contact@tracerbuddy.com</div>
                   <div className="text-[11.5px] text-gray-400 mt-0.5">General & support</div>
                 </div>
               </a>
