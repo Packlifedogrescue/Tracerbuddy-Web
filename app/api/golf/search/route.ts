@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const GOLF_BASE     = 'https://api.golfapi.io/api/v2.7'
+const GOLF_BASE     = 'https://golfapi.io/api/v2.3'
 const CACHE_TTL_DAYS = 7
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
+}
+
+// Normalise API response field names to match frontend interface (PascalCase)
+function normaliseCourse(c: any) {
+  return {
+    CourseID:  c.courseID  ?? c.CourseID  ?? '',
+    ClubName:  c.clubName  ?? c.ClubName  ?? '',
+    CourseName: c.courseName ?? c.CourseName ?? '',
+    City:       c.city      ?? c.City      ?? '',
+    StateCode:  c.state     ?? c.StateCode ?? '',
+    Country:    c.country   ?? c.Country   ?? '',
+    Latitude:   c.latitude  ?? c.Latitude  ?? null,
+    Longitude:  c.longitude ?? c.Longitude ?? null,
+    hasGPS:     c.hasGPS    ?? 0,
+    numHoles:   c.numHoles  ?? 18,
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -13,7 +29,6 @@ export async function GET(req: NextRequest) {
   const state = req.nextUrl.searchParams.get('state')?.trim() ?? ''
   const city  = req.nextUrl.searchParams.get('city')?.trim() ?? ''
 
-  // Need at least a query or a state to search
   if (!raw && !state) return NextResponse.json({ courses: [] })
 
   const cacheKey = normalise([raw, state, city].filter(Boolean).join('|'))
@@ -38,31 +53,33 @@ export async function GET(req: NextRequest) {
       }
     }
   } catch {
-    // Cache table may not exist yet — fall through to live API
+    // Cache table may not exist yet — fall through
   }
 
-  // ── 2. Build GolfAPI URL ─────────────────────────────────────────────────
+  // ── 2. Call GolfAPI.io ───────────────────────────────────────────────────
   try {
-    const params = new URLSearchParams({ apikey: GOLF_KEY })
-    if (raw)   params.set('search', raw)
+    const params = new URLSearchParams()
+    if (raw)   params.set('name', raw)       // docs: 'name' not 'search'
     if (state) params.set('state', state)
     if (city)  params.set('city', city)
+    params.set('country', 'usa')             // default to USA
 
-    const res     = await fetch(`${GOLF_BASE}/courses?${params.toString()}`)
-    const data    = await res.json()
-    let courses   = Array.isArray(data) ? data : (data.courses ?? [])
+    const res  = await fetch(`${GOLF_BASE}/courses?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${GOLF_KEY}` },  // docs: Bearer token
+    })
+    const data = await res.json()
+    let raw_courses = Array.isArray(data) ? data : (data.courses ?? [])
 
-    // Client-side filter by state if API doesn't filter natively
-    if (state && courses.length > 0) {
-      const stateUp = state.toUpperCase()
-      const filtered = courses.filter((c: any) =>
-        c.StateCode?.toUpperCase() === stateUp ||
-        c.State?.toUpperCase()     === stateUp ||
-        c.state?.toUpperCase()     === stateUp
+    // Client-side state filter as fallback if API doesn't honour param
+    if (state && raw_courses.length > 0) {
+      const stateUp  = state.toUpperCase()
+      const filtered = raw_courses.filter((c: any) =>
+        (c.state ?? c.StateCode ?? '').toUpperCase() === stateUp
       )
-      // Only apply filter if it returns results (some APIs ignore the param)
-      if (filtered.length > 0) courses = filtered
+      if (filtered.length > 0) raw_courses = filtered
     }
+
+    const courses = raw_courses.map(normaliseCourse)
 
     // ── 3. Write to cache (best-effort) ──────────────────────────────────
     try {
@@ -71,10 +88,10 @@ export async function GET(req: NextRequest) {
         results:      courses,
         cached_at:    new Date().toISOString(),
       })
-    } catch { /* ignore cache write failure */ }
+    } catch { /* ignore */ }
 
     return NextResponse.json({ courses })
-  } catch {
-    return NextResponse.json({ courses: [] }, { status: 502 })
+  } catch (e) {
+    return NextResponse.json({ courses: [], error: String(e) }, { status: 502 })
   }
 }
