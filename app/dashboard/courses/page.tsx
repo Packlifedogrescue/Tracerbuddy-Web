@@ -322,6 +322,25 @@ export default function CoursesPage() {
     }),
   }))
 
+  const selectedHoleData = selectedHole ? holes.find(h => holeNum(h) === selectedHole) : null
+
+  const holeYardageRows = (() => {
+    if (!selectedHole || processedTees.length === 0) return []
+    const relevant = processedTees
+      .map(t => ({ name: t.name, color: t.color, yds: t.yardages[selectedHole - 1] }))
+      .filter(t => t.yds != null && t.yds > 0)
+      .sort((a, b) => (b.yds ?? 0) - (a.yds ?? 0))
+    if (relevant.length === 0) return []
+    if (relevant.length === 1) return [{ label: 'Yardage', ...relevant[0] }]
+    if (relevant.length === 2) return [{ label: 'Back', ...relevant[0] }, { label: 'Front', ...relevant[1] }]
+    if (relevant.length === 3) return relevant.map((r, i) => ({ label: ['Back', 'Center', 'Front'][i], ...r }))
+    return [
+      { label: 'Back',   ...relevant[0] },
+      { label: 'Center', ...relevant[Math.floor(relevant.length / 2)] },
+      { label: 'Front',  ...relevant[relevant.length - 1] },
+    ]
+  })()
+
   return (
     <div className="flex flex-col h-full">
 
@@ -576,6 +595,36 @@ export default function CoursesPage() {
 
                 {/* Right panel: scorecard or weather */}
                 <div className="w-[280px] shrink-0 bg-white border-l border-[#F0EAE0] overflow-auto">
+
+                  {/* Hole yardage summary — shown when a hole is selected */}
+                  {selectedHoleData && holeYardageRows.length > 0 && (
+                    <div className="bg-[#FEF9EE] border-b border-[#EDD98A] px-3 py-3">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-[#C9A84C] rounded-md flex items-center justify-center text-white text-[10px] font-black leading-none">
+                            {selectedHole}
+                          </div>
+                          <span className="text-[12px] font-bold text-[#111]">Hole {selectedHole}</span>
+                        </div>
+                        <div className="text-[11px] text-gray-500">
+                          Par <span className="font-bold text-[#111]">{selectedHoleData.Par ?? '—'}</span>
+                          {selectedHoleData.Handicap != null && (
+                            <span className="ml-2">HCP <span className="font-bold text-[#111]">{selectedHoleData.Handicap}</span></span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {holeYardageRows.map(row => (
+                          <div key={row.label} className="flex-1 bg-white rounded-xl border border-[#EDE8DC] px-2 py-2 text-center">
+                            <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">{row.label}</div>
+                            <div className="text-[17px] font-black text-[#C9A84C] leading-none">{row.yds}</div>
+                            <div className="text-[9px] text-gray-400 mt-0.5">yds</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {activeTab === 'scorecard' ? (
                     holes.length > 0 ? (
                       <Scorecard

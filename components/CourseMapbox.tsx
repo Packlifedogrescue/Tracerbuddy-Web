@@ -220,24 +220,6 @@ export default function CourseMapbox({
 
   const activeHole = selectedHole != null ? holes.find(h => holeNum(h) === selectedHole) : null
 
-  // ── Yardage panel data ───────────────────────────────────────────────────────
-  const yardageRows = (() => {
-    if (!tees || !selectedHole) return []
-    const relevant = tees
-      .map(t => ({ name: t.name, color: t.color, yds: t.yardages[selectedHole - 1] }))
-      .filter(t => t.yds != null && t.yds > 0)
-      .sort((a, b) => (b.yds ?? 0) - (a.yds ?? 0))
-    if (relevant.length === 0) return []
-    if (relevant.length <= 3) {
-      const labels = relevant.length === 1 ? ['Yardage'] : relevant.length === 2 ? ['Back', 'Front'] : ['Back', 'Center', 'Front']
-      return relevant.map((t, i) => ({ label: labels[i], ...t }))
-    }
-    return [
-      { label: 'Back',   ...relevant[0] },
-      { label: 'Center', ...relevant[Math.floor(relevant.length / 2)] },
-      { label: 'Front',  ...relevant[relevant.length - 1] },
-    ]
-  })()
 
   const SF = { fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }
 
@@ -383,7 +365,7 @@ export default function CourseMapbox({
               <div style={{ ...SF, color: activeHole.Par === 3 ? '#93C5FD' : activeHole.Par === 5 ? '#6EE7B7' : '#fff', fontSize: 26, fontWeight: 900, lineHeight: 1 }}>{activeHole.Par ?? '—'}</div>
             </div>
 
-            {(activeHole.Yardage ?? activeHole.Yards) && yardageRows.length === 0 && (
+            {(activeHole.Yardage ?? activeHole.Yards) && (
               <>
                 <div style={{ width: 1, height: 34, background: 'rgba(255,255,255,0.1)' }} />
                 <div style={{ textAlign: 'center' }}>
@@ -422,9 +404,9 @@ export default function CourseMapbox({
         </div>
       )}
 
-      {/* ── Tour button (top-left when hole active) ── */}
+      {/* ── Tour button (bottom-left, above chip strip) ── */}
       {sorted.length > 0 && (
-        <div className="absolute top-3 left-3">
+        <div className="absolute bottom-[68px] left-3">
           <button
             onClick={touring ? stopTour : startTour}
             style={{ ...SF, background: touring ? 'rgba(239,68,68,0.88)' : 'rgba(201,168,76,0.92)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: `1px solid ${touring ? 'rgba(239,68,68,0.5)' : 'rgba(255,215,0,0.4)'}`, borderRadius: 10, padding: '6px 12px', cursor: 'pointer', transition: 'all 0.2s ease', fontSize: 11, fontWeight: 800, color: touring ? '#fff' : '#1a0f00', letterSpacing: 0.5 }}
@@ -434,27 +416,9 @@ export default function CourseMapbox({
         </div>
       )}
 
-      {/* ── Left: Back/Center/Front yardages ── */}
-      {yardageRows.length > 0 && selectedHole && (
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none flex flex-col gap-1.5">
-          {yardageRows.map(row => (
-            <div key={row.label} style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '7px 12px', minWidth: 80 }}>
-              <div style={{ ...SF, color: 'rgba(255,255,255,0.35)', fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 }}>{row.label}</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                {row.color && (
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: row.color, border: '1px solid rgba(255,255,255,0.3)', flexShrink: 0, marginBottom: 2 }} />
-                )}
-                <span style={{ ...SF, color: '#C9A84C', fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{row.yds}</span>
-                <span style={{ ...SF, color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 600 }}>yds</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* ── Tour progress bar ── */}
       {touring && (
-        <div className="absolute top-[70px] left-1/2 -translate-x-1/2 pointer-events-none" style={{ width: 160 }}>
+        <div className="absolute bottom-[58px] left-1/2 -translate-x-1/2 pointer-events-none" style={{ width: 160 }}>
           <div style={{ height: 2, borderRadius: 1, background: 'rgba(255,255,255,0.15)', overflow: 'hidden' }}>
             <div style={{ height: '100%', background: '#C9A84C', width: `${((tourIdx % sorted.length) / Math.max(sorted.length - 1, 1)) * 100}%`, transition: 'width 0.4s ease' }} />
           </div>
