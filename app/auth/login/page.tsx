@@ -36,7 +36,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <Link href="/">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-10 w-auto mx-auto" style={{ mixBlendMode: 'multiply' }} />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-14 w-auto mx-auto" style={{ mixBlendMode: 'multiply' }} />
           </Link>
           <h1 className="text-2xl font-light text-[#0A0A0A] mt-6 tracking-tight">Welcome back</h1>
           <p className="text-sm text-[#666] mt-1.5">Sign in to your account</p>
