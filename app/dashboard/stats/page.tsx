@@ -20,7 +20,7 @@ export default function StatsPage() {
   const r = rounds
 
   const avg = (key: string) => {
-    const vals = r.filter(x => x[key] != null && x[key] !== 0).map(x => x[key])
+    const vals = r.filter(x => x[key] != null).map(x => x[key])
     return vals.length ? (vals.reduce((a, v) => a + v, 0) / vals.length).toFixed(1) : '—'
   }
 
@@ -69,18 +69,7 @@ export default function StatsPage() {
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
-        {kpis.slice(0, 5).map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">{s.label}</div>
-            <div className={`text-[26px] font-black ${s.gold ? 'text-[#C9A84C]' : 'text-[#111]'}`}>
-              {s.value}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
-        {kpis.slice(5).map(s => (
+        {kpis.map(s => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
             <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">{s.label}</div>
             <div className={`text-[26px] font-black ${s.gold ? 'text-[#C9A84C]' : 'text-[#111]'}`}>

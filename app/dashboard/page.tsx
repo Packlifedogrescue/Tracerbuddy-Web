@@ -391,7 +391,7 @@ export default function DashboardPage() {
                   {[
                     { label: 'GIR',   value: latestRound.gir_count != null ? `${latestRound.gir_count}/18` : '—' },
                     { label: 'Putts', value: latestRound.putts ?? '—' },
-                    { label: 'FIR',   value: latestRound.fairways_hit != null ? `${latestRound.fairways_hit}/14` : '—' },
+                    { label: 'FIR',   value: latestRound.fairways_hit != null ? `${latestRound.fairways_hit}${latestRound.fairways_total ? `/${latestRound.fairways_total}` : ''}` : '—' },
                   ].map(s => (
                     <div key={s.label} className="bg-[#F8F4EE] rounded-xl p-3 text-center">
                       <div className="text-[18px] font-black text-[#111]">{s.value}</div>

@@ -106,7 +106,7 @@ export default function RoundsPage() {
               <div className="flex-1 min-w-0">
                 <div className="text-[14px] font-bold text-[#111] truncate">{r.course_name || 'Unknown Course'}</div>
                 <div className="flex items-center gap-3 mt-1 text-[11.5px] text-gray-400">
-                  <span>{r.gir_count ?? 0} GIR</span>
+                  <span>{r.gir_count ?? 0}/18 GIR</span>
                   <span>·</span>
                   <span>{r.putts ?? 0} putts</span>
                   <span>·</span>
@@ -135,7 +135,7 @@ export default function RoundsPage() {
                         </div>
                       )}
                       {topar == null && diff != null && (
-                        <div className="text-[11px] text-gray-400 mt-0.5">+{diff.toFixed(1)} diff</div>
+                        <div className="text-[11px] text-gray-400 mt-0.5">{diff >= 0 ? '+' : ''}{diff.toFixed(1)} diff</div>
                       )}
                     </>
                   )

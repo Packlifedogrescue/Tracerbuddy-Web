@@ -48,6 +48,7 @@ export default function ClubsPage() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [saving,    setSaving]    = useState(false)
   const [removing,  setRemoving]  = useState<string | null>(null)
+  const [dupError,  setDupError]  = useState('')
   const brandRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -77,8 +78,11 @@ export default function ClubsPage() {
 
   async function addClub() {
     if (!brand.trim() || !clubType) return
-    // prevent duplicate club types in bag
-    if (bagClubs.some(c => c.club_type === clubType)) return
+    if (bagClubs.some(c => c.club_type === clubType)) {
+      setDupError(`${clubType} is already in your bag`)
+      return
+    }
+    setDupError('')
     setSaving(true)
     const { data } = await supabase
       .from('user_bag')
@@ -180,7 +184,7 @@ export default function ClubsPage() {
               <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">Club Type</label>
               <select
                 value={clubType}
-                onChange={e => setClubType(e.target.value)}
+                onChange={e => { setClubType(e.target.value); setDupError('') }}
                 className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-3 text-[14px] text-[#111] focus:outline-none focus:border-[#C9A84C] transition cursor-pointer"
               >
                 <option value="">Select type…</option>
@@ -200,6 +204,9 @@ export default function ClubsPage() {
               {saving ? 'Adding…' : 'Add to Bag'}
             </button>
           </div>
+          {dupError && (
+            <p className="mt-3 text-[12.5px] text-red-500 font-medium">{dupError}</p>
+          )}
         </div>
       )}
 
@@ -289,7 +296,7 @@ export default function ClubsPage() {
                   </div>
 
                   {/* Miss pattern */}
-                  <div className="w-24 text-right shrink-0 space-y-0.5 hidden sm:block">
+                  <div className="w-24 text-right shrink-0 space-y-0.5">
                     {profile ? (
                       <>
                         {profile.fade_pct > 25 && (

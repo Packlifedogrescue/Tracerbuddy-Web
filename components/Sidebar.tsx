@@ -1,12 +1,13 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, FileText, Map, Activity, Watch, Wrench,
   BarChart2, Settings2, Star, Gift, ChevronRight,
-  Brain, Target, Dumbbell, Trophy, Users, Flag, X,
+  Brain, Target, Dumbbell, Trophy, Users, Flag, X, Check,
 } from 'lucide-react'
+import { fetchUserProfile } from '@/lib/supabase'
 
 const nav = [
   { href: '/dashboard',              icon: Home,      label: 'Dashboard'   },
@@ -53,22 +54,31 @@ function NavLinks({ path, onNav }: { path: string; onNav?: () => void }) {
   )
 }
 
-function SidebarFooter() {
+function SidebarFooter({ isPro }: { isPro: boolean }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleRefer() {
+    navigator.clipboard.writeText('https://tracerbuddy.app').then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
   return (
     <>
-      {/* Pro Plan */}
+      {/* Plan status */}
       <div className="px-3 pt-3 pb-2 border-t border-gray-100">
         <div className="flex items-center gap-2.5 px-2 py-2">
-          <div className="w-8 h-8 rounded-full bg-[#C9A84C] flex items-center justify-center shrink-0 shadow-sm">
-            <Star className="w-[15px] h-[15px] text-white fill-white" />
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${isPro ? 'bg-[#C9A84C]' : 'bg-gray-200'}`}>
+            <Star className={`w-[15px] h-[15px] fill-white ${isPro ? 'text-white' : 'text-gray-400'}`} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-[#111]">Pro Plan</span>
-              <span className="text-[11px] font-semibold text-[#C9A84C]">Active</span>
+              <span className="text-[13px] font-bold text-[#111]">{isPro ? 'Pro Plan' : 'Free Plan'}</span>
+              {isPro && <span className="text-[11px] font-semibold text-[#C9A84C]">Active</span>}
             </div>
             <Link href="/dashboard/profile" className="text-[11px] text-gray-400 leading-tight hover:text-[#C9A84C] transition-colors">
-              Manage subscription
+              {isPro ? 'Manage subscription' : 'Upgrade to Pro'}
             </Link>
           </div>
         </div>
@@ -76,16 +86,21 @@ function SidebarFooter() {
 
       {/* Refer a friend */}
       <div className="px-3 pb-4 pt-1">
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+        <button
+          onClick={handleRefer}
+          className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
+        >
           <div className="w-7 h-7 rounded-full bg-[#FEF3E8] flex items-center justify-center shrink-0">
-            <Gift className="w-3.5 h-3.5 text-[#E87830]" />
+            {copied ? <Check className="w-3.5 h-3.5 text-[#22A06B]" /> : <Gift className="w-3.5 h-3.5 text-[#E87830]" />}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[12.5px] font-semibold text-[#111] leading-tight">Refer a friend</div>
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-[12.5px] font-semibold text-[#111] leading-tight">
+              {copied ? 'Link copied!' : 'Refer a friend'}
+            </div>
             <div className="text-[11px] text-gray-400 leading-tight">Get 1 month free</div>
           </div>
-          <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-        </div>
+          {!copied && <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
+        </button>
       </div>
     </>
   )
@@ -94,13 +109,20 @@ function SidebarFooter() {
 export default function Sidebar() {
   const path = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isPro, setIsPro] = useState(false)
+
+  useEffect(() => {
+    fetchUserProfile().then((p: any) => {
+      setIsPro(p?.subscription === 'pro')
+    })
+  }, [])
 
   return (
     <>
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-[210px] bg-white border-r border-gray-100 flex-col shrink-0 overflow-y-auto">
         <NavLinks path={path} />
-        <SidebarFooter />
+        <SidebarFooter isPro={isPro} />
       </aside>
 
       {/* ── Mobile top bar ── */}
@@ -140,7 +162,7 @@ export default function Sidebar() {
               </button>
             </div>
             <NavLinks path={path} onNav={() => setMobileOpen(false)} />
-            <SidebarFooter />
+            <SidebarFooter isPro={isPro} />
           </div>
         </div>
       )}
