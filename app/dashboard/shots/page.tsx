@@ -28,7 +28,7 @@ export default function ShotShapesPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Shot Shapes</h1>
+        <h1 className="text-3xl font-black text-[#111]">Shot Shapes</h1>
         <p className="text-gray-500 mt-1">Your ball flight tendencies per club — logged from every round</p>
       </div>
 
@@ -45,7 +45,7 @@ export default function ShotShapesPage() {
             <div key={shape} className="flex items-center gap-2 px-4 py-2 rounded-full border"
               style={{ borderColor: `${shapeColors[shape] || '#666'}40`, background: `${shapeColors[shape] || '#666'}15` }}>
               <div className="w-2 h-2 rounded-full" style={{ background: shapeColors[shape] || '#666' }} />
-              <span className="text-sm font-bold text-white">{shape}</span>
+              <span className="text-sm font-bold text-[#111]">{shape}</span>
               <span className="text-xs font-black" style={{ color: shapeColors[shape] || '#666' }}>
                 {Math.round((count / shapes.length) * 100)}%
               </span>
@@ -73,7 +73,7 @@ export default function ShotShapesPage() {
         return (
           <div key={club} className="card p-5 mb-3">
             <div className="flex items-center gap-4 mb-3">
-              <div className="text-xl font-black text-white w-16">{club}</div>
+              <div className="text-xl font-black text-[#111] w-16">{club}</div>
               <div className="flex-1">
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(shapeCounts).sort((a,b) => b[1]-a[1]).map(([shape, count]) => (

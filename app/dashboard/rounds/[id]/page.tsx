@@ -34,15 +34,15 @@ export default function RoundDetailPage() {
     <div className="p-8 max-w-7xl">
       {/* Header */}
       <div className="flex items-start gap-4 mb-8">
-        <Link href="/dashboard/rounds" className="text-gray-500 hover:text-white mt-1">← Back</Link>
+        <Link href="/dashboard/rounds" className="text-gray-500 hover:text-[#111] mt-1">← Back</Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-black text-white">{round.course_name}</h1>
+          <h1 className="text-3xl font-black text-[#111]">{round.course_name}</h1>
           <p className="text-gray-500 mt-1">
             {format(new Date(round.created_at), 'EEEE, MMMM d yyyy')} · {round.round_mode || 'Stroke Play'}
           </p>
         </div>
         <div className="text-right">
-          <div className="text-5xl font-black text-white">{round.total_score}</div>
+          <div className="text-5xl font-black text-[#111]">{round.total_score}</div>
           <div className={`text-lg font-black ${scoreDiff <= 0 ? 'text-[#00E578]' : 'text-[#FFD700]'}`}>
             {scoreDiff > 0 ? `+${scoreDiff}` : scoreDiff === 0 ? 'E' : scoreDiff}
           </div>
@@ -61,7 +61,7 @@ export default function RoundDetailPage() {
         ].map(s => (
           <div key={s.label} className="card p-4 text-center">
             <div className="stat-label mb-1">{s.label}</div>
-            <div className="text-xl font-black text-white">{s.value}</div>
+            <div className="text-xl font-black text-[#111]">{s.value}</div>
           </div>
         ))}
       </div>
@@ -81,9 +81,9 @@ export default function RoundDetailPage() {
 
         {/* Scorecard */}
         <div className="card">
-          <div className="stat-label p-4 border-b border-[#1F1F1F]">SCORECARD</div>
+          <div className="stat-label p-4 border-b border-[#F0EAE0]">SCORECARD</div>
           {/* Header row */}
-          <div className="grid grid-cols-5 gap-0 text-center border-b border-[#1F1F1F] px-4 py-2">
+          <div className="grid grid-cols-5 gap-0 text-center border-b border-[#F0EAE0] px-4 py-2">
             {['HOLE','PAR','SCORE','GIR','PUTTS'].map(h => (
               <div key={h} className="stat-label">{h}</div>
             ))}
@@ -92,32 +92,32 @@ export default function RoundDetailPage() {
             {holeStats.map((h: any) => {
               const diff = (h.score || 0) - (h.par || 4)
               return (
-                <div key={h.hole} className="grid grid-cols-5 gap-0 text-center px-4 py-2.5 border-b border-[#1F1F1F]/50 hover:bg-white/[0.02]">
-                  <div className="text-gray-400 font-bold">{h.hole}</div>
-                  <div className="text-gray-400">{h.par}</div>
+                <div key={h.hole} className="grid grid-cols-5 gap-0 text-center px-4 py-2.5 border-b border-[#F0EAE0]/50 hover:bg-white/[0.02]">
+                  <div className="text-gray-500 font-bold">{h.hole}</div>
+                  <div className="text-gray-500">{h.par}</div>
                   <div className={`font-black ${
                     diff < -1 ? 'text-[#FFD700]' :
                     diff === -1 ? 'text-[#00E578]' :
-                    diff === 0 ? 'text-white' :
+                    diff === 0 ? 'text-[#111]' :
                     diff === 1 ? 'text-orange-400' : 'text-red-400'
                   }`}>
                     {h.score || '—'}
                   </div>
                   <div>{h.gir ? '✓' : <span className="text-gray-600">—</span>}</div>
-                  <div className="text-gray-400">{h.putts || '—'}</div>
+                  <div className="text-gray-500">{h.putts || '—'}</div>
                 </div>
               )
             })}
           </div>
           {/* Totals */}
-          <div className="grid grid-cols-5 gap-0 text-center px-4 py-3 border-t border-[#1F1F1F] bg-[#161616]">
+          <div className="grid grid-cols-5 gap-0 text-center px-4 py-3 border-t border-[#F0EAE0] bg-[#161616]">
             <div className="stat-label">TOTAL</div>
-            <div className="font-black text-gray-400">{par}</div>
+            <div className="font-black text-gray-500">{par}</div>
             <div className={`font-black text-xl ${scoreDiff <= 0 ? 'text-[#00E578]' : 'text-[#FFD700]'}`}>
               {round.total_score}
             </div>
             <div className="font-bold text-[#00E578]">{round.gir_count}</div>
-            <div className="font-bold text-gray-400">{round.putts}</div>
+            <div className="font-bold text-gray-500">{round.putts}</div>
           </div>
         </div>
       </div>
@@ -127,9 +127,9 @@ export default function RoundDetailPage() {
         <div className="card p-6 mb-6">
           <div className="stat-label mb-4">CONDITIONS</div>
           <div className="flex gap-8">
-            <div><div className="stat-label">TEMP</div><div className="font-black text-white">{round.weather_temp_f}°F</div></div>
-            <div><div className="stat-label">WIND</div><div className="font-black text-white">{round.weather_wind_mph} mph</div></div>
-            <div><div className="stat-label">CONDITIONS</div><div className="font-black text-white">{round.weather_condition || '—'}</div></div>
+            <div><div className="stat-label">TEMP</div><div className="font-black text-[#111]">{round.weather_temp_f}°F</div></div>
+            <div><div className="stat-label">WIND</div><div className="font-black text-[#111]">{round.weather_wind_mph} mph</div></div>
+            <div><div className="stat-label">CONDITIONS</div><div className="font-black text-[#111]">{round.weather_condition || '—'}</div></div>
           </div>
         </div>
       )}

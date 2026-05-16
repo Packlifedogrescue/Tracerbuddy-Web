@@ -4,16 +4,52 @@
 
 html, body {
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
 }
+
+html { scroll-behavior: smooth; }
 
 ::selection { background: #1A1A1A; color: #F5EFE0; }
 
 @layer components {
   .card {
-    @apply bg-[#111111] border border-[#1F1F1F] rounded-xl;
+    @apply bg-white rounded-xl shadow-[0_2px_16px_rgba(0,0,0,0.055)];
   }
 
   .stat-label {
-    @apply text-[10px] font-black tracking-[0.15em] text-[#666] uppercase;
+    @apply text-[10px] font-semibold tracking-[0.13em] text-gray-400 uppercase;
   }
+
+  .premium-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-[#1A1A1A] text-[#F5EFE0] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-black hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
+  }
+
+  .premium-btn-gold {
+    @apply inline-flex items-center justify-center gap-2 bg-[#DF9905] text-white px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-[#A07509] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(184,134,11,0.35)] active:translate-y-0;
+  }
+
+  .premium-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 bg-white/60 backdrop-blur border border-black/10 text-[#1A1A1A] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-white hover:border-black/20 hover:-translate-y-0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #1A1A1A 0%, #1A1A1A 40%, #DF9905 50%, #1A1A1A 60%, #1A1A1A 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+.noise-bg {
+  background-image: radial-gradient(rgba(26,26,26,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
 }

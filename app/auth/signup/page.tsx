@@ -105,7 +105,7 @@ export default function SignupPage() {
 
           <button
             type="submit" disabled={loading || appleLoading}
-            className="w-full bg-[#B8860B] text-white font-bold py-3.5 rounded-xl text-[15px] hover:bg-[#A07509] transition disabled:opacity-50"
+            className="w-full bg-[#DF9905] text-white font-bold py-3.5 rounded-xl text-[15px] hover:bg-[#A07509] transition disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>

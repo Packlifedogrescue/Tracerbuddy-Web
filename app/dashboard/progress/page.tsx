@@ -47,7 +47,7 @@ export default function ProgressPage() {
   return (
     <div className="p-8 max-w-5xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">My Golf Journey</h1>
+        <h1 className="text-3xl font-black text-[#111]">My Golf Journey</h1>
         <p className="text-gray-500 mt-1">Every round. Every improvement. Your complete golf history.</p>
       </div>
 
@@ -73,7 +73,7 @@ export default function ProgressPage() {
         {handicap.length >= 2 ? (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={handicap}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1F1F1F" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#EDE8DC" />
               <XAxis dataKey="date" tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} reversed />
               {profile?.goal_settings?.target_handicap && (
@@ -99,7 +99,7 @@ export default function ProgressPage() {
         {scoreData.length >= 3 ? (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={scoreData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1F1F1F" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#EDE8DC" />
               <XAxis dataKey="date" tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} reversed domain={['auto','auto']} />
               <Tooltip contentStyle={{ background:'#111', border:'1px solid #1F1F1F', borderRadius:8 }}
