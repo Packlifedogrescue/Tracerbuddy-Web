@@ -9,6 +9,7 @@ interface GolfHole {
   Par?: number
   Yardage?: number
   Yards?: number
+  Handicap?: number
   TeeLatitude?: string | number
   TeeLongitude?: string | number
   GreenLatitude?: string | number
