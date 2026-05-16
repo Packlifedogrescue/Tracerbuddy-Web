@@ -106,7 +106,7 @@ export default function HomePage() {
         <Reveal>
           <div className="border-y border-black/[0.06] py-7">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              [
+              {[
                 { stat: '42,000+', label: 'Courses',          sub: 'in 100+ countries'      },
                 { stat: '18',      label: 'Metrics Per Round', sub: 'GIR, putts, SG & more' },
                 { stat: '50+',     label: 'Features',          sub: 'across 6 categories'   },

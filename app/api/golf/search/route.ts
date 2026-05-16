@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE = 'https://api.golfapi.io/api/v2.7'
-const GOLF_KEY  = process.env.GOLF_API_KEY!
 const CACHE_TTL_DAYS = 7
-
-const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -19,6 +13,11 @@ export async function GET(req: NextRequest) {
   if (!raw) return NextResponse.json({ courses: [] })
 
   const key = normalise(raw)
+  const GOLF_KEY = process.env.GOLF_API_KEY!
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
 
   // ── 1. Check Supabase cache ──────────────────────────────────────────────
   try {

@@ -2,19 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE = 'https://api.golfapi.io/api/v2.7'
-const GOLF_KEY  = process.env.GOLF_API_KEY!
-const CACHE_TTL_DAYS = 30   // Course layouts barely change
-
-const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
+const CACHE_TTL_DAYS = 30
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { courseId: string } },
 ) {
   const { courseId } = params
+  const GOLF_KEY = process.env.GOLF_API_KEY!
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
 
   // ── 1. Check Supabase cache ──────────────────────────────────────────────
   try {
