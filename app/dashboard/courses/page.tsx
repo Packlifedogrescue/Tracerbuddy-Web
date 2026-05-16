@@ -525,20 +525,7 @@ export default function CoursesPage() {
                 {/* Satellite map */}
                 <div className="flex-1 relative">
                   {lat && lng ? (
-                    <>
-                      <CourseMapbox lat={lat} lng={lng} holes={holes} />
-                      {holes.length > 0 && (
-                        <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-3 pointer-events-none">
-                          <div className="flex items-center gap-1.5 text-[10.5px] text-white font-medium">
-                            <div className="w-[13px] h-[13px] rounded-[4px] border border-[#C9A84C] bg-black/80 shrink-0" />
-                            Tee box
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10.5px] text-white font-medium">
-                            <div className="w-3 h-3 rounded-full bg-[#22C55E] border border-white shrink-0" /> Green
-                          </div>
-                        </div>
-                      )}
-                    </>
+                    <CourseMapbox lat={lat} lng={lng} holes={holes} courseName={name} />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE]">
                       <div className="text-center">
