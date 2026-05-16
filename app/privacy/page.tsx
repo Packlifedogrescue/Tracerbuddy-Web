@@ -40,8 +40,8 @@ export default function PrivacyPage() {
 
           <section>
             <h2>1. Who We Are</h2>
-            <p>TracerBuddy ("we", "our", or "us") is a golf performance platform. We operate the website at tracerbuddy.app and the TracerBuddy iOS and Apple Watch applications (collectively, the "Service").</p>
-            <p>If you have questions about this policy, contact us at <a href="mailto:privacy@tracerbuddy.app">privacy@tracerbuddy.app</a>.</p>
+            <p>TracerBuddy ("we", "our", or "us") is a golf performance platform. We operate the website at tracerbuddy.com and the TracerBuddy iOS and Apple Watch applications (collectively, the "Service").</p>
+            <p>If you have questions about this policy, contact us at <a href="mailto:privacy@tracerbuddy.com">privacy@tracerbuddy.com</a>.</p>
           </section>
 
           <section>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
               <li>Data portability (export of your round history in a machine-readable format).</li>
               <li>Objection to or restriction of certain processing.</li>
             </ul>
-            <p>To exercise these rights, email <a href="mailto:privacy@tracerbuddy.app">privacy@tracerbuddy.app</a>. We will respond within 30 days.</p>
+            <p>To exercise these rights, email <a href="mailto:privacy@tracerbuddy.com">privacy@tracerbuddy.com</a>. We will respond within 30 days.</p>
           </section>
 
           <section>
@@ -120,7 +120,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2>10. Contact</h2>
-            <p>Questions or concerns? Reach us at <a href="mailto:privacy@tracerbuddy.app">privacy@tracerbuddy.app</a>.</p>
+            <p>Questions or concerns? Reach us at <a href="mailto:privacy@tracerbuddy.com">privacy@tracerbuddy.com</a>.</p>
           </section>
 
         </div>

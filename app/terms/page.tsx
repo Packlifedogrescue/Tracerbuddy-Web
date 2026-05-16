@@ -40,7 +40,7 @@ export default function TermsPage() {
 
           <section>
             <h2>1. Acceptance of Terms</h2>
-            <p>By creating an account or using the TracerBuddy Service — including the website at tracerbuddy.app, the iOS app, and the Apple Watch app — you agree to these Terms of Service ("Terms"). If you do not agree, do not use the Service.</p>
+            <p>By creating an account or using the TracerBuddy Service — including the website at tracerbuddy.com, the iOS app, and the Apple Watch app — you agree to these Terms of Service ("Terms"). If you do not agree, do not use the Service.</p>
             <p>We may update these Terms from time to time. Continued use of the Service after updates take effect constitutes acceptance of the revised Terms.</p>
           </section>
 
@@ -127,7 +127,7 @@ export default function TermsPage() {
 
           <section>
             <h2>13. Contact</h2>
-            <p>Questions about these Terms? Email us at <a href="mailto:legal@tracerbuddy.app">legal@tracerbuddy.app</a> or visit our <Link href="/contact">Contact page</Link>.</p>
+            <p>Questions about these Terms? Email us at <a href="mailto:legal@tracerbuddy.com">legal@tracerbuddy.com</a> or visit our <Link href="/contact">Contact page</Link>.</p>
           </section>
 
         </div>
