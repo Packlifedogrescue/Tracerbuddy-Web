@@ -31,9 +31,6 @@ export default function Sidebar() {
     <>
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-[210px] bg-white border-r border-gray-100 flex-col shrink-0 overflow-y-auto">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-8 w-auto" />
-        </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {nav.map(item => {
             const active = item.href === '/dashboard'

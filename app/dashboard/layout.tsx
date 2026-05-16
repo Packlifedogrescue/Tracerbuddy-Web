@@ -11,14 +11,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <header className="h-14 bg-white border-b border-[#EDE8DC] flex items-center pl-5 pr-6 gap-4 shrink-0 z-20 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
 
         {/* Logo — matches sidebar width */}
-        <div className="flex items-center gap-2.5 w-[210px] shrink-0">
-          {/* Target/tracer icon — no dark box */}
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#C9A84C" strokeWidth="1.5"/>
-            <circle cx="12" cy="12" r="5.5" stroke="#C9A84C" strokeWidth="1.5"/>
-            <circle cx="12" cy="12" r="2.5" fill="#C9A84C"/>
-          </svg>
-          <span className="font-black text-[15px] tracking-tight text-[#111]">TracerBuddy</span>
+        <div className="flex items-center w-[210px] shrink-0">
+          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-8 w-auto" style={{ mixBlendMode: 'multiply' }} />
         </div>
 
         {/* Search */}
