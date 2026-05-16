@@ -3,6 +3,40 @@ import { useRef, useCallback, useEffect, useState } from 'react'
 import Map, { Marker, Source, Layer, NavigationControl, type MapRef } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
+interface OverpassElement {
+  type: 'node' | 'way' | 'relation'
+  id: number
+  lat?: number
+  lon?: number
+  nodes?: number[]
+  tags?: Record<string, string>
+}
+
+function overpassToGeoJSON(elements: OverpassElement[]): GeoJSON.FeatureCollection {
+  const nodeMap: Record<number, [number, number]> = {}
+  elements.forEach(el => {
+    if (el.type === 'node' && el.lat != null && el.lon != null) {
+      nodeMap[el.id] = [el.lon, el.lat]
+    }
+  })
+  const features: GeoJSON.Feature[] = []
+  elements.forEach(el => {
+    if (el.type !== 'way' || !el.nodes || !el.tags) return
+    const coords = el.nodes.map(nid => nodeMap[nid]).filter(Boolean) as [number, number][]
+    if (coords.length < 3) return
+    const ring: [number, number][] =
+      coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1]
+        ? [...coords, coords[0]]
+        : coords
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [ring] },
+      properties: { golf: el.tags.golf ?? '' },
+    })
+  })
+  return { type: 'FeatureCollection', features }
+}
+
 interface GolfHole {
   HoleNo?: number
   Number?: number
@@ -57,6 +91,7 @@ export default function CourseMapbox({
   const [mapLoaded, setMapLoaded] = useState(false)
   const [touring,   setTouring]   = useState(false)
   const [tourIdx,   setTourIdx]   = useState(0)
+  const [osmData,   setOsmData]   = useState<GeoJSON.FeatureCollection | null>(null)
 
   holesRef.current = holes
 
@@ -155,6 +190,20 @@ export default function CourseMapbox({
   function startTour() { if (holesRef.current.length === 0) return; setTourIdx(0); setTouring(true) }
   function stopTour()  { setTouring(false) }
 
+  // ── Fetch OSM golf polygons ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!lat || !lng) return
+    let cancelled = false
+    const query = `[out:json][timeout:25];(way["golf"~"fairway|green|bunker|water_hazard|rough|tee"](around:2000,${lat},${lng}););(._;>;);out body;`
+    fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query })
+      .then(r => r.json())
+      .then((d: { elements: OverpassElement[] }) => {
+        if (!cancelled) setOsmData(overpassToGeoJSON(d.elements))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [lat, lng])
+
   // ── GeoJSON fairways ────────────────────────────────────────────────────────
   const fairways: GeoJSON.FeatureCollection = {
     type: 'FeatureCollection',
@@ -204,6 +253,18 @@ export default function CourseMapbox({
         onLoad={onLoad}
       >
         <NavigationControl position="bottom-right" showCompass visualizePitch />
+
+        {/* OSM polygon fills — rendered beneath everything else */}
+        {osmData && (
+          <Source id="osm-golf" type="geojson" data={osmData}>
+            <Layer id="osm-rough"    type="fill" filter={['==', ['get', 'golf'], 'rough']}        paint={{ 'fill-color': 'rgba(30,110,50,0.28)',   'fill-outline-color': 'rgba(30,110,50,0.45)'   }} />
+            <Layer id="osm-fairway"  type="fill" filter={['==', ['get', 'golf'], 'fairway']}      paint={{ 'fill-color': 'rgba(34,197,94,0.38)',   'fill-outline-color': 'rgba(34,197,94,0.6)'    }} />
+            <Layer id="osm-tee"      type="fill" filter={['==', ['get', 'golf'], 'tee']}          paint={{ 'fill-color': 'rgba(148,163,184,0.42)', 'fill-outline-color': 'rgba(148,163,184,0.65)' }} />
+            <Layer id="osm-bunker"   type="fill" filter={['==', ['get', 'golf'], 'bunker']}       paint={{ 'fill-color': 'rgba(251,211,141,0.65)', 'fill-outline-color': 'rgba(234,179,8,0.75)'   }} />
+            <Layer id="osm-water"    type="fill" filter={['==', ['get', 'golf'], 'water_hazard']} paint={{ 'fill-color': 'rgba(56,130,246,0.55)',  'fill-outline-color': 'rgba(56,130,246,0.8)'   }} />
+            <Layer id="osm-green"    type="fill" filter={['==', ['get', 'golf'], 'green']}        paint={{ 'fill-color': 'rgba(74,222,128,0.55)',  'fill-outline-color': 'rgba(74,222,128,0.85)'  }} />
+          </Source>
+        )}
 
         {/* Fairway glow */}
         <Source id="fairways-glow" type="geojson" data={fairways}>
