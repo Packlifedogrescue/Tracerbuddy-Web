@@ -11,24 +11,42 @@ const BRANDS = [
 ]
 
 const CLUB_TYPES = [
-  'Driver',
-  '3 Wood', '5 Wood', '7 Wood',
-  '2 Hybrid', '3 Hybrid', '4 Hybrid', '5 Hybrid', '6 Hybrid',
-  '2 Iron', '3 Iron', '4 Iron', '5 Iron', '6 Iron', '7 Iron', '8 Iron', '9 Iron',
-  'Pitching Wedge', '48° Wedge', '50° Wedge', '52° Wedge',
-  '54° Wedge', '56° Wedge', '58° Wedge', '60° Wedge',
+  // Woods
+  'Driver', 'Mini Driver',
+  '2 Wood', '3 Wood', '4 Wood', '5 Wood', '7 Wood', '9 Wood',
+  // Hybrids
+  '1 Hybrid', '2 Hybrid', '3 Hybrid', '4 Hybrid', '5 Hybrid', '6 Hybrid', '7 Hybrid',
+  // Driving / Utility Irons
+  'Driving Iron', '1 Iron', '2 Iron', '3 Iron', '4 Iron',
+  // Irons
+  '5 Iron', '6 Iron', '7 Iron', '8 Iron', '9 Iron',
+  // Wedges (by loft)
+  'Pitching Wedge',
+  '44° Wedge', '45° Wedge', '46° Wedge', '47° Wedge', '48° Wedge',
+  '49° Wedge', '50° Wedge', '51° Wedge', '52° Wedge', '53° Wedge',
+  '54° Wedge', '55° Wedge', '56° Wedge', '57° Wedge', '58° Wedge',
+  '59° Wedge', '60° Wedge', '61° Wedge', '62° Wedge', '64° Wedge',
+  // Named wedges (for users who label by name)
   'Gap Wedge', 'Sand Wedge', 'Lob Wedge',
-  'Putter',
+  // Other
+  'Chipper', 'Putter',
 ]
 
 const TYPE_TO_CODE: Record<string, string> = {
-  'Driver': 'Driver',
-  '3 Wood': '3W', '5 Wood': '5W', '7 Wood': '7W',
-  '2 Hybrid': '2H', '3 Hybrid': '3H', '4 Hybrid': '4H', '5 Hybrid': '5H', '6 Hybrid': '6H',
-  '2 Iron': '2I', '3 Iron': '3I', '4 Iron': '4I',
+  'Driver': 'Driver', 'Mini Driver': 'Mini',
+  '2 Wood': '2W', '3 Wood': '3W', '4 Wood': '4W', '5 Wood': '5W', '7 Wood': '7W', '9 Wood': '9W',
+  '1 Hybrid': '1H', '2 Hybrid': '2H', '3 Hybrid': '3H', '4 Hybrid': '4H',
+  '5 Hybrid': '5H', '6 Hybrid': '6H', '7 Hybrid': '7H',
+  'Driving Iron': 'DI',
+  '1 Iron': '1I', '2 Iron': '2I', '3 Iron': '3I', '4 Iron': '4I',
   '5 Iron': '5I', '6 Iron': '6I', '7 Iron': '7I', '8 Iron': '8I', '9 Iron': '9I',
-  'Pitching Wedge': 'PW', 'Gap Wedge': 'GW', 'Sand Wedge': 'SW', 'Lob Wedge': 'LW',
-  'Putter': 'Putter',
+  'Pitching Wedge': 'PW',
+  '44° Wedge': '44°', '45° Wedge': '45°', '46° Wedge': '46°', '47° Wedge': '47°', '48° Wedge': '48°',
+  '49° Wedge': '49°', '50° Wedge': '50°', '51° Wedge': '51°', '52° Wedge': '52°', '53° Wedge': '53°',
+  '54° Wedge': '54°', '55° Wedge': '55°', '56° Wedge': '56°', '57° Wedge': '57°', '58° Wedge': '58°',
+  '59° Wedge': '59°', '60° Wedge': '60°', '61° Wedge': '61°', '62° Wedge': '62°', '64° Wedge': '64°',
+  'Gap Wedge': 'GW', 'Sand Wedge': 'SW', 'Lob Wedge': 'LW',
+  'Chipper': 'Chip', 'Putter': 'Putter',
 }
 
 function confidenceInfo(shots: number, stdDev: number | null) {
