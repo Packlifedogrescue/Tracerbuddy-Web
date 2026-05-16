@@ -141,6 +141,37 @@ export default function HomePage() {
         </Reveal>
       </section>
 
+      {/* ════════════════════════ HOW IT WORKS ════════════════════════ */}
+      <section id="how" className="px-6 md:px-12 py-24 md:py-28 max-w-[1400px] mx-auto">
+        <Reveal>
+          <div className="text-center mb-16">
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">HOW IT WORKS</div>
+            <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1]">
+              Better data.<br />Better decisions. <span className="italic">Better golf.</span>
+            </h2>
+          </div>
+        </Reveal>
+
+        <div className="grid md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto relative">
+          <div className="hidden md:block absolute top-7 left-[18%] right-[18%] h-px border-t border-dashed border-black/15" />
+          {[
+            { num: '01', title: 'Track your round', desc: 'Open the app at the first tee. Shots, clubs, and distances log automatically as you play.' },
+            { num: '02', title: 'Review every miss', desc: 'After the round, see exactly where you lost strokes — and the patterns behind them.' },
+            { num: '03', title: 'Improve faster', desc: 'AI coach cards turn raw data into a personalized plan for your next session.' },
+          ].map((step, i) => (
+            <Reveal key={step.num} delay={i * 100}>
+              <div className="text-center relative">
+                <div className="w-14 h-14 rounded-full bg-[#1A1A1A] text-[#F5EFE0] flex items-center justify-center font-serif font-medium text-[18px] mx-auto mb-6 relative z-10 shadow-lg">
+                  {step.num}
+                </div>
+                <h3 className="font-bold text-[17px] mb-2.5 text-[#1A1A1A]">{step.title}</h3>
+                <p className="text-[13.5px] text-[#666] leading-[1.65] max-w-[260px] mx-auto">{step.desc}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
       {/* ════════════════════════ FEATURE GRID ════════════════════════ */}
       <section id="features" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
@@ -261,37 +292,6 @@ export default function HomePage() {
             </div>
           </div>
         </Reveal>
-      </section>
-
-      {/* ════════════════════════ HOW IT WORKS ════════════════════════ */}
-      <section id="how" className="px-6 md:px-12 py-24 md:py-28 max-w-[1400px] mx-auto">
-        <Reveal>
-          <div className="text-center mb-16">
-            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">HOW IT WORKS</div>
-            <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1]">
-              Better data.<br />Better decisions. <span className="italic">Better golf.</span>
-            </h2>
-          </div>
-        </Reveal>
-
-        <div className="grid md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto relative">
-          <div className="hidden md:block absolute top-7 left-[18%] right-[18%] h-px border-t border-dashed border-black/15" />
-          {[
-            { num: '01', title: 'Track your round', desc: 'Open the app at the first tee. Shots, clubs, and distances log automatically as you play.' },
-            { num: '02', title: 'Review every miss', desc: 'After the round, see exactly where you lost strokes — and the patterns behind them.' },
-            { num: '03', title: 'Improve faster', desc: 'AI coach cards turn raw data into a personalized plan for your next session.' },
-          ].map((step, i) => (
-            <Reveal key={step.num} delay={i * 100}>
-              <div className="text-center relative">
-                <div className="w-14 h-14 rounded-full bg-[#1A1A1A] text-[#F5EFE0] flex items-center justify-center font-serif font-medium text-[18px] mx-auto mb-6 relative z-10 shadow-lg">
-                  {step.num}
-                </div>
-                <h3 className="font-bold text-[17px] mb-2.5 text-[#1A1A1A]">{step.title}</h3>
-                <p className="text-[13.5px] text-[#666] leading-[1.65] max-w-[260px] mx-auto">{step.desc}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
       </section>
 
       {/* ════════════════════════ WAITLIST ════════════════════════ */}
@@ -514,7 +514,7 @@ export default function HomePage() {
                 <h3 className="font-serif text-white text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] max-w-[500px]">
                   Every round should<br />make you <span className="italic text-[#DF9905]">better.</span>
                 </h3>
-                <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Join the golfers already using TracerBuddy to drop strokes every week.</p>
+                <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Be among the first to play smarter. Start free — no credit card needed.</p>
               </div>
               <Link href="/auth/signup" className="premium-btn-gold shrink-0">
                 Start Free — 2 Rounds
