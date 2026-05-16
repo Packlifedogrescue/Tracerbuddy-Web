@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { fetchRounds } from '@/lib/supabase'
 import { format } from 'date-fns'
 
@@ -130,13 +130,19 @@ export default function StatsPage() {
         <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">Scoring Trend</div>
         {scoreData.length >= 3 ? (
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={scoreData}>
+            <AreaChart data={scoreData}>
+              <defs>
+                <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#C9A84C" stopOpacity={0.18} />
+                  <stop offset="95%" stopColor="#C9A84C" stopOpacity={0}    />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
               <XAxis dataKey="date" tick={CHART.tick} axisLine={false} tickLine={false} />
               <YAxis tick={CHART.tick} axisLine={false} tickLine={false} reversed domain={['auto', 'auto']} />
               <Tooltip contentStyle={CHART.tooltip} labelStyle={CHART.labelStyle} itemStyle={{ color: '#C9A84C' }} />
-              <Line type="monotone" dataKey="score" stroke="#C9A84C" strokeWidth={2.5} dot={{ fill: '#C9A84C', strokeWidth: 0, r: 4 }} />
-            </LineChart>
+              <Area type="monotone" dataKey="score" stroke="#C9A84C" strokeWidth={2.5} fill="url(#scoreGrad)" dot={{ fill: '#C9A84C', strokeWidth: 0, r: 4 }} />
+            </AreaChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-48 flex items-center justify-center text-gray-300 text-[13px]">

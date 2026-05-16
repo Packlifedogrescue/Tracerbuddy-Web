@@ -119,10 +119,27 @@ export default function RoundsPage() {
 
               {/* Score */}
               <div className="text-right shrink-0">
-                <div className="text-[32px] font-black text-[#111] leading-none">{r.total_score ?? '—'}</div>
-                {diff != null && (
-                  <div className="text-[11px] text-gray-400 mt-0.5">+{diff.toFixed(1)} diff</div>
-                )}
+                {(() => {
+                  const topar = r.course_par && r.total_score ? r.total_score - r.course_par : null
+                  const scoreColor = topar == null ? 'text-[#111]'
+                    : topar < 0 ? 'text-[#22A06B]'
+                    : topar === 0 ? 'text-[#111]'
+                    : topar <= 5 ? 'text-orange-500'
+                    : 'text-red-500'
+                  return (
+                    <>
+                      <div className={`text-[32px] font-black leading-none ${scoreColor}`}>{r.total_score ?? '—'}</div>
+                      {topar != null && (
+                        <div className={`text-[11px] font-bold mt-0.5 ${topar < 0 ? 'text-[#22A06B]' : topar === 0 ? 'text-gray-400' : 'text-red-400'}`}>
+                          {topar === 0 ? 'E' : topar > 0 ? `+${topar}` : topar}
+                        </div>
+                      )}
+                      {topar == null && diff != null && (
+                        <div className="text-[11px] text-gray-400 mt-0.5">+{diff.toFixed(1)} diff</div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
 
               <span className="text-gray-300 group-hover:text-gray-500 transition-colors shrink-0 text-lg">›</span>

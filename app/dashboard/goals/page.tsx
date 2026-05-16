@@ -85,18 +85,39 @@ export default function GoalsPage() {
         </div>
 
         {targetNum > 0 && current > 0 && targetNum < current && (
-          <>
-            <div className="h-3 bg-[#F8F4EE] rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full bg-gradient-to-r from-[#C9A84C] to-[#22A06B] rounded-full transition-all duration-700"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="text-[11px] text-gray-400">{progressPct}% of goal size set</div>
-              <div className="text-[13px] font-bold text-[#111]">{needed.toFixed(1)} strokes to drop</div>
-            </div>
-          </>
+          <div className="flex flex-col items-center gap-3 pt-2">
+            {(() => {
+              const r = 54, cx = 70, cy = 70
+              const circ = 2 * Math.PI * r
+              const filled = (progressPct / 100) * circ
+              return (
+                <div className="relative" style={{ width: 140, height: 140 }}>
+                  <svg width="140" height="140" viewBox="0 0 140 140">
+                    <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F0EAE0" strokeWidth="10" strokeLinecap="round" />
+                    <circle
+                      cx={cx} cy={cy} r={r} fill="none"
+                      stroke="url(#arcGrad)" strokeWidth="10" strokeLinecap="round"
+                      strokeDasharray={`${filled} ${circ}`}
+                      strokeDashoffset={circ * 0.25}
+                      transform={`rotate(-90 ${cx} ${cy})`}
+                      style={{ transition: 'stroke-dasharray 0.8s ease' }}
+                    />
+                    <defs>
+                      <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%"   stopColor="#C9A84C" />
+                        <stop offset="100%" stopColor="#22A06B" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-[28px] font-black text-[#111] leading-none">{progressPct}%</div>
+                    <div className="text-[10px] text-gray-400 mt-1 font-semibold">Progress</div>
+                  </div>
+                </div>
+              )
+            })()}
+            <div className="text-[13px] font-bold text-[#111]">{needed.toFixed(1)} strokes to drop</div>
+          </div>
         )}
         {targetNum > 0 && current > 0 && targetNum >= current && (
           <div className="text-center py-2">
