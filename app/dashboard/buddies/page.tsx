@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, fetchUserProfile } from '@/lib/supabase'
 import { Users, Send, Clock, Check } from 'lucide-react'
+import ProGate from '@/components/ProGate'
 import { track } from '@/lib/analytics'
 
 export default function BuddiesPage() {
@@ -78,6 +79,7 @@ export default function BuddiesPage() {
   )
 
   return (
+    <ProGate feature="Buddy Battles" description="Challenge your golf friends, compare handicaps and stats, and see who has the better game.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-[26px] font-black text-[#111] tracking-tight">Buddy Battles</h1>
@@ -168,5 +170,6 @@ export default function BuddiesPage() {
         })}
       </div>
     </div>
+    </ProGate>
   )
 }

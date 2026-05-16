@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase, fetchClubProfiles, fetchUserProfile, fetchRounds } from '@/lib/supabase'
 import { format } from 'date-fns'
+import ProGate from '@/components/ProGate'
 
 // ── Types ─────────────────────────────────────────────────────
 interface ClubData {
@@ -125,6 +126,7 @@ export default function FittingReportPage() {
   )
 
   if (clubs.length === 0) return (
+    <ProGate feature="Club Fitting Report" description="Real on-course data to optimize your bag — club distances, gap analysis, confidence scores, and printable PDF report.">
     <div className="p-8 max-w-2xl">
       <h1 className="text-3xl font-black text-[#111] mb-4">Club Fitting Report</h1>
       <div className="card p-16 text-center text-gray-600">
@@ -133,9 +135,11 @@ export default function FittingReportPage() {
         <p className="mt-2">Track shots in the TracerBuddy app to build your club profiles. You need at least 5 shots per club for a meaningful report.</p>
       </div>
     </div>
+    </ProGate>
   )
 
   return (
+    <ProGate feature="Club Fitting Report" description="Real on-course data to optimize your bag — club distances, gap analysis, confidence scores, and printable PDF report.">
     <>
       {/* Print button — hidden when printing */}
       <div className="no-print p-6 flex items-center justify-between border-b border-[#F0EAE0] bg-[#0D0D0D] sticky top-0 z-10">
@@ -487,5 +491,6 @@ export default function FittingReportPage() {
         }
       `}</style>
     </>
+    </ProGate>
   )
 }

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { Brain, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import ProGate from '@/components/ProGate'
 
 export default function CoachCardsPage() {
   const [cards,    setCards]    = useState<any[]>([])
@@ -24,6 +25,7 @@ export default function CoachCardsPage() {
   )
 
   return (
+    <ProGate feature="Coach Cards" description="AI-powered round analysis breaks down why you shot your score, what clubs cost you strokes, and exactly what to fix next round.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-[26px] font-black text-[#111] tracking-tight">AI Coach</h1>
@@ -134,5 +136,6 @@ export default function CoachCardsPage() {
         </div>
       ))}
     </div>
+    </ProGate>
   )
 }

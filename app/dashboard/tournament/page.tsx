@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { Trophy } from 'lucide-react'
+import ProGate from '@/components/ProGate'
 
 export default function TournamentPage() {
   const [results, setResults] = useState<any[]>([])
@@ -28,6 +29,7 @@ export default function TournamentPage() {
   )
 
   return (
+    <ProGate feature="Tournament Results" description="Track your match play, Stableford, and tournament history — wins, losses, and your best performances.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-[26px] font-black text-[#111] tracking-tight">Tournament Results</h1>
@@ -112,5 +114,6 @@ export default function TournamentPage() {
         </div>
       )}
     </div>
+    </ProGate>
   )
 }

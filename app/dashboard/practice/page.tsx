@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { Target } from 'lucide-react'
+import ProGate from '@/components/ProGate'
 
 export default function PracticePage() {
   const [sessions, setSessions] = useState<any[]>([])
@@ -39,6 +40,7 @@ export default function PracticePage() {
   )
 
   return (
+    <ProGate feature="Practice Sessions" description="Track your range sessions and see which clubs you're developing — shots hit, avg distances, and weekly activity.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-[26px] font-black text-[#111] tracking-tight">Practice</h1>
@@ -113,5 +115,6 @@ export default function PracticePage() {
         </>
       )}
     </div>
+    </ProGate>
   )
 }

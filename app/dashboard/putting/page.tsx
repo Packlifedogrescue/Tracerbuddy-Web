@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
+import ProGate from '@/components/ProGate'
 
 export default function PuttingPage() {
   const [data,    setData]    = useState<any[]>([])
@@ -62,6 +63,7 @@ export default function PuttingPage() {
   )
 
   return (
+    <ProGate feature="PuttBuddy" description="Deep putting analytics — miss patterns, 3-putt causes, and data-driven fixes to stop leaving shots on the green.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-[26px] font-black text-[#111] tracking-tight">PuttBuddy</h1>
@@ -185,5 +187,6 @@ export default function PuttingPage() {
         </div>
       </div>
     </div>
+    </ProGate>
   )
 }

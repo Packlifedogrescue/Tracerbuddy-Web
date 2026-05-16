@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts'
 import { fetchRounds, fetchHandicapHistory, fetchUserProfile } from '@/lib/supabase'
 import { format } from 'date-fns'
+import ProGate from '@/components/ProGate'
 
 export default function ProgressPage() {
   const [rounds, setRounds]     = useState<any[]>([])
@@ -45,6 +46,7 @@ export default function ProgressPage() {
   if (loading) return <div className="p-8 text-gray-500">Loading progress...</div>
 
   return (
+    <ProGate feature="Golf Journey" description="Your complete handicap history, score trends, best rounds, and milestone tracking — every improvement documented.">
     <div className="p-8 max-w-5xl">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-[#111]">My Golf Journey</h1>
@@ -113,5 +115,6 @@ export default function ProgressPage() {
         )}
       </div>
     </div>
+    </ProGate>
   )
 }

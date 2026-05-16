@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { Activity, Zap, TrendingUp } from 'lucide-react'
+import ProGate from '@/components/ProGate'
 
 export default function SwingPage() {
   const [swings,  setSwings]  = useState<any[]>([])
@@ -53,6 +54,7 @@ export default function SwingPage() {
   )
 
   return (
+    <ProGate feature="Swing Data" description="Apple Watch swing speed tracking with trend analysis and per-club breakdowns — see if you're getting faster over time.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-[26px] font-black text-[#111] tracking-tight">SwingTrace</h1>
@@ -122,5 +124,6 @@ export default function SwingPage() {
         </>
       )}
     </div>
+    </ProGate>
   )
 }

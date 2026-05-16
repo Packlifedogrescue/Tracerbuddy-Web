@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import ProGate from '@/components/ProGate'
 
 export default function ShotShapesPage() {
   const [shapes, setShapes] = useState<any[]>([])
@@ -26,6 +27,7 @@ export default function ShotShapesPage() {
   if (loading) return <div className="p-8 text-gray-500">Loading shot shapes...</div>
 
   return (
+    <ProGate feature="Shot Shapes" description="Your ball flight tendencies per club — identify your fade, draw, or slice patterns and fix them with data.">
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-[#111]">Shot Shapes</h1>
@@ -106,5 +108,6 @@ export default function ShotShapesPage() {
         )
       })}
     </div>
+    </ProGate>
   )
 }

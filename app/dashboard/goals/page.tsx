@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, fetchUserProfile } from '@/lib/supabase'
 import { Target, Brain, TrendingDown, Check } from 'lucide-react'
+import ProGate from '@/components/ProGate'
 import { track } from '@/lib/analytics'
 
 export default function GoalsPage() {
@@ -58,6 +59,7 @@ export default function GoalsPage() {
   )
 
   return (
+    <ProGate feature="Goals & AI Coaching Plan" description="Set your target handicap and get a personalized AI coaching plan to help you reach it.">
     <div className="p-6 md:p-8 max-w-2xl space-y-4 pb-10">
       <div>
         <h1 className="text-[26px] font-black text-[#111] tracking-tight">Goals</h1>
@@ -183,5 +185,6 @@ export default function GoalsPage() {
         </div>
       )}
     </div>
+    </ProGate>
   )
 }
