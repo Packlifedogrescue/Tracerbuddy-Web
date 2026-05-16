@@ -121,15 +121,15 @@ export default function AboutPage() {
           {[
             {
               title: 'Honest analytics',
-              desc: 'We show you what the data says, even when it's uncomfortable. No flattering your handicap. Just the truth about your game.',
+              desc: "We show you what the data says, even when it's uncomfortable. No flattering your handicap. Just the truth about your game.",
             },
             {
               title: 'Simple by design',
-              desc: 'Powerful features that disappear into the round. You shouldn't be thinking about the app on the 14th fairway — just playing golf.',
+              desc: "Powerful features that disappear into the round. You shouldn't be thinking about the app on the 14th fairway — just playing golf.",
             },
             {
               title: 'Your data, always',
-              desc: 'We don't sell your round data, share it with third parties, or use it to train models. What happens on the course stays in your account.',
+              desc: "We don't sell your round data, share it with third parties, or use it to train models. What happens on the course stays in your account.",
             },
           ].map((p, i) => (
             <div key={p.title} className="bg-white rounded-2xl border border-black/[0.05] p-7">
