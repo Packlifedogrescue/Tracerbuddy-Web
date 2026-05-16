@@ -40,8 +40,6 @@ export default function GoalsPage() {
   const needed    = Math.max(0, current - targetNum)
 
   // progress = how much of the goal has been covered (0 → 100%)
-  // We show how far below "current" you need to get
-  const totalDrop    = current > 0 && targetNum < current ? current - targetNum : 0
   const progressPct  = current > 0 && targetNum < current
     ? Math.min(100, Math.round(((current - targetNum) / current) * 100))
     : 0
