@@ -46,8 +46,12 @@ export default function CourseMapbox({
 }) {
   const mapRef      = useRef<MapRef>(null)
   const chipRefs    = useRef<Record<number, HTMLButtonElement | null>>({})
+  const holesRef    = useRef(holes)
   const [touring,   setTouring]   = useState(false)
   const [tourIdx,   setTourIdx]   = useState(0)
+
+  // Keep holesRef current without causing effect re-runs
+  holesRef.current = holes
 
   const sorted = [...holes].sort((a, b) => holeNum(a) - holeNum(b))
 
@@ -56,7 +60,6 @@ export default function CourseMapbox({
     if (!mapRef.current) return
     const map = mapRef.current.getMap() as any
 
-    // 3-D terrain
     try {
       map.addSource('mapbox-dem', {
         type: 'raster-dem',
@@ -67,9 +70,10 @@ export default function CourseMapbox({
       map.setTerrain({ source: 'mapbox-dem', exaggeration: 2.0 })
     } catch (_) {}
 
-    if (sorted.length === 0) return
+    const allHoles = holesRef.current
+    if (allHoles.length === 0) return
     const pts: [number, number][] = []
-    sorted.forEach(h => {
+    allHoles.forEach(h => {
       const tLat = parseNum(h.TeeLatitude);  const tLng = parseNum(h.TeeLongitude)
       const gLat = parseNum(h.GreenLatitude); const gLng = parseNum(h.GreenLongitude)
       if (tLat && tLng) pts.push([tLng, tLat])
@@ -83,13 +87,15 @@ export default function CourseMapbox({
         { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 17, pitch: 20 },
       )
     }
-  }, [sorted])
+  }, [])
 
-  // ── Fly to hole ──────────────────────────────────────────────────────────────
-  const flyToHole = useCallback((holeNumber: number) => {
-    if (!mapRef.current) return
-    const hole = holes.find(h => holeNum(h) === holeNumber)
+  // ── Fly when selectedHole changes — uses ref to avoid stale closures ─────────
+  useEffect(() => {
+    if (!selectedHole || !mapRef.current) return
+
+    const hole = holesRef.current.find(h => holeNum(h) === selectedHole)
     if (!hole) return
+
     const tLat = parseNum(hole.TeeLatitude)
     const tLng = parseNum(hole.TeeLongitude)
     const gLat = parseNum(hole.GreenLatitude)
@@ -98,47 +104,44 @@ export default function CourseMapbox({
 
     let bearing = 0, centerLat = tLat, centerLng = tLng
     if (gLat && gLng) {
-      bearing    = bearingTo(tLat, tLng, gLat, gLng)
-      centerLat  = (tLat + gLat) / 2
-      centerLng  = (tLng + gLng) / 2
+      bearing   = bearingTo(tLat, tLng, gLat, gLng)
+      centerLat = (tLat + gLat) / 2
+      centerLng = (tLng + gLng) / 2
     }
+
     mapRef.current.flyTo({
       center: [centerLng, centerLat],
-      zoom: 17,
+      zoom: 18.5,
       bearing,
-      pitch: 42,
-      duration: touring ? 2200 : 1300,
+      pitch: 45,
+      duration: 1400,
       essential: true,
     })
-  }, [holes, touring])
 
-  // ── Fly when selectedHole changes ────────────────────────────────────────────
-  useEffect(() => {
-    if (!selectedHole) return
-    flyToHole(selectedHole)
     chipRefs.current[selectedHole]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-  }, [selectedHole, flyToHole])
+  }, [selectedHole])
 
   // ── Auto-tour sequencer ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!touring || sorted.length === 0) return
-    const idx  = tourIdx % sorted.length
-    const hole = sorted[idx]
-    const n    = holeNum(hole)
-    onHoleClick?.(n)
+    if (!touring) return
+    const allSorted = [...holesRef.current].sort((a, b) => holeNum(a) - holeNum(b))
+    if (allSorted.length === 0) return
+
+    const idx = tourIdx % allSorted.length
+    onHoleClick?.(holeNum(allSorted[idx]))
 
     const timer = setTimeout(() => {
-      if (idx >= sorted.length - 1) {
+      if (idx >= allSorted.length - 1) {
         setTouring(false)
       } else {
         setTourIdx(i => i + 1)
       }
-    }, 3200)
+    }, 3500)
     return () => clearTimeout(timer)
   }, [touring, tourIdx])
 
   function startTour() {
-    if (sorted.length === 0) return
+    if (holesRef.current.length === 0) return
     setTourIdx(0)
     setTouring(true)
   }
