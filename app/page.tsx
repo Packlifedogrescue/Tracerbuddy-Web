@@ -1,8 +1,26 @@
 'use client'
 import Link from 'next/link'
 import Reveal from '@/components/Reveal'
+import { useState } from 'react'
 
 export default function HomePage() {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+
+  async function joinWaitlist(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email) return
+    setStatus('loading')
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) { setStatus('success'); setEmail('') }
+      else setStatus('error')
+    } catch { setStatus('error') }
+  }
   return (
     <div className="bg-[#F5EFE0] text-[#1A1A1A] min-h-screen font-sans">
 
@@ -16,7 +34,7 @@ export default function HomePage() {
             <a href="#features" className="text-[14px] text-[#333] hover:text-black transition-colors">Features</a>
             <a href="#how" className="text-[14px] text-[#333] hover:text-black transition-colors">How It Works</a>
             <a href="#watch" className="text-[14px] text-[#333] hover:text-black transition-colors">Apple Watch</a>
-            <a href="#testimonials" className="text-[14px] text-[#333] hover:text-black transition-colors">Reviews</a>
+            <a href="#waitlist" className="text-[14px] text-[#333] hover:text-black transition-colors">Early Access</a>
             <a href="#pricing" className="text-[14px] text-[#333] hover:text-black transition-colors">Pricing</a>
           </div>
           <div className="flex items-center gap-4">
@@ -276,44 +294,53 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════════ TESTIMONIALS ════════════════════════ */}
-      <section id="testimonials" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
+      {/* ════════════════════════ WAITLIST ════════════════════════ */}
+      <section id="waitlist" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
-          <div className="text-center mb-14">
-            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">LOVED BY GOLFERS</div>
-            <h2 className="font-serif text-3xl md:text-[44px] font-medium tracking-[-0.02em] leading-[1.1]">
-              From scratch players<br />to weekend warriors.
-            </h2>
+          <div className="bg-[#1A1A1A] rounded-3xl px-8 md:px-20 py-16 md:py-20 text-center relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(223,153,5,0.2) 0%, transparent 60%)' }} />
+            <div className="relative z-10 max-w-xl mx-auto">
+              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">COMING SOON TO iOS</div>
+              <h2 className="font-serif text-3xl md:text-[48px] font-medium leading-[1.1] tracking-[-0.02em] text-[#F5EFE0] mb-5">
+                Be first on the<br />course.
+              </h2>
+              <p className="text-[15px] text-[#888] leading-[1.65] mb-10">
+                TracerBuddy is launching soon. Drop your email and you'll be the first to know — plus get early access before we go public.
+              </p>
+
+              {status === 'success' ? (
+                <div className="flex items-center justify-center gap-3 bg-white/[0.06] border border-white/[0.1] rounded-2xl px-8 py-5">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10L8 14L16 6" stroke="#DF9905" strokeWidth="2.5" strokeLinecap="round"/></svg>
+                  <span className="text-[#F5EFE0] font-semibold text-[15px]">You're on the list — we'll be in touch.</span>
+                </div>
+              ) : (
+                <form onSubmit={joinWaitlist} className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="email"
+                    required
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="flex-1 bg-white/[0.07] border border-white/[0.12] text-[#F5EFE0] placeholder-[#666] rounded-xl px-5 py-3.5 text-[15px] outline-none focus:border-[#DF9905]/60 transition-colors"
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === 'loading'}
+                    className="bg-[#DF9905] hover:bg-[#c98a04] text-white font-semibold px-8 py-3.5 rounded-xl text-[15px] transition-colors shrink-0 disabled:opacity-60"
+                  >
+                    {status === 'loading' ? 'Joining…' : 'Join the Waitlist'}
+                  </button>
+                </form>
+              )}
+
+              {status === 'error' && (
+                <p className="text-red-400 text-[13px] mt-3">Something went wrong — try again.</p>
+              )}
+
+              <p className="text-[12px] text-[#555] mt-5">No spam. Just a launch notification and early access.</p>
+            </div>
           </div>
         </Reveal>
-
-        <div className="grid md:grid-cols-3 gap-5">
-          {[
-            { quote: "Dropped my handicap 4 strokes in one season. The club confidence numbers are a game changer — I finally know my real yardages.", name: 'Brett M.', role: 'Index 8.2', course: 'Carlisle Barracks GC' },
-            { quote: "The Apple Watch integration is unreal. I forget I'm even tracking until I see the round summary. Best $25/month I spend on golf.", name: 'Marcus T.', role: 'Index 14.6', course: 'Pebble Beach Resorts' },
-            { quote: "Coach cards tell me what to actually work on. No more guessing at the range. It's like having a swing coach in my pocket.", name: 'Sarah K.', role: 'Index 5.4', course: 'Pinehurst No. 2' },
-          ].map((t, i) => (
-            <Reveal key={t.name} delay={i * 80}>
-              <div className="h-full bg-white border border-black/[0.05] rounded-2xl p-7 hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-shadow">
-                <div className="flex gap-1 mb-4 text-[#DF9905]">
-                  {[...Array(5)].map((_, j) => (
-                    <svg key={j} width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 1l1.8 4 4.2.4-3.2 2.8 1 4.3L7 10.3l-3.8 2.2 1-4.3L1 5.4 5.2 5z"/></svg>
-                  ))}
-                </div>
-                <p className="text-[14.5px] text-[#1A1A1A] leading-[1.65] mb-6 font-serif italic">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3 pt-5 border-t border-black/[0.06]">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#DF9905]/20 to-[#1A1A1A]/10 flex items-center justify-center font-bold text-[#1A1A1A]">
-                    {t.name[0]}
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-bold text-[#1A1A1A]">{t.name}</div>
-                    <div className="text-[11.5px] text-[#888]">{t.role} · {t.course}</div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
       </section>
 
       {/* ════════════════════════ iPHONE + APPLE WATCH ════════════════════════ */}
@@ -519,7 +546,7 @@ export default function HomePage() {
           <div>
             <div className="text-[12px] font-bold text-[#1A1A1A] mb-4 tracking-wider">COMPANY</div>
             <div className="space-y-2.5 text-[13px] text-[#666]">
-              <a href="#testimonials" className="block hover:text-black transition-colors">Reviews</a>
+              <a href="#waitlist" className="block hover:text-black transition-colors">Early Access</a>
               <span className="block hover:text-black cursor-pointer transition-colors">About</span>
               <span className="block hover:text-black cursor-pointer transition-colors">Contact</span>
             </div>
