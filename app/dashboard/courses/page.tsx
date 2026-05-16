@@ -89,7 +89,12 @@ function courseColor(name: string) {
 }
 
 // ── Scorecard ─────────────────────────────────────────────────────────────────
-function Scorecard({ holes, tees = [] }: { holes: GolfHole[]; tees?: GolfTee[] }) {
+function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
+  holes: GolfHole[]
+  tees?: GolfTee[]
+  selectedHole?: number
+  onHoleClick?: (n: number) => void
+}) {
   const [teeIdx, setTeeIdx] = useState(0)
   const activeTee = tees[teeIdx]
 
@@ -112,20 +117,34 @@ function Scorecard({ holes, tees = [] }: { holes: GolfHole[]; tees?: GolfTee[] }
   const slope  = activeTee?.slopeMen
 
   function HoleRow({ h }: { h: GolfHole }) {
-    const n   = holeNum(h)
-    const yds = getYards(n, h)
-    const par = h.Par ?? 0
+    const n      = holeNum(h)
+    const yds    = getYards(n, h)
+    const par    = h.Par ?? 0
+    const active = selectedHole === n
     return (
-      <tr className="hover:bg-[#F8F4EE] transition-colors border-b border-[#F8F4EE] last:border-0">
+      <tr
+        onClick={() => onHoleClick?.(n)}
+        className={`transition-colors border-b border-[#F8F4EE] last:border-0 cursor-pointer ${
+          active ? 'bg-[#FEF3D8]' : 'hover:bg-[#F8F4EE]'
+        }`}
+      >
         <td className="py-1.5 pl-3">
-          <span className="text-[12px] font-bold text-[#111]">{n}</span>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black transition-all ${
+              active
+                ? 'bg-[#C9A84C] text-white shadow-sm'
+                : 'bg-[#F8F4EE] text-[#666]'
+            }`}>{n}</div>
+          </div>
         </td>
         <td className="py-1.5 text-center">
-          <span className={`text-[12px] font-bold ${par === 3 ? 'text-blue-500' : par === 5 ? 'text-[#22A06B]' : 'text-[#111]'}`}>
+          <span className={`text-[12px] font-bold ${
+            active ? 'text-[#C9A84C]' : par === 3 ? 'text-blue-500' : par === 5 ? 'text-[#22A06B]' : 'text-[#111]'
+          }`}>
             {h.Par ?? '—'}
           </span>
         </td>
-        <td className="py-1.5 text-center text-[12px] text-gray-600 font-medium">{yds ?? '—'}</td>
+        <td className="py-1.5 text-center text-[12px] font-medium text-gray-600">{yds ?? '—'}</td>
         <td className="py-1.5 pr-3 text-center text-[11px] text-gray-400">{h.Handicap ?? '—'}</td>
       </tr>
     )
@@ -225,6 +244,7 @@ export default function CoursesPage() {
   const [error,          setError]          = useState('')
   const [visitedCourses, setVisitedCourses] = useState<VisitedCourse[]>([])
   const [activeTab,      setActiveTab]      = useState<'scorecard' | 'weather'>('scorecard')
+  const [selectedHole,   setSelectedHole]   = useState<number | undefined>(undefined)
 
   // Load courses from user's rounds
   useEffect(() => {
@@ -264,7 +284,7 @@ export default function CoursesPage() {
   }
 
   async function pickCourse(course: GolfCourse) {
-    setSelected(course); setResults([]); setDetail(null); setLoadingDetail(true); setError('')
+    setSelected(course); setResults([]); setDetail(null); setLoadingDetail(true); setError(''); setSelectedHole(undefined)
     track('course_viewed', { course_id: course.CourseID, course_name: course.CourseName || course.ClubName, city: course.City, state: course.StateCode })
     try {
       const res  = await fetch(`/api/golf/course/${course.CourseID}`)
@@ -526,11 +546,15 @@ export default function CoursesPage() {
               <div className="flex-1 flex overflow-hidden">
 
                 {/* Satellite map */}
-                <div className="flex-1 relative">
+                <div className="flex-1 relative m-3 rounded-2xl overflow-hidden shadow-2xl">
                   {lat && lng ? (
-                    <CourseMapbox lat={lat} lng={lng} holes={holes} courseName={name} />
+                    <CourseMapbox
+                      lat={lat} lng={lng} holes={holes} courseName={name}
+                      selectedHole={selectedHole}
+                      onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE]">
+                    <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE] rounded-2xl">
                       <div className="text-center">
                         <MapPin className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
                         <p className="text-[13px] text-gray-400">No GPS coordinates available for this course</p>
@@ -543,7 +567,12 @@ export default function CoursesPage() {
                 <div className="w-[280px] shrink-0 bg-white border-l border-[#F0EAE0] overflow-auto">
                   {activeTab === 'scorecard' ? (
                     holes.length > 0 ? (
-                      <Scorecard holes={holes} tees={detail?.Tees ?? []} />
+                      <Scorecard
+                        holes={holes}
+                        tees={detail?.Tees ?? []}
+                        selectedHole={selectedHole}
+                        onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
+                      />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full py-10 px-5 text-center">
                         <Trophy className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
