@@ -64,11 +64,8 @@ export default function HomePage() {
                   <div className="text-[14px] font-semibold leading-none">App Store</div>
                 </div>
               </a>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} width="13" height="13" viewBox="0 0 14 14" fill="#DF9905"><path d="M7 1l1.8 4 4.2.4-3.2 2.8 1 4.3L7 10.3l-3.8 2.2 1-4.3L1 5.4 5.2 5z"/></svg>
-                ))}
-                <span className="text-[12px] text-[#666] ml-1.5">4.9 · App Store</span>
+              <div className="text-[12.5px] text-[#666]">
+                GPS maps for <span className="font-semibold text-[#1A1A1A]">42,000+ courses</span> worldwide
               </div>
             </div>
 
@@ -110,11 +107,11 @@ export default function HomePage() {
         <Reveal>
           <div className="border-y border-black/[0.06] py-7">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              {[
-                { stat: '4.9★', label: 'App Store Rating',    sub: '5-star reviewed'       },
-                { stat: '50+', label: 'Features',             sub: 'across 6 categories'   },
-                { stat: '18',  label: 'Metrics Per Round',    sub: 'GIR, putts, SG & more' },
-                { stat: '−4',  label: 'Avg Handicap Drop',    sub: 'in first season'        },
+              [
+                { stat: '42,000+', label: 'Courses',          sub: 'in 100+ countries'      },
+                { stat: '18',      label: 'Metrics Per Round', sub: 'GIR, putts, SG & more' },
+                { stat: '50+',     label: 'Features',          sub: 'across 6 categories'   },
+                { stat: '2',       label: 'Rounds Free',       sub: 'no credit card needed'  },
               ].map(s => (
                 <div key={s.label}>
                   <div className="font-serif text-[32px] md:text-[40px] font-medium text-[#1A1A1A] leading-none">{s.stat}</div>
@@ -174,7 +171,7 @@ export default function HomePage() {
               num: '03', label: 'COURSE MAPS',
               title: 'Satellite Course Maps',
               desc: 'Real aerial imagery with live GPS distances, hazards, and weather at your course.',
-              features: ['Satellite aerial imagery', 'Live distance to pin', 'Hazard & layup yardages', 'Wind & weather overlay', '40,000+ courses'],
+              features: ['Satellite aerial imagery', 'Live distance to pin', 'Hazard & layup yardages', 'Wind & weather overlay', '42,000+ courses worldwide'],
             },
             {
               num: '04', label: 'PERFORMANCE INSIGHTS',
@@ -462,6 +459,7 @@ export default function HomePage() {
 
         <div className="space-y-3">
           {[
+            { q: 'Will my course be available?', a: 'Almost certainly. TracerBuddy has GPS maps for over 42,000 courses across 100+ countries. Search by name when you sign up — it takes seconds to find and load your home course.' },
             { q: 'Do I need an Apple Watch?', a: 'No. The iPhone app works on its own — but the Apple Watch unlocks automatic swing detection, tempo, and motion data.' },
             { q: 'Does my data sync between iOS and the web?', a: 'Yes. Sign in with the same Apple ID or email and everything is instantly available on both.' },
             { q: 'Can I cancel anytime?', a: 'Yes. Cancel from your iPhone Settings → Apple ID → Subscriptions. No questions asked.' },
@@ -505,9 +503,8 @@ export default function HomePage() {
       <footer className="px-6 md:px-12 pt-16 pb-10 max-w-[1400px] mx-auto border-t border-black/[0.06] mt-8">
         <div className="grid md:grid-cols-4 gap-10 mb-10">
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
-              <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#1A1A1A"/><circle cx="14" cy="14" r="5" fill="#F5EFE0"/></svg>
-              <span className="text-[16px] font-bold">TracerBuddy</span>
+            <div className="mb-4">
+              <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-8 w-auto" style={{ mixBlendMode: 'multiply' }} />
             </div>
             <p className="text-[13px] text-[#666] leading-[1.6] max-w-[240px]">Premium shot tracking and round insights for serious golfers.</p>
           </div>
