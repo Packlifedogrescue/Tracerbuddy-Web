@@ -127,7 +127,7 @@ export default function Sidebar() {
 
       {/* ── Mobile top bar ── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100">
-        <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-9 w-auto" />
+        <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-11 w-auto" />
         <button
           onClick={() => setMobileOpen(true)}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -152,7 +152,7 @@ export default function Sidebar() {
           {/* Drawer */}
           <div className="relative w-[260px] bg-white flex flex-col h-full shadow-2xl">
             <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 shrink-0">
-              <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-9 w-auto" />
+              <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-11 w-auto" />
               <button
                 onClick={() => setMobileOpen(false)}
                 className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"

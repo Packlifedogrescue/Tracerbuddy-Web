@@ -30,11 +30,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="flex flex-col h-screen overflow-hidden bg-[#F5EFE0]">
 
       {/* ── Full-width header ── */}
-      <header className="h-14 bg-white border-b border-[#EDE8DC] flex items-center pl-5 pr-6 gap-4 shrink-0 z-20 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+      <header className="h-16 bg-white border-b border-[#EDE8DC] flex items-center pl-5 pr-6 gap-4 shrink-0 z-20 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
 
         {/* Logo */}
         <div className="flex items-center w-[210px] shrink-0">
-          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-10 w-auto" />
+          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-12 w-auto" />
         </div>
 
         {/* Search */}
