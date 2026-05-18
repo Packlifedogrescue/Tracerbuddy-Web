@@ -122,7 +122,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ HOW IT WORKS ════════════════════════ */}
-      <section id="how" className="px-6 md:px-12 py-24 md:py-28 max-w-[1400px] mx-auto">
+      <section id="how" className="px-6 md:px-12 py-16 md:py-20 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="text-center mb-16">
             <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">HOW IT WORKS</div>
@@ -275,7 +275,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ iPHONE + APPLE WATCH ════════════════════════ */}
-      <section id="watch" className="px-6 md:px-12 pb-6 max-w-[1400px] mx-auto">
+      <section id="watch" className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl px-8 md:px-16 pt-14 pb-0 overflow-hidden relative">
             {/* Decorative gradient orb */}
@@ -311,7 +311,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ SWINGTRACE PREVIEW ════════════════════════ */}
-      <section className="px-6 md:px-12 pb-6 max-w-[1400px] mx-auto">
+      <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl overflow-hidden relative">
             <div className="grid md:grid-cols-12 gap-8 px-8 md:px-16 pt-14 pb-14 items-center">
@@ -405,7 +405,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ CTA BANNER ════════════════════════ */}
-      <section className="px-6 md:px-12 py-8 max-w-[1400px] mx-auto">
+      <section className="px-6 md:px-12 py-14 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="relative rounded-3xl overflow-hidden bg-[#1A1A1A]">
             <div className="absolute inset-0 opacity-30" style={{ background: 'radial-gradient(circle at 20% 50%, rgba(223,153,5,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(10,143,79,0.2) 0%, transparent 50%)' }} />
