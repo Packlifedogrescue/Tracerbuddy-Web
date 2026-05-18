@@ -28,7 +28,7 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 bg-[#F5EFE0] border-b border-black/[0.04]">
         <div className="flex items-center justify-between px-6 md:px-12 py-4 max-w-[1400px] mx-auto">
           <div className="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-11 w-auto" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-11 w-auto" style={{ mixBlendMode: 'multiply' }} />
           </div>
           <div className="hidden md:flex items-center gap-9">
             <a href="#features" className="text-[14px] text-[#333] hover:text-black transition-colors">Features</a>
@@ -48,75 +48,57 @@ export default function HomePage() {
 
       {/* ════════════════════════ HERO ════════════════════════ */}
       <section className="relative px-6 md:px-12 pt-12 md:pt-20 pb-16 overflow-hidden max-w-[1400px] mx-auto">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Left: text */}
-          <Reveal className="relative z-10">
-            <h1 className="font-serif text-[48px] md:text-[76px] font-medium leading-[1.02] tracking-[-0.025em] mb-7">
-              Track Every Shot.<br />
-              Understand <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
-            </h1>
-            <p className="text-[17px] text-[#444] leading-[1.7] max-w-[480px] mb-9">
-              Most golfers finish a round with no idea where they lost strokes.
-              TracerBuddy shows you exactly — hole by hole, shot by shot — so every
-              round makes you a better golfer.
-            </p>
-            <div className="flex flex-wrap gap-3 mb-8">
-              <Link href="/auth/signup" className="premium-btn-gold">
-                Start Free — 2 Rounds
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11L9 7L5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              </Link>
-              <a href="#features" className="premium-btn-ghost">
-                See How It Works
-              </a>
-            </div>
+        <Reveal className="relative z-10 max-w-[720px] mx-auto text-center">
+          <h1 className="font-serif text-[48px] md:text-[76px] font-medium leading-[1.02] tracking-[-0.025em] mb-7">
+            Track Every Shot.<br />
+            Understand <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
+          </h1>
+          <p className="text-[17px] text-[#444] leading-[1.7] max-w-[520px] mx-auto mb-9">
+            Most golfers finish a round with no idea where they lost strokes.
+            TracerBuddy shows you exactly — hole by hole, shot by shot — so every
+            round makes you a better golfer.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <Link href="/auth/signup" className="premium-btn-gold">
+              Start Free — 2 Rounds
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11L9 7L5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            </Link>
+            <a href="#features" className="premium-btn-ghost">
+              See How It Works
+            </a>
+          </div>
 
-            {/* Coming soon */}
-            <div className="flex flex-wrap items-center gap-4 mb-6">
-              <div className="inline-flex items-center gap-2.5 bg-[#1A1A1A]/[0.06] border border-black/[0.08] px-4 py-2.5 rounded-xl">
-                <svg width="18" height="22" viewBox="0 0 18 22" fill="#1A1A1A" opacity="0.5">
-                  <path d="M14.94 11.55c-.02-2.16 1.77-3.2 1.85-3.25-1.01-1.48-2.58-1.68-3.14-1.7-1.33-.14-2.6.79-3.28.79-.68 0-1.72-.77-2.83-.75-1.45.02-2.8.85-3.54 2.15-1.52 2.63-.39 6.52 1.08 8.65.73 1.05 1.59 2.22 2.72 2.18 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.69.71 2.84.69 1.18-.02 1.92-1.07 2.63-2.13.84-1.21 1.18-2.4 1.19-2.46-.03-.01-2.36-.9-2.36-3.46zM12.68 4.5c.6-.73 1.01-1.74.9-2.75-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.87 2.65.97.07 1.95-.49 2.51-1.2z"/>
-                </svg>
-                <div>
-                  <div className="text-[9px] leading-none text-[#999] mb-0.5">Coming soon to the</div>
-                  <div className="text-[14px] font-semibold leading-none text-[#555]">App Store</div>
-                </div>
-              </div>
-              <div className="text-[12.5px] text-[#666]">
-                GPS maps for <span className="font-semibold text-[#1A1A1A]">42,000+ courses</span> worldwide
+          {/* Coming soon */}
+          <div className="flex flex-wrap justify-center items-center gap-4 mb-6">
+            <div className="inline-flex items-center gap-2.5 bg-[#1A1A1A]/[0.06] border border-black/[0.08] px-4 py-2.5 rounded-xl">
+              <svg width="18" height="22" viewBox="0 0 18 22" fill="#1A1A1A" opacity="0.5">
+                <path d="M14.94 11.55c-.02-2.16 1.77-3.2 1.85-3.25-1.01-1.48-2.58-1.68-3.14-1.7-1.33-.14-2.6.79-3.28.79-.68 0-1.72-.77-2.83-.75-1.45.02-2.8.85-3.54 2.15-1.52 2.63-.39 6.52 1.08 8.65.73 1.05 1.59 2.22 2.72 2.18 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.69.71 2.84.69 1.18-.02 1.92-1.07 2.63-2.13.84-1.21 1.18-2.4 1.19-2.46-.03-.01-2.36-.9-2.36-3.46zM12.68 4.5c.6-.73 1.01-1.74.9-2.75-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.87 2.65.97.07 1.95-.49 2.51-1.2z"/>
+              </svg>
+              <div>
+                <div className="text-[9px] leading-none text-[#999] mb-0.5">Coming soon to the</div>
+                <div className="text-[14px] font-semibold leading-none text-[#555]">App Store</div>
               </div>
             </div>
+            <div className="text-[12.5px] text-[#666]">
+              GPS maps for <span className="font-semibold text-[#1A1A1A]">42,000+ courses</span> worldwide
+            </div>
+          </div>
 
-            <div className="flex items-center gap-5 text-[12px] text-[#888]">
-              <div className="flex items-center gap-1.5">
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
-                2 rounds free
-              </div>
-              <div className="flex items-center gap-1.5">
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
-                No credit card
-              </div>
-              <div className="flex items-center gap-1.5">
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
-                Cancel anytime
-              </div>
+          <div className="flex justify-center items-center gap-5 text-[12px] text-[#888]">
+            <div className="flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
+              2 rounds free
             </div>
-          </Reveal>
-
-          {/* Right: phone floating with ambient glow */}
-          <Reveal delay={200} className="relative">
-            <div className="relative flex items-center justify-center min-h-[520px]">
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.18) 0%, rgba(223,153,5,0.05) 40%, transparent 70%)' }} />
-              </div>
-              <img
-                src="/images/hero-phone.png"
-                alt="TracerBuddy app on iPhone and Apple Watch"
-                className="relative max-h-[560px] w-auto drop-shadow-[0_40px_80px_rgba(26,26,26,0.25)]"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
+            <div className="flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
+              No credit card
             </div>
-          </Reveal>
-        </div>
+            <div className="flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
+              Cancel anytime
+            </div>
+          </div>
+        </Reveal>
       </section>
 
       {/* ════════════════════════ TRUST BAR ════════════════════════ */}
@@ -371,7 +353,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative z-10 flex justify-center">
-              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full max-w-[680px] h-auto drop-shadow-2xl" />
+              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full max-w-[680px] h-auto" style={{ mixBlendMode: 'multiply' }} />
             </div>
           </div>
         </Reveal>
