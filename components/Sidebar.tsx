@@ -127,7 +127,12 @@ export default function Sidebar() {
 
       {/* ── Mobile top bar ── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100">
-        <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-7 w-auto" style={{ mixBlendMode: 'multiply' }} />
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-[#111] flex items-center justify-center shrink-0">
+            <span className="text-[#C9A84C] font-black text-[9px] tracking-tight">TB</span>
+          </div>
+          <span className="font-black text-[16px] text-[#111] tracking-tight leading-none">TracerBuddy</span>
+        </div>
         <button
           onClick={() => setMobileOpen(true)}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -152,7 +157,12 @@ export default function Sidebar() {
           {/* Drawer */}
           <div className="relative w-[260px] bg-white flex flex-col h-full shadow-2xl">
             <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 shrink-0">
-              <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-7 w-auto" style={{ mixBlendMode: 'multiply' }} />
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-[#111] flex items-center justify-center shrink-0">
+                  <span className="text-[#C9A84C] font-black text-[9px] tracking-tight">TB</span>
+                </div>
+                <span className="font-black text-[16px] text-[#111] tracking-tight leading-none">TracerBuddy</span>
+              </div>
               <button
                 onClick={() => setMobileOpen(false)}
                 className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
