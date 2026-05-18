@@ -120,6 +120,49 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ════════════════════════ WAITLIST ════════════════════════ */}
+      <section className="px-6 md:px-12 pb-12 max-w-[1400px] mx-auto">
+        <Reveal>
+          <div className="bg-gradient-to-br from-[#EFE7D4] to-[#E5DBC2] rounded-3xl px-8 md:px-16 py-14 text-center relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(223,153,5,0.2) 0%, transparent 60%)' }} />
+            <div className="relative z-10 max-w-[540px] mx-auto">
+              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">APP STORE — COMING SOON</div>
+              <h2 className="font-serif text-3xl md:text-[42px] font-medium tracking-[-0.02em] leading-[1.1] mb-4">
+                Be first when we launch<br className="hidden md:block" /> on the App Store.
+              </h2>
+              <p className="text-[15px] text-[#666] leading-[1.65] mb-8">
+                Drop your email and we'll notify you the moment TracerBuddy is live on iOS — plus early access and a free extended trial.
+              </p>
+              {waitlistDone ? (
+                <div className="inline-flex items-center gap-3 bg-[#0A8F4F]/10 border border-[#0A8F4F]/20 text-[#0A8F4F] px-6 py-3.5 rounded-xl font-semibold text-[15px]">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9L7.5 12.5L14 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
+                  You&apos;re on the list — we&apos;ll be in touch!
+                </div>
+              ) : (
+                <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row gap-3 max-w-[420px] mx-auto">
+                  <input
+                    type="email"
+                    value={waitlistEmail}
+                    onChange={e => setWaitlistEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    required
+                    className="flex-1 bg-white border border-black/10 rounded-full px-5 py-3.5 text-[15px] text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#1A1A1A] transition"
+                  />
+                  <button
+                    type="submit"
+                    disabled={waitlistSubmitting}
+                    className="bg-[#1A1A1A] text-[#F5EFE0] font-semibold px-7 py-3.5 rounded-full text-[15px] hover:bg-black transition hover:-translate-y-0.5 disabled:opacity-50 shrink-0"
+                  >
+                    {waitlistSubmitting ? 'Saving…' : 'Notify Me'}
+                  </button>
+                </form>
+              )}
+              {waitlistError && <p className="text-red-500 text-[13px] mt-3">{waitlistError}</p>}
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ════════════════════════ TRUST BAR ════════════════════════ */}
       <section className="px-6 md:px-12 pb-12 max-w-[1400px] mx-auto">
         <Reveal>
@@ -423,49 +466,6 @@ export default function HomePage() {
             </div>
           </Reveal>
         </div>
-      </section>
-
-      {/* ════════════════════════ WAITLIST ════════════════════════ */}
-      <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
-        <Reveal>
-          <div className="bg-gradient-to-br from-[#EFE7D4] to-[#E5DBC2] rounded-3xl px-8 md:px-16 py-14 text-center relative overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(223,153,5,0.2) 0%, transparent 60%)' }} />
-            <div className="relative z-10 max-w-[540px] mx-auto">
-              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">APP STORE — COMING SOON</div>
-              <h2 className="font-serif text-3xl md:text-[42px] font-medium tracking-[-0.02em] leading-[1.1] mb-4">
-                Be first when we launch<br className="hidden md:block" /> on the App Store.
-              </h2>
-              <p className="text-[15px] text-[#666] leading-[1.65] mb-8">
-                Drop your email and we'll notify you the moment TracerBuddy is live on iOS — plus early access and a free extended trial.
-              </p>
-              {waitlistDone ? (
-                <div className="inline-flex items-center gap-3 bg-[#0A8F4F]/10 border border-[#0A8F4F]/20 text-[#0A8F4F] px-6 py-3.5 rounded-xl font-semibold text-[15px]">
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9L7.5 12.5L14 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
-                  You&apos;re on the list — we&apos;ll be in touch!
-                </div>
-              ) : (
-                <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row gap-3 max-w-[420px] mx-auto">
-                  <input
-                    type="email"
-                    value={waitlistEmail}
-                    onChange={e => setWaitlistEmail(e.target.value)}
-                    placeholder="you@email.com"
-                    required
-                    className="flex-1 bg-white border border-black/10 rounded-full px-5 py-3.5 text-[15px] text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#1A1A1A] transition"
-                  />
-                  <button
-                    type="submit"
-                    disabled={waitlistSubmitting}
-                    className="bg-[#1A1A1A] text-[#F5EFE0] font-semibold px-7 py-3.5 rounded-full text-[15px] hover:bg-black transition hover:-translate-y-0.5 disabled:opacity-50 shrink-0"
-                  >
-                    {waitlistSubmitting ? 'Saving…' : 'Notify Me'}
-                  </button>
-                </form>
-              )}
-              {waitlistError && <p className="text-red-500 text-[13px] mt-3">{waitlistError}</p>}
-            </div>
-          </div>
-        </Reveal>
       </section>
 
       {/* ════════════════════════ CTA BANNER ════════════════════════ */}
