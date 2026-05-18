@@ -111,8 +111,8 @@ export default function HomePage() {
               </div>
               <img
                 src="/images/hero-phone.png"
-                alt="TracerBuddy iPhone app"
-                className="relative w-[280px] md:w-[400px] drop-shadow-[0_40px_80px_rgba(26,26,26,0.25)]"
+                alt="TracerBuddy app on iPhone and Apple Watch"
+                className="relative w-[380px] md:w-[580px] drop-shadow-[0_40px_80px_rgba(26,26,26,0.25)]"
               />
             </div>
           </Reveal>
