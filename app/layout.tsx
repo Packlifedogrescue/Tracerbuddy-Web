@@ -18,6 +18,7 @@ const fraunces = Fraunces({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://tracerbuddy.app'),
   title: 'TracerBuddy — Know your shot. Know your miss. Know what to fix.',
   description: 'Premium shot tracking, course mapping, swing motion data, and round insights. The golf performance app for serious players.',
   icons: {
