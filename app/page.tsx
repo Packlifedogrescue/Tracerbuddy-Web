@@ -380,9 +380,7 @@ export default function HomePage() {
       {/* ════════════════════════ SWINGTRACE PREVIEW ════════════════════════ */}
       <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
-          <div className="bg-[#1A1A1A] text-[#F5EFE0] rounded-3xl p-8 md:p-16 grid md:grid-cols-12 gap-8 items-center relative overflow-hidden">
-            {/* Decorative grid */}
-            <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(245,239,224,1) 1px, transparent 1px), linear-gradient(90deg, rgba(245,239,224,1) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+          <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl p-8 md:p-16 grid md:grid-cols-12 gap-8 items-center relative overflow-hidden">
             <div className="md:col-span-4 relative z-10">
               <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">SWINGTRACE</div>
               <h2 className="font-serif text-3xl md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
