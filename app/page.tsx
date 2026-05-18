@@ -148,8 +148,8 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div className="flex justify-center">
-            <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="max-w-full h-auto" />
+          <div className="flex justify-center items-center">
+            <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full h-auto object-contain" style={{ maxWidth: '560px' }} />
           </div>
         </div>
       </section>
@@ -157,13 +157,13 @@ export default function HomePage() {
       {/* ════ SWINGTRACE PREVIEW ════ */}
       <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <div className="bg-[#EFE7D4] rounded-2xl p-8 md:p-14 grid md:grid-cols-12 gap-6 items-center">
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <div className="text-[11px] font-bold text-[#B8860B] tracking-[0.2em] mb-5">SWINGTRACE PREVIEW</div>
             <h2 className="text-3xl md:text-[34px] font-bold leading-[1.15] tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
               Understand your swing.<br />Improve your game.
             </h2>
           </div>
-          <div className="md:col-span-6 grid grid-cols-3 gap-4">
+          <div className="md:col-span-5 grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-[12px] font-semibold text-[#444] mb-2">Swing Speed</div>
               <div className="text-[44px] md:text-[52px] font-bold text-[#1A1A1A] leading-none">85</div>
@@ -183,8 +183,8 @@ export default function HomePage() {
               <svg width="100%" height="16" viewBox="0 0 100 16" className="mt-2"><path d="M0,10 Q15,6 30,11 T60,5 T90,9 T100,6" stroke="#B8860B" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>
             </div>
           </div>
-          <div className="md:col-span-3 flex justify-center">
-            <img src="/images/golfer.png" alt="Golfer swing" className="max-h-[200px] w-auto" />
+          <div className="md:col-span-3 flex justify-center items-center">
+            <img src="/images/golfer.png" alt="Golfer swing" className="w-full h-auto object-contain" style={{ maxHeight: '420px' }} />
           </div>
         </div>
       </section>
