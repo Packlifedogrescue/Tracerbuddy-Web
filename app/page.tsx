@@ -404,41 +404,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════════ FAQ ════════════════════════ */}
-      <section className="px-6 md:px-12 py-16 max-w-3xl mx-auto">
-        <Reveal>
-          <div className="text-center mb-12">
-            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">FAQ</div>
-            <h2 className="font-serif text-3xl md:text-[40px] font-medium tracking-[-0.02em]">
-              Common questions
-            </h2>
-          </div>
-        </Reveal>
-
-        <div className="space-y-3">
-          {[
-            { q: 'Will my course be available?', a: 'Almost certainly. TracerBuddy has GPS maps for over 42,000 courses across 100+ countries. Search by name when you sign up — it takes seconds to find and load your home course.' },
-            { q: 'Do I need an Apple Watch?', a: 'No. The iPhone app works on its own for shot tracking and GPS distances — but the Apple Watch unlocks automatic swing detection, tempo, backswing time, and real-time motion data without touching your phone.' },
-            { q: 'How does automatic shot detection work?', a: 'The Apple Watch accelerometer detects the motion signature of a golf swing. TracerBuddy filters out practice swings and records your shot location automatically, then calculates distances using GPS.' },
-            { q: 'What is Strokes Gained and do you track it?', a: 'Strokes Gained measures your performance relative to a scratch golfer on each shot type — off the tee, approach, around the green, and putting. TracerBuddy calculates it automatically from your round data.' },
-            { q: 'Does my data sync between iOS and the web?', a: 'Yes. Sign in with the same Apple ID or email and everything is instantly available on both platforms in real time.' },
-            { q: 'How accurate is the GPS distance tracking?', a: 'TracerBuddy uses device GPS with an accuracy of roughly 3 meters. Distances to the front, center, and back of the green update continuously as you move.' },
-            { q: 'Can I cancel anytime?', a: 'Yes. Cancel from your iPhone Settings → Apple ID → Subscriptions at any time. No questions asked, no cancellation fees.' },
-            { q: 'Is there a free trial?', a: 'Yes — your first 2 rounds are completely free on either plan. No credit card required to start.' },
-          ].map((item, i) => (
-            <Reveal key={item.q} delay={i * 50}>
-              <details className="group bg-white/60 border border-black/[0.05] rounded-xl overflow-hidden hover:bg-white transition-colors">
-                <summary className="cursor-pointer p-5 font-semibold text-[14.5px] text-[#1A1A1A] flex items-center justify-between list-none">
-                  {item.q}
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform group-open:rotate-180"><path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-                </summary>
-                <p className="px-5 pb-5 text-[13.5px] text-[#666] leading-[1.65]">{item.a}</p>
-              </details>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
       {/* ════════════════════════ CTA BANNER ════════════════════════ */}
       <section className="px-6 md:px-12 py-8 max-w-[1400px] mx-auto">
         <Reveal>
