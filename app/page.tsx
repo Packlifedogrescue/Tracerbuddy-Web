@@ -341,32 +341,34 @@ export default function HomePage() {
       {/* ════════════════════════ iPHONE + APPLE WATCH ════════════════════════ */}
       <section id="watch" className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
-          <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl p-8 md:p-16 grid md:grid-cols-5 gap-10 items-center overflow-hidden relative">
+          <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl px-8 md:px-16 pt-14 pb-0 overflow-hidden relative">
             {/* Decorative gradient orb */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.12) 0%, transparent 60%)' }} />
-            <div className="relative z-10 md:col-span-2">
-              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">iPHONE + APPLE WATCH</div>
-              <h2 className="font-serif text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mb-8">
-                Everything you need.<br />Right on your wrist.
-              </h2>
-              <div className="space-y-3.5">
-                {[
-                  'Auto shot detection from your Apple Watch',
-                  'Live distances and hole maps as you play',
-                  'Swing speed, tempo, and motion analytics',
-                  'Syncs seamlessly between iPhone and Watch',
-                ].map(item => (
-                  <div key={item} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-[#DF9905] flex items-center justify-center flex-shrink-0">
-                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+            <div className="relative z-10 grid md:grid-cols-2 gap-10 items-end">
+              <div className="pb-14">
+                <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">iPHONE + APPLE WATCH</div>
+                <h2 className="font-serif text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mb-8">
+                  Everything you need.<br />Right on your wrist.
+                </h2>
+                <div className="space-y-3.5">
+                  {[
+                    'Auto shot detection from your Apple Watch',
+                    'Live distances and hole maps as you play',
+                    'Swing speed, tempo, and motion analytics',
+                    'Syncs seamlessly between iPhone and Watch',
+                  ].map(item => (
+                    <div key={item} className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-[#DF9905] flex items-center justify-center flex-shrink-0">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                      </div>
+                      <span className="text-[14.5px] text-[#1A1A1A]">{item}</span>
                     </div>
-                    <span className="text-[14.5px] text-[#1A1A1A]">{item}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="relative z-10 md:col-span-3 flex justify-center">
-              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full h-auto" />
+              <div className="flex justify-center items-end">
+                <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full h-auto max-w-[780px]" />
+              </div>
             </div>
           </div>
         </Reveal>
@@ -388,7 +390,7 @@ export default function HomePage() {
                 </p>
               </div>
               {/* Stats */}
-              <div className="md:col-span-5 grid grid-cols-3 gap-4 relative z-10">
+              <div className="md:col-span-8 grid grid-cols-3 gap-4 relative z-10">
                 {[
                   { label: 'Swing Speed', value: '85', unit: 'MPH', tag: null },
                   { label: 'Tempo', value: '3:1:1', unit: '', tag: 'Optimal' },
@@ -402,15 +404,6 @@ export default function HomePage() {
                     <svg width="100%" height="20" viewBox="0 0 100 20" className="mt-3"><path d="M0,12 Q15,4 30,10 T60,6 T90,8 T100,5" stroke="#DF9905" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7"/></svg>
                   </div>
                 ))}
-              </div>
-              {/* Golfer — absolute so he can be full height */}
-              <div className="md:col-span-3 hidden md:flex items-end justify-center self-stretch relative">
-                <img
-                  src="/images/golfer.png"
-                  alt="Golfer swing analysis"
-                  className="absolute bottom-0 right-0 h-[110%] w-auto max-w-none"
-                  style={{ filter: 'drop-shadow(0 0 40px rgba(201,168,76,0.45))' }}
-                />
               </div>
             </div>
           </div>
