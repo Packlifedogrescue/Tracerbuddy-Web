@@ -111,7 +111,8 @@ export default function HomePage() {
               <img
                 src="/images/hero-phone.png"
                 alt="TracerBuddy app on iPhone and Apple Watch"
-                className="relative max-h-[580px] w-auto drop-shadow-[0_40px_80px_rgba(26,26,26,0.25)]"
+                className="relative max-h-[560px] w-auto drop-shadow-[0_40px_80px_rgba(26,26,26,0.25)]"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             </div>
           </Reveal>
@@ -370,7 +371,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative z-10 flex justify-center">
-              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="max-w-full h-auto drop-shadow-2xl" />
+              <img src="/images/hero-phone.png" alt="iPhone and Apple Watch" className="max-h-[520px] w-auto drop-shadow-2xl" />
             </div>
           </div>
         </Reveal>
