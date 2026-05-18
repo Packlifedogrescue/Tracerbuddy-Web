@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Logo */}
         <div className="flex items-center w-[210px] shrink-0">
-          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-8 w-auto" style={{ mixBlendMode: 'multiply' }} />
+          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-10 w-auto" />
         </div>
 
         {/* Search */}
