@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { supabase, fetchClubProfiles } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { Plus, Trash2 } from 'lucide-react'
 import { track } from '@/lib/analytics'
 
@@ -69,7 +70,7 @@ export default function ClubsPage() {
   const [dupError,  setDupError]  = useState('')
   const brandRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  function load() {
     Promise.all([
       supabase.from('user_bag').select('*').order('created_at', { ascending: true }),
       fetchClubProfiles(),
@@ -78,7 +79,9 @@ export default function ClubsPage() {
       setProfiles(profs)
       setLoading(false)
     })
-  }, [])
+  }
+  useEffect(() => { load() }, [])
+  const live = useRealtime(['user_bag', 'club_profiles'], load)
 
   useEffect(() => {
     if (!brand.trim()) { setSuggestions([]); return }
@@ -149,7 +152,10 @@ export default function ClubsPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-[26px] font-black text-[#111] tracking-tight">My Bag</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[26px] font-black text-[#111] tracking-tight">My Bag</h1>
+            {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+          </div>
           <p className="text-[13.5px] text-gray-400 mt-0.5">
             {bagClubs.length > 0
               ? `${bagClubs.length} club${bagClubs.length !== 1 ? 's' : ''} · confidence builds as you log shots`

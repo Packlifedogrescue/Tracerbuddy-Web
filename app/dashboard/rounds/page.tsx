@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { fetchRounds } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { SlidersHorizontal } from 'lucide-react'
 
@@ -14,7 +15,9 @@ export default function RoundsPage() {
   const [sort,        setSort]        = useState<SortKey>('date')
   const [dateFilter,  setDateFilter]  = useState<DateFilter>('all')
 
-  useEffect(() => { fetchRounds(200).then(d => { setRounds(d); setLoading(false) }) }, [])
+  function load() { fetchRounds(200).then(d => { setRounds(d); setLoading(false) }) }
+  useEffect(() => { load() }, [])
+  const live = useRealtime(['rounds'], load)
 
   const filtered = rounds.filter(r => {
     if (dateFilter === 'all') return true
@@ -42,7 +45,10 @@ export default function RoundsPage() {
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-[26px] font-black text-[#111] tracking-tight">All Rounds</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[26px] font-black text-[#111] tracking-tight">All Rounds</h1>
+            {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+          </div>
           <p className="text-[13px] text-gray-400 mt-0.5">{filtered.length} of {rounds.length} rounds</p>
         </div>
 

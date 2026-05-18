@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { fetchRounds } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 
 const CHART = {
@@ -15,7 +16,9 @@ export default function StatsPage() {
   const [rounds,  setRounds]  = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { fetchRounds(100).then(d => { setRounds(d); setLoading(false) }) }, [])
+  function load() { fetchRounds(100).then(d => { setRounds(d); setLoading(false) }) }
+  useEffect(() => { load() }, [])
+  const live = useRealtime(['rounds'], load)
 
   const r = rounds
 
@@ -61,7 +64,10 @@ export default function StatsPage() {
     <div className="p-5 md:p-6 max-w-4xl space-y-5 pb-10">
 
       <div>
-        <h1 className="text-[26px] font-black text-[#111] tracking-tight">Stats Overview</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[26px] font-black text-[#111] tracking-tight">Stats Overview</h1>
+          {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+        </div>
         <p className="text-[13.5px] text-gray-400 mt-0.5">
           Based on {r.length} round{r.length !== 1 ? 's' : ''} tracked
         </p>

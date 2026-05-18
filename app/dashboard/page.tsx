@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { useRealtime } from '@/lib/useRealtime'
 import {
   Calendar, ChevronRight, MapPin, Trophy, Flag,
   ArrowDown, ArrowUp, TrendingUp, TrendingDown, Watch,
@@ -197,6 +198,10 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
+  const live = useRealtime(['rounds', 'putt_data', 'club_profiles'], () => {
+    fetchRounds(50).then(r => setRounds(r))
+  })
+
   // ── Computed ──────────────────────────────────────────────────────────────
   const totalRounds = rounds.length
   const scored      = rounds.filter(r => r.total_score)
@@ -282,9 +287,12 @@ export default function DashboardPage() {
       {/* ── Welcome ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-black text-[#111] tracking-tight leading-tight">
-            Welcome back, {firstName}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[26px] font-black text-[#111] tracking-tight leading-tight">
+              Welcome back, {firstName}
+            </h1>
+            {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+          </div>
           <p className="text-[13.5px] text-gray-400 mt-0.5">
             {totalRounds > 0
               ? `${totalRounds} round${totalRounds !== 1 ? 's' : ''} tracked · ${coursesVisited.length} course${coursesVisited.length !== 1 ? 's' : ''} visited`

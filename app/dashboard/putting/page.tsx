@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { Loader2, Sparkles, X } from 'lucide-react'
 
@@ -27,7 +28,7 @@ export default function PuttingPage() {
   const [analysis,   setAnalysis]   = useState<any>(null)
   const [aiError,    setAiError]    = useState<string | null>(null)
 
-  useEffect(() => {
+  function load() {
     Promise.all([
       supabase.from('putt_data')
         .select('*, rounds(course_name, created_at)')
@@ -42,7 +43,9 @@ export default function PuttingPage() {
       setRounds(rds || [])
       setLoading(false)
     })
-  }, [])
+  }
+  useEffect(() => { load() }, [])
+  const live = useRealtime(['putt_data', 'rounds'], load)
 
   // ── Core stats ────────────────────────────────────────────────────────────
   const totalPutts  = data.reduce((a, d) => a + (d.num_putts || 0), 0)
@@ -130,7 +133,10 @@ export default function PuttingPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-black text-[#111] tracking-tight">PuttBuddy</h1>
+            <div className="flex items-center gap-2">
+            <h1 className="text-[26px] font-black text-[#111] tracking-tight">PuttBuddy</h1>
+            {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+          </div>
           <p className="text-[13px] text-gray-400 mt-0.5">Stop counting putts. Start fixing them.</p>
         </div>
         <button
