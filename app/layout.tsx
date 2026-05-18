@@ -30,14 +30,14 @@ export const metadata: Metadata = {
     description: 'Track every shot. Understand every round. The premium golf app for players who want to improve.',
     url: 'https://tracerbuddy.app',
     siteName: 'TracerBuddy',
-    images: [{ url: '/images/watch-section.png', width: 1448, height: 1086, alt: 'TracerBuddy app on iPhone and Apple Watch' }],
+    images: [{ url: '/images/og-image.png', width: 1500, height: 788, alt: 'TracerBuddy — Golf shot tracking that actually helps your game' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'TracerBuddy — Golf Performance Tracking',
     description: 'Track every shot. Understand every round. The premium golf app for players who want to improve.',
-    images: ['/images/watch-section.png'],
+    images: ['/images/og-image.png'],
   },
 }
 
