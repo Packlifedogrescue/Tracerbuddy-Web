@@ -355,7 +355,7 @@ export default function HomePage() {
               Invest in your game.
             </h2>
             <p className="text-[14.5px] text-[#666] max-w-[460px] mx-auto leading-[1.6]">
-              Every plan includes the complete TracerBuddy experience — shot tracking, AI coaching, Apple Watch, and more. No add-ons, no hidden fees.
+              Full access from day one. No tiers, no add-ons, no hidden fees.
             </p>
           </div>
         </Reveal>
