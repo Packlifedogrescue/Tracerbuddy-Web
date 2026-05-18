@@ -51,14 +51,6 @@ export default function HomePage() {
       <section className="relative px-6 md:px-12 pt-12 md:pt-20 pb-16 overflow-hidden max-w-[1400px] mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <Reveal className="relative z-10">
-            <div className="inline-flex items-center gap-2 bg-[#DF9905]/10 border border-[#DF9905]/20 rounded-full px-4 py-1.5 mb-6">
-              <div className="flex -space-x-1.5">
-                {['#4A7C59','#C9A84C','#2D6A4F'].map(c => (
-                  <div key={c} className="w-5 h-5 rounded-full border-2 border-white" style={{ background: c }} />
-                ))}
-              </div>
-              <span className="text-[12px] font-semibold text-[#A07340]">3,200+ golfers tracking their game</span>
-            </div>
             <h1 className="font-serif text-[48px] md:text-[76px] font-medium leading-[1.02] tracking-[-0.025em] mb-7">
               Track Every Shot.<br />
               Understand <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
@@ -300,52 +292,18 @@ export default function HomePage() {
         </Reveal>
       </section>
 
-      {/* ════════════════════════ TESTIMONIALS ════════════════════════ */}
-      <section className="px-6 md:px-12 pb-16 max-w-[1400px] mx-auto">
-        <Reveal>
-          <div className="text-center mb-12">
-            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">WHAT GOLFERS SAY</div>
-            <h2 className="font-serif text-3xl md:text-[40px] font-medium tracking-[-0.02em]">
-              Real golfers. Real results.
-            </h2>
-          </div>
-        </Reveal>
-        <div className="grid md:grid-cols-3 gap-5">
-          {[
-            { quote: "I dropped 4 strokes in 6 weeks just by understanding where I was losing shots. The strokes gained data is incredible.", name: "Marcus T.", detail: "12 handicap · Phoenix, AZ" },
-            { quote: "The Apple Watch integration is seamless. I don't have to touch my phone during a round — it just tracks everything automatically.", name: "Jennifer R.", detail: "8 handicap · Atlanta, GA" },
-            { quote: "Finally a golf app that doesn't feel like it was built in 2012. The dashboard is clean, fast, and actually useful.", name: "David K.", detail: "18 handicap · Chicago, IL" },
-          ].map((t, i) => (
-            <Reveal key={t.name} delay={i * 80}>
-              <div className="bg-white border border-black/[0.06] rounded-2xl p-7 flex flex-col h-full shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, s) => (
-                    <svg key={s} width="14" height="14" viewBox="0 0 14 14" fill="#DF9905"><path d="M7 1l1.5 4h4l-3.3 2.4 1.3 4L7 9 3.5 11.4l1.3-4L1.5 5H5.5L7 1z"/></svg>
-                  ))}
-                </div>
-                <p className="text-[14px] text-[#333] leading-[1.7] flex-1 mb-5">&ldquo;{t.quote}&rdquo;</p>
-                <div>
-                  <div className="text-[13px] font-semibold text-[#1A1A1A]">{t.name}</div>
-                  <div className="text-[12px] text-[#888] mt-0.5">{t.detail}</div>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
       {/* ════════════════════════ WAITLIST ════════════════════════ */}
       <section id="waitlist" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="bg-[#1A1A1A] rounded-3xl px-8 md:px-20 py-16 md:py-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(223,153,5,0.2) 0%, transparent 60%)' }} />
             <div className="relative z-10 max-w-xl mx-auto">
-              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">GET EARLY ACCESS</div>
+              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">COMING SOON TO iOS</div>
               <h2 className="font-serif text-3xl md:text-[48px] font-medium leading-[1.1] tracking-[-0.02em] text-[#F5EFE0] mb-5">
-                Start tracking<br />your game today.
+                Be first on the<br />course.
               </h2>
               <p className="text-[15px] text-[#888] leading-[1.65] mb-10">
-                Join thousands of golfers already using TracerBuddy. Get priority access and a free 2-round trial — no credit card needed.
+                TracerBuddy is launching soon. Drop your email and you'll be the first to know — plus get early access before we go public.
               </p>
 
               {status === 'success' ? (
@@ -368,7 +326,7 @@ export default function HomePage() {
                     disabled={status === 'loading'}
                     className="bg-[#DF9905] hover:bg-[#c98a04] text-white font-semibold px-8 py-3.5 rounded-xl text-[15px] transition-colors shrink-0 disabled:opacity-60"
                   >
-                    {status === 'loading' ? 'Joining…' : 'Get Early Access'}
+                    {status === 'loading' ? 'Joining…' : 'Join the Waitlist'}
                   </button>
                 </form>
               )}
@@ -377,7 +335,7 @@ export default function HomePage() {
                 <p className="text-red-400 text-[13px] mt-3">Something went wrong — try again.</p>
               )}
 
-              <p className="text-[12px] text-[#555] mt-5">No spam. No credit card. Unsubscribe anytime.</p>
+              <p className="text-[12px] text-[#555] mt-5">No spam. Just a launch notification and early access.</p>
             </div>
           </div>
         </Reveal>
