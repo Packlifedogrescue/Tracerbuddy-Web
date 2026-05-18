@@ -105,14 +105,13 @@ export default function HomePage() {
           {/* Right: phone floating with ambient glow */}
           <Reveal delay={200} className="relative">
             <div className="relative flex items-center justify-center min-h-[520px]">
-              {/* Ambient glow */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-[400px] h-[400px] rounded-full bg-gradient-radial from-[#DF9905]/15 via-[#DF9905]/5 to-transparent blur-3xl" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.18) 0%, rgba(223,153,5,0.05) 40%, transparent 70%)' }} />
+                <div className="w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.18) 0%, rgba(223,153,5,0.05) 40%, transparent 70%)' }} />
               </div>
               <img
                 src="/images/hero-phone.png"
                 alt="TracerBuddy app on iPhone and Apple Watch"
-                className="relative w-[380px] md:w-[580px] drop-shadow-[0_40px_80px_rgba(26,26,26,0.25)]"
+                className="relative max-h-[580px] w-auto drop-shadow-[0_40px_80px_rgba(26,26,26,0.25)]"
               />
             </div>
           </Reveal>
