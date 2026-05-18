@@ -28,7 +28,7 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 bg-[#F5EFE0] border-b border-black/[0.04]">
         <div className="flex items-center justify-between px-6 md:px-12 py-4 max-w-[1400px] mx-auto">
           <div className="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-11 w-auto" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-16 w-auto" />
           </div>
           <div className="hidden md:flex items-center gap-9">
             <a href="#features" className="text-[14px] text-[#333] hover:text-black transition-colors">Features</a>
