@@ -406,7 +406,7 @@ export default function HomePage() {
               ))}
             </div>
             <div className="md:col-span-3 flex justify-center relative z-10">
-              <img src="/images/golfer.png" alt="Golfer swing analysis" className="max-h-[260px] w-auto" />
+              <img src="/images/golfer.png" alt="Golfer swing analysis" className="max-h-[260px] w-auto" style={{ filter: 'brightness(1.8) drop-shadow(0 0 24px rgba(201,168,76,0.35))' }} />
             </div>
           </div>
         </Reveal>
