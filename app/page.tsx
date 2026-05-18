@@ -371,7 +371,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative z-10 flex justify-center">
-              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="max-h-[580px] w-auto drop-shadow-2xl" />
+              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full max-w-[680px] h-auto drop-shadow-2xl" />
             </div>
           </div>
         </Reveal>
