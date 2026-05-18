@@ -23,15 +23,19 @@ html { scroll-behavior: smooth; }
   }
 
   .premium-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 bg-[#1A1A1A] text-[#F5EFE0] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-black hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
+    @apply inline-flex items-center justify-center gap-2 bg-[#1A1A1A] text-[#F5EFE0] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-black hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.97];
   }
 
   .premium-btn-gold {
-    @apply inline-flex items-center justify-center gap-2 bg-[#DF9905] text-white px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-[#A07509] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(184,134,11,0.35)] active:translate-y-0;
+    @apply inline-flex items-center justify-center gap-2 bg-[#DF9905] text-white px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-[#A07509] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(184,134,11,0.35)] active:translate-y-0 active:scale-[0.97];
   }
 
   .premium-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 bg-white/60 backdrop-blur border border-black/10 text-[#1A1A1A] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-white hover:border-black/20 hover:-translate-y-0.5;
+    @apply inline-flex items-center justify-center gap-2 bg-white/60 backdrop-blur border border-black/10 text-[#1A1A1A] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-white hover:border-black/20 hover:-translate-y-0.5 active:scale-[0.97];
+  }
+
+  .skeleton {
+    @apply bg-gray-200 rounded animate-pulse;
   }
 }
 

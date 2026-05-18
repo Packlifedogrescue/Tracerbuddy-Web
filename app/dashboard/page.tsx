@@ -239,10 +239,35 @@ export default function DashboardPage() {
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[#F0EAE0] border-t-[#C9A84C] animate-spin mx-auto mb-4" />
-        <p className="text-[13.5px] text-gray-400 font-medium">Loading your stats…</p>
+    <div className="p-6 md:p-8 space-y-6">
+      {/* header skeleton */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="skeleton h-8 w-56 rounded-lg" />
+          <div className="skeleton h-4 w-36 rounded" />
+        </div>
+        <div className="skeleton h-9 w-32 rounded-xl" />
+      </div>
+      {/* stat cards skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-[0_2px_16px_rgba(0,0,0,0.055)] p-5 space-y-3">
+            <div className="skeleton h-3 w-20 rounded" />
+            <div className="skeleton h-7 w-12 rounded" />
+            <div className="skeleton h-3 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+      {/* main content skeleton */}
+      <div className="grid md:grid-cols-[1fr_340px] gap-5">
+        <div className="bg-white rounded-xl shadow-[0_2px_16px_rgba(0,0,0,0.055)] p-5 space-y-4">
+          <div className="skeleton h-5 w-28 rounded" />
+          <div className="skeleton h-40 w-full rounded-lg" />
+        </div>
+        <div className="bg-white rounded-xl shadow-[0_2px_16px_rgba(0,0,0,0.055)] p-5 space-y-4">
+          <div className="skeleton h-5 w-32 rounded" />
+          <div className="skeleton h-40 w-full rounded-lg" />
+        </div>
       </div>
     </div>
   )

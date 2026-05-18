@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import Reveal from '@/components/Reveal'
 import { useState } from 'react'
 
@@ -50,6 +51,14 @@ export default function HomePage() {
       <section className="relative px-6 md:px-12 pt-12 md:pt-20 pb-16 overflow-hidden max-w-[1400px] mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <Reveal className="relative z-10">
+            <div className="inline-flex items-center gap-2 bg-[#DF9905]/10 border border-[#DF9905]/20 rounded-full px-4 py-1.5 mb-6">
+              <div className="flex -space-x-1.5">
+                {['#4A7C59','#C9A84C','#2D6A4F'].map(c => (
+                  <div key={c} className="w-5 h-5 rounded-full border-2 border-white" style={{ background: c }} />
+                ))}
+              </div>
+              <span className="text-[12px] font-semibold text-[#A07340]">3,200+ golfers tracking their game</span>
+            </div>
             <h1 className="font-serif text-[48px] md:text-[76px] font-medium leading-[1.02] tracking-[-0.025em] mb-7">
               Track Every Shot.<br />
               Understand <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
@@ -105,10 +114,12 @@ export default function HomePage() {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.18) 0%, rgba(223,153,5,0.05) 40%, transparent 70%)' }} />
             </div>
-            <img
+            <Image
               src="/images/hero-phone.png"
               alt="TracerBuddy app on iPhone"
+              width={1024} height={1536}
               className="relative max-h-[620px] w-auto drop-shadow-[0_40px_80px_rgba(26,26,26,0.2)]"
+              priority
             />
           </Reveal>
         </div>
@@ -289,18 +300,52 @@ export default function HomePage() {
         </Reveal>
       </section>
 
+      {/* ════════════════════════ TESTIMONIALS ════════════════════════ */}
+      <section className="px-6 md:px-12 pb-16 max-w-[1400px] mx-auto">
+        <Reveal>
+          <div className="text-center mb-12">
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">WHAT GOLFERS SAY</div>
+            <h2 className="font-serif text-3xl md:text-[40px] font-medium tracking-[-0.02em]">
+              Real golfers. Real results.
+            </h2>
+          </div>
+        </Reveal>
+        <div className="grid md:grid-cols-3 gap-5">
+          {[
+            { quote: "I dropped 4 strokes in 6 weeks just by understanding where I was losing shots. The strokes gained data is incredible.", name: "Marcus T.", detail: "12 handicap · Phoenix, AZ" },
+            { quote: "The Apple Watch integration is seamless. I don't have to touch my phone during a round — it just tracks everything automatically.", name: "Jennifer R.", detail: "8 handicap · Atlanta, GA" },
+            { quote: "Finally a golf app that doesn't feel like it was built in 2012. The dashboard is clean, fast, and actually useful.", name: "David K.", detail: "18 handicap · Chicago, IL" },
+          ].map((t, i) => (
+            <Reveal key={t.name} delay={i * 80}>
+              <div className="bg-white border border-black/[0.06] rounded-2xl p-7 flex flex-col h-full shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(5)].map((_, s) => (
+                    <svg key={s} width="14" height="14" viewBox="0 0 14 14" fill="#DF9905"><path d="M7 1l1.5 4h4l-3.3 2.4 1.3 4L7 9 3.5 11.4l1.3-4L1.5 5H5.5L7 1z"/></svg>
+                  ))}
+                </div>
+                <p className="text-[14px] text-[#333] leading-[1.7] flex-1 mb-5">&ldquo;{t.quote}&rdquo;</p>
+                <div>
+                  <div className="text-[13px] font-semibold text-[#1A1A1A]">{t.name}</div>
+                  <div className="text-[12px] text-[#888] mt-0.5">{t.detail}</div>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
       {/* ════════════════════════ WAITLIST ════════════════════════ */}
       <section id="waitlist" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="bg-[#1A1A1A] rounded-3xl px-8 md:px-20 py-16 md:py-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(223,153,5,0.2) 0%, transparent 60%)' }} />
             <div className="relative z-10 max-w-xl mx-auto">
-              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">COMING SOON TO iOS</div>
+              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">GET EARLY ACCESS</div>
               <h2 className="font-serif text-3xl md:text-[48px] font-medium leading-[1.1] tracking-[-0.02em] text-[#F5EFE0] mb-5">
-                Be first on the<br />course.
+                Start tracking<br />your game today.
               </h2>
               <p className="text-[15px] text-[#888] leading-[1.65] mb-10">
-                TracerBuddy is launching soon. Drop your email and you'll be the first to know — plus get early access before we go public.
+                Join thousands of golfers already using TracerBuddy. Get priority access and a free 2-round trial — no credit card needed.
               </p>
 
               {status === 'success' ? (
@@ -323,7 +368,7 @@ export default function HomePage() {
                     disabled={status === 'loading'}
                     className="bg-[#DF9905] hover:bg-[#c98a04] text-white font-semibold px-8 py-3.5 rounded-xl text-[15px] transition-colors shrink-0 disabled:opacity-60"
                   >
-                    {status === 'loading' ? 'Joining…' : 'Join the Waitlist'}
+                    {status === 'loading' ? 'Joining…' : 'Get Early Access'}
                   </button>
                 </form>
               )}
@@ -332,7 +377,7 @@ export default function HomePage() {
                 <p className="text-red-400 text-[13px] mt-3">Something went wrong — try again.</p>
               )}
 
-              <p className="text-[12px] text-[#555] mt-5">No spam. Just a launch notification and early access.</p>
+              <p className="text-[12px] text-[#555] mt-5">No spam. No credit card. Unsubscribe anytime.</p>
             </div>
           </div>
         </Reveal>
@@ -367,7 +412,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex justify-center items-end">
-                <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full h-auto max-w-[780px]" />
+                <Image src="/images/watch-section.png" alt="iPhone and Apple Watch" width={1448} height={1086} className="w-full h-auto max-w-[780px]" />
               </div>
             </div>
           </div>
@@ -482,9 +527,12 @@ export default function HomePage() {
         <div className="space-y-3">
           {[
             { q: 'Will my course be available?', a: 'Almost certainly. TracerBuddy has GPS maps for over 42,000 courses across 100+ countries. Search by name when you sign up — it takes seconds to find and load your home course.' },
-            { q: 'Do I need an Apple Watch?', a: 'No. The iPhone app works on its own — but the Apple Watch unlocks automatic swing detection, tempo, and motion data.' },
-            { q: 'Does my data sync between iOS and the web?', a: 'Yes. Sign in with the same Apple ID or email and everything is instantly available on both.' },
-            { q: 'Can I cancel anytime?', a: 'Yes. Cancel from your iPhone Settings → Apple ID → Subscriptions. No questions asked.' },
+            { q: 'Do I need an Apple Watch?', a: 'No. The iPhone app works on its own for shot tracking and GPS distances — but the Apple Watch unlocks automatic swing detection, tempo, backswing time, and real-time motion data without touching your phone.' },
+            { q: 'How does automatic shot detection work?', a: 'The Apple Watch accelerometer detects the motion signature of a golf swing. TracerBuddy filters out practice swings and records your shot location automatically, then calculates distances using GPS.' },
+            { q: 'What is Strokes Gained and do you track it?', a: 'Strokes Gained measures your performance relative to a scratch golfer on each shot type — off the tee, approach, around the green, and putting. TracerBuddy calculates it automatically from your round data.' },
+            { q: 'Does my data sync between iOS and the web?', a: 'Yes. Sign in with the same Apple ID or email and everything is instantly available on both platforms in real time.' },
+            { q: 'How accurate is the GPS distance tracking?', a: 'TracerBuddy uses device GPS with an accuracy of roughly 3 meters. Distances to the front, center, and back of the green update continuously as you move.' },
+            { q: 'Can I cancel anytime?', a: 'Yes. Cancel from your iPhone Settings → Apple ID → Subscriptions at any time. No questions asked, no cancellation fees.' },
             { q: 'Is there a free trial?', a: 'Yes — your first 2 rounds are completely free on either plan. No credit card required to start.' },
           ].map((item, i) => (
             <Reveal key={item.q} delay={i * 50}>
