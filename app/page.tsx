@@ -380,33 +380,43 @@ export default function HomePage() {
       {/* ════════════════════════ SWINGTRACE PREVIEW ════════════════════════ */}
       <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
-          <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl px-8 md:px-16 pt-12 pb-0 grid md:grid-cols-12 gap-8 items-end relative overflow-hidden">
-            <div className="md:col-span-4 relative z-10">
-              <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">SWINGTRACE</div>
-              <h2 className="font-serif text-3xl md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
-                See your swing.<br />Fix what's broken.
-              </h2>
-              <p className="text-[14px] text-[#aaa] leading-[1.65]">
-                Apple Watch motion sensors capture every detail — so you can stop guessing what's wrong with your swing.
-              </p>
-            </div>
-            <div className="md:col-span-5 grid grid-cols-3 gap-4 relative z-10">
-              {[
-                { label: 'Swing Speed', value: '85', unit: 'MPH', tag: null },
-                { label: 'Tempo', value: '3:1:1', unit: '', tag: 'Optimal' },
-                { label: 'Backswing', value: '0.92', unit: 'SEC', tag: null },
-              ].map(m => (
-                <div key={m.label} className="text-center bg-white/[0.04] backdrop-blur border border-white/[0.06] rounded-2xl p-5">
-                  <div className="text-[11px] font-semibold text-[#888] mb-2.5 tracking-wide">{m.label}</div>
-                  <div className="font-serif text-[36px] md:text-[44px] font-medium text-[#F5EFE0] leading-none">{m.value}</div>
-                  {m.unit && <div className="text-[10px] text-[#777] font-semibold mt-2 tracking-wider">{m.unit}</div>}
-                  {m.tag && <span className="inline-block text-[10px] text-[#0A8F4F] bg-[#0A8F4F]/15 px-2.5 py-0.5 rounded-full mt-2 font-semibold">{m.tag}</span>}
-                  <svg width="100%" height="20" viewBox="0 0 100 20" className="mt-3"><path d="M0,12 Q15,4 30,10 T60,6 T90,8 T100,5" stroke="#DF9905" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7"/></svg>
-                </div>
-              ))}
-            </div>
-            <div className="md:col-span-3 flex justify-center relative z-10">
-              <img src="/images/golfer.png" alt="Golfer swing analysis" className="w-full max-w-[340px] mx-auto block" style={{ filter: 'drop-shadow(0 0 30px rgba(201,168,76,0.4))' }} />
+          <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl overflow-hidden relative">
+            <div className="grid md:grid-cols-12 gap-8 px-8 md:px-16 pt-14 pb-14 items-center">
+              {/* Text */}
+              <div className="md:col-span-4 relative z-10">
+                <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">SWINGTRACE</div>
+                <h2 className="font-serif text-3xl md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
+                  See your swing.<br />Fix what's broken.
+                </h2>
+                <p className="text-[14px] text-[#aaa] leading-[1.65]">
+                  Apple Watch motion sensors capture every detail — so you can stop guessing what's wrong with your swing.
+                </p>
+              </div>
+              {/* Stats */}
+              <div className="md:col-span-5 grid grid-cols-3 gap-4 relative z-10">
+                {[
+                  { label: 'Swing Speed', value: '85', unit: 'MPH', tag: null },
+                  { label: 'Tempo', value: '3:1:1', unit: '', tag: 'Optimal' },
+                  { label: 'Backswing', value: '0.92', unit: 'SEC', tag: null },
+                ].map(m => (
+                  <div key={m.label} className="text-center bg-white/[0.04] backdrop-blur border border-white/[0.06] rounded-2xl p-5">
+                    <div className="text-[11px] font-semibold text-[#888] mb-2.5 tracking-wide">{m.label}</div>
+                    <div className="font-serif text-[36px] md:text-[44px] font-medium text-[#F5EFE0] leading-none">{m.value}</div>
+                    {m.unit && <div className="text-[10px] text-[#777] font-semibold mt-2 tracking-wider">{m.unit}</div>}
+                    {m.tag && <span className="inline-block text-[10px] text-[#0A8F4F] bg-[#0A8F4F]/15 px-2.5 py-0.5 rounded-full mt-2 font-semibold">{m.tag}</span>}
+                    <svg width="100%" height="20" viewBox="0 0 100 20" className="mt-3"><path d="M0,12 Q15,4 30,10 T60,6 T90,8 T100,5" stroke="#DF9905" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7"/></svg>
+                  </div>
+                ))}
+              </div>
+              {/* Golfer — absolute so he can be full height */}
+              <div className="md:col-span-3 hidden md:flex items-end justify-center self-stretch relative">
+                <img
+                  src="/images/golfer.png"
+                  alt="Golfer swing analysis"
+                  className="absolute bottom-0 right-0 h-[110%] w-auto max-w-none"
+                  style={{ filter: 'drop-shadow(0 0 40px rgba(201,168,76,0.45))' }}
+                />
+              </div>
             </div>
           </div>
         </Reveal>
