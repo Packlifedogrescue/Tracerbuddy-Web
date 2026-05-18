@@ -30,19 +30,21 @@ export default function ProfilePage() {
         setUser(user)
         setName(bestName((p as any)?.display_name, user?.user_metadata))
         setCourse((p as any)?.home_course ?? '')
-        setLoading(false)
       }
-    )
+    ).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    await supabase.from('user_profiles').upsert({ display_name: name.trim(), home_course: course.trim() })
-    await supabase.auth.updateUser({ data: { display_name: name.trim() } })
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    try {
+      await supabase.from('user_profiles').upsert({ display_name: name.trim(), home_course: course.trim() })
+      await supabase.auth.updateUser({ data: { display_name: name.trim() } })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function sendPasswordReset() {

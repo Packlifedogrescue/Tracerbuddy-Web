@@ -26,8 +26,7 @@ export default function CoachPage() {
       setCards(c || [])
       setRounds(r)
       setClubs(cl)
-      setLoading(false)
-    })
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   async function generateAnalysis(round: any) {

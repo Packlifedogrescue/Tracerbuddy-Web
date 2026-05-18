@@ -21,18 +21,20 @@ export default function GoalsPage() {
       setGoal(g.data)
       setProfile(p)
       setTarget(g.data?.target_handicap?.toString() ?? '')
-      setLoading(false)
-    })
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   async function saveGoal(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    await supabase.from('goal_settings').upsert({ target_handicap: parseFloat(target) })
-    track('goal_updated', { target_handicap: parseFloat(target) })
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    try {
+      await supabase.from('goal_settings').upsert({ target_handicap: parseFloat(target) })
+      track('goal_updated', { target_handicap: parseFloat(target) })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const current   = profile?.handicap_index ?? 0
