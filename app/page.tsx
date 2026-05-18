@@ -352,10 +352,10 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">PRICING</div>
             <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1] mb-4">
-              Simple pricing.<br />Full access.
+              Invest in your game.
             </h2>
             <p className="text-[14.5px] text-[#666] max-w-[460px] mx-auto leading-[1.6]">
-              Every plan includes the complete TracerBuddy experience. No add-ons, no hidden fees.
+              Every plan includes the complete TracerBuddy experience — shot tracking, AI coaching, Apple Watch, and more. No add-ons, no hidden fees.
             </p>
           </div>
         </Reveal>
