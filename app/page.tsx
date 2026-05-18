@@ -135,7 +135,7 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto relative">
           <div className="hidden md:block absolute top-7 left-[18%] right-[18%] h-px border-t border-dashed border-black/15" />
           {[
-            { num: '01', title: 'Track your round', desc: 'Open the app at the first tee. Shots, clubs, and distances log automatically as you play.' },
+            { num: '01', title: 'Track your round', desc: 'Open the app at the first tee. Shots, clubs, and distances are captured automatically as you play.' },
             { num: '02', title: 'Review every miss', desc: 'After the round, see exactly where you lost strokes — and the patterns behind them.' },
             { num: '03', title: 'Improve faster', desc: 'AI coach cards turn raw data into a personalized plan for your next session.' },
           ].map((step, i) => (
@@ -156,7 +156,7 @@ export default function HomePage() {
       <section id="features" className="px-6 md:px-12 pb-20 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="text-center mb-10">
-            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">EVERYTHING YOU NEED</div>
+            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4">BUILT FOR PERFORMANCE</div>
             <h2 className="font-serif text-3xl md:text-[48px] font-medium tracking-[-0.02em] leading-[1.1]">
               The complete performance<br />system for serious golfers.
             </h2>
@@ -389,7 +389,7 @@ export default function HomePage() {
                 <span className="font-serif text-[48px] font-medium leading-none">$199.99</span>
                 <span className="text-[14px] text-[#888]">/ year</span>
               </div>
-              <p className="text-[13px] text-[#888] mb-6">Just $16.67/month — best value</p>
+              <p className="text-[13px] text-[#888] mb-6">Just $16.67/month, billed annually</p>
               <div className="space-y-3 mb-8">
                 {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Tournament & match-play modes'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
@@ -414,7 +414,7 @@ export default function HomePage() {
                 <h3 className="font-serif text-white text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] max-w-[500px]">
                   Every round should<br />make you <span className="italic text-[#DF9905]">better.</span>
                 </h3>
-                <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Be among the first to play smarter. Start free — no credit card needed.</p>
+                <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Start free. Play two full rounds on us. No credit card required.</p>
               </div>
               <Link href="/auth/signup" className="premium-btn-gold shrink-0">
                 Start Free — 2 Rounds
