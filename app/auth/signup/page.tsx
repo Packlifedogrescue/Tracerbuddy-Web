@@ -1,17 +1,16 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 export default function SignupPage() {
-  const router = useRouter()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [name, setName]         = useState('')
   const [loading, setLoading]   = useState(false)
   const [appleLoading, setAppleLoading] = useState(false)
   const [error, setError]       = useState('')
+  const [success, setSuccess]   = useState(false)
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -21,7 +20,7 @@ export default function SignupPage() {
       options: { data: { display_name: name } }
     })
     if (error) { setError(error.message); setLoading(false) }
-    else router.push('/dashboard')
+    else setSuccess(true)
   }
 
   async function handleAppleSignIn() {
@@ -34,6 +33,33 @@ export default function SignupPage() {
     })
     if (error) { setError(error.message); setAppleLoading(false) }
   }
+
+  if (success) return (
+    <div className="min-h-screen bg-[#FAFAF7] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm text-center">
+        <Link href="/">
+          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-20 w-auto mx-auto mb-10" />
+        </Link>
+        <div className="w-16 h-16 rounded-full bg-[#0A8F4F]/10 flex items-center justify-center mx-auto mb-6">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M6 14L11 19L22 8" stroke="#0A8F4F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h1 className="text-2xl font-semibold text-[#0A0A0A] mb-3">Check your inbox</h1>
+        <p className="text-[15px] text-[#555] leading-[1.65] mb-2">
+          We sent a confirmation link to
+        </p>
+        <p className="text-[15px] font-semibold text-[#0A0A0A] mb-6">{email}</p>
+        <p className="text-[13.5px] text-[#888] leading-[1.65] mb-8">
+          Click the link in that email to activate your account and start your 2 free rounds.
+        </p>
+        <p className="text-center text-[#666] text-sm">
+          Already confirmed?{' '}
+          <Link href="/auth/login" className="text-[#0A0A0A] font-bold hover:underline">Sign in</Link>
+        </p>
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-[#FAFAF7] flex items-center justify-center px-4">
