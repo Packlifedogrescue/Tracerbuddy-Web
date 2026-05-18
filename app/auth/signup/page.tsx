@@ -40,7 +40,7 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <Link href="/">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-14 w-auto mx-auto" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-20 w-auto mx-auto" />
           </Link>
           <h1 className="text-2xl font-light text-[#0A0A0A] mt-6 tracking-tight">Create your account</h1>
           <p className="text-sm text-[#666] mt-1.5">Start tracking your game in seconds</p>

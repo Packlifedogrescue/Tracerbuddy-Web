@@ -47,7 +47,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#FAFAF7] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
-          <Link href="/"><img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-14 w-auto mx-auto" /></Link>
+          <Link href="/"><img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-20 w-auto mx-auto" /></Link>
           <h1 className="text-2xl font-light text-[#0A0A0A] mt-6 tracking-tight">Reset your password</h1>
           <p className="text-sm text-[#666] mt-1.5">We'll send a reset link to your email</p>
         </div>
@@ -82,7 +82,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#FAFAF7] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
-          <Link href="/"><img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-14 w-auto mx-auto" /></Link>
+          <Link href="/"><img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-20 w-auto mx-auto" /></Link>
           <h1 className="text-2xl font-light text-[#0A0A0A] mt-6 tracking-tight">Welcome back</h1>
           <p className="text-sm text-[#666] mt-1.5">Sign in to your account</p>
         </div>
