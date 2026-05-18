@@ -3,6 +3,7 @@ import { Inter, Fraunces } from 'next/font/google'
 import './globals.css'
 import 'leaflet/dist/leaflet.css'
 import { ToastProvider } from '@/components/Toast'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -46,7 +47,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
-      <body className="antialiased"><ToastProvider>{children}</ToastProvider></body>
+      <body className="antialiased"><ToastProvider>{children}</ToastProvider><Analytics /></body>
     </html>
   )
 }
