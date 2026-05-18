@@ -386,10 +386,7 @@ export default function HomePage() {
                 <span className="font-serif text-[48px] font-medium leading-none">$199.99</span>
                 <span className="text-[14px] text-[#888]">/ year</span>
               </div>
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-[13px] text-[#888] line-through">$24.99/mo</span>
-                <span className="text-[13px] text-[#DF9905] font-semibold">→ $16.67/mo</span>
-              </div>
+              <p className="text-[13px] text-[#888] mb-6">Just $16.67/month, billed annually</p>
               <div className="space-y-3 mb-8">
                 {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Tournament & match-play modes'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
