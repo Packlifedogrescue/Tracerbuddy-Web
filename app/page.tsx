@@ -380,7 +380,7 @@ export default function HomePage() {
       {/* ════════════════════════ SWINGTRACE PREVIEW ════════════════════════ */}
       <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
-          <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl p-8 md:p-16 grid md:grid-cols-12 gap-8 items-end relative overflow-visible">
+          <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl px-8 md:px-16 pt-12 pb-0 grid md:grid-cols-12 gap-8 items-end relative overflow-hidden">
             <div className="md:col-span-4 relative z-10">
               <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">SWINGTRACE</div>
               <h2 className="font-serif text-3xl md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
@@ -406,7 +406,7 @@ export default function HomePage() {
               ))}
             </div>
             <div className="md:col-span-3 flex justify-center relative z-10">
-              <img src="/images/golfer.png" alt="Golfer swing analysis" className="w-full max-w-[380px] mx-auto block" style={{ filter: 'brightness(4) drop-shadow(0 0 30px rgba(201,168,76,0.5))' }} />
+              <img src="/images/golfer.png" alt="Golfer swing analysis" className="w-full max-w-[340px] mx-auto block" style={{ filter: 'drop-shadow(0 0 30px rgba(201,168,76,0.4))' }} />
             </div>
           </div>
         </Reveal>
