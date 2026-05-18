@@ -23,6 +23,20 @@ export const metadata: Metadata = {
     icon: '/images/logo-icon.png',
     apple: '/images/logo-icon.png',
   },
+  openGraph: {
+    title: 'TracerBuddy — Golf Performance Tracking',
+    description: 'Track every shot. Understand every round. The premium golf app for players who want to improve.',
+    url: 'https://tracerbuddy.app',
+    siteName: 'TracerBuddy',
+    images: [{ url: '/images/watch-section.png', width: 1448, height: 1086, alt: 'TracerBuddy app on iPhone and Apple Watch' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TracerBuddy — Golf Performance Tracking',
+    description: 'Track every shot. Understand every round. The premium golf app for players who want to improve.',
+    images: ['/images/watch-section.png'],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
