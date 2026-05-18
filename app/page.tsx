@@ -275,13 +275,13 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ iPHONE + APPLE WATCH ════════════════════════ */}
-      <section id="watch" className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
+      <section id="watch" className="px-6 md:px-12 pb-6 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl px-8 md:px-16 pt-14 pb-0 overflow-hidden relative">
             {/* Decorative gradient orb */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.12) 0%, transparent 60%)' }} />
-            <div className="relative z-10 grid md:grid-cols-2 gap-10 items-end">
-              <div className="pb-14">
+            <div className="relative z-10 grid md:grid-cols-5 gap-10 items-end">
+              <div className="md:col-span-2 pb-14">
                 <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">iPHONE + APPLE WATCH</div>
                 <h2 className="font-serif text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mb-8">
                   Everything you need.<br />Right on your wrist.
@@ -302,8 +302,8 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
-              <div className="flex justify-center items-end">
-                <Image src="/images/watch-section.png" alt="iPhone and Apple Watch" width={1448} height={1086} className="w-full h-auto max-w-[780px]" />
+              <div className="md:col-span-3 flex justify-center items-end">
+                <Image src="/images/watch-section.png" alt="iPhone and Apple Watch" width={1448} height={1086} className="w-full h-auto scale-[1.08] origin-bottom" />
               </div>
             </div>
           </div>
@@ -311,7 +311,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ SWINGTRACE PREVIEW ════════════════════════ */}
-      <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
+      <section className="px-6 md:px-12 pb-6 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl overflow-hidden relative">
             <div className="grid md:grid-cols-12 gap-8 px-8 md:px-16 pt-14 pb-14 items-center">
