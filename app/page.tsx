@@ -328,10 +328,10 @@ export default function HomePage() {
       {/* ════════════════════════ iPHONE + APPLE WATCH ════════════════════════ */}
       <section id="watch" className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
-          <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl p-8 md:p-16 grid md:grid-cols-2 gap-10 items-center overflow-hidden relative">
+          <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl p-8 md:p-16 grid md:grid-cols-5 gap-10 items-center overflow-hidden relative">
             {/* Decorative gradient orb */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.12) 0%, transparent 60%)' }} />
-            <div className="relative z-10">
+            <div className="relative z-10 md:col-span-2">
               <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">iPHONE + APPLE WATCH</div>
               <h2 className="font-serif text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mb-8">
                 Everything you need.<br />Right on your wrist.
@@ -352,8 +352,8 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <div className="relative z-10 flex justify-center">
-              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full max-w-[680px] h-auto" />
+            <div className="relative z-10 md:col-span-3 flex justify-center">
+              <img src="/images/watch-section.png" alt="iPhone and Apple Watch" className="w-full h-auto" />
             </div>
           </div>
         </Reveal>
