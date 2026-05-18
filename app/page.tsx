@@ -63,9 +63,6 @@ export default function HomePage() {
                   <div className="text-[14px] font-semibold leading-none text-[#555]">App Store</div>
                 </div>
               </div>
-              <div className="text-[12.5px] text-[#666]">
-                GPS maps for <span className="font-semibold text-[#1A1A1A]">42,000+ courses</span> worldwide
-              </div>
             </div>
 
             <div className="flex items-center gap-5 text-[12px] text-[#888]">
