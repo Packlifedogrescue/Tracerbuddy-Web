@@ -17,8 +17,10 @@ const fraunces = Fraunces({
   axes: ['opsz'],
 })
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracerbuddy.app'
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://tracerbuddy.app'),
+  metadataBase: new URL(siteUrl),
   title: 'TracerBuddy — Know your shot. Know your miss. Know what to fix.',
   description: 'Premium shot tracking, course mapping, swing motion data, and round insights. The golf performance app for serious players.',
   icons: {
@@ -28,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'TracerBuddy — Golf Performance Tracking',
     description: 'Track every shot. Understand every round. The premium golf app for players who want to improve.',
-    url: 'https://tracerbuddy.app',
+    url: siteUrl,
     siteName: 'TracerBuddy',
     images: [{ url: '/images/og-image.png', width: 1500, height: 788, alt: 'TracerBuddy — Golf shot tracking that actually helps your game' }],
     type: 'website',
