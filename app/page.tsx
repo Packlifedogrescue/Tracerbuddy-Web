@@ -375,33 +375,33 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ SWINGTRACE PREVIEW ════════════════════════ */}
-      <section className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
+      <section className="px-4 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
           <div className="bg-[#0D2818] text-[#F5EFE0] rounded-3xl overflow-hidden relative">
-            <div className="grid md:grid-cols-12 gap-8 px-8 md:px-16 pt-14 pb-14 items-center">
+            <div className="grid md:grid-cols-12 gap-6 md:gap-8 px-6 md:px-16 pt-10 md:pt-14 pb-10 md:pb-14 items-center">
               {/* Text */}
               <div className="md:col-span-4 relative z-10">
-                <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">SWINGTRACE</div>
-                <h2 className="font-serif text-3xl md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
+                <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-4 md:mb-5">SWINGTRACE</div>
+                <h2 className="font-serif text-[26px] md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-3 md:mb-4">
                   See your swing.<br />Fix what's broken.
                 </h2>
-                <p className="text-[14px] text-[#aaa] leading-[1.65]">
+                <p className="text-[13px] md:text-[14px] text-[#aaa] leading-[1.65]">
                   Apple Watch motion sensors capture every detail — so you can stop guessing what's wrong with your swing.
                 </p>
               </div>
               {/* Stats */}
-              <div className="md:col-span-8 grid grid-cols-3 gap-4 relative z-10">
+              <div className="md:col-span-8 grid grid-cols-3 gap-2.5 md:gap-4 relative z-10">
                 {[
-                  { label: 'Swing Speed', value: '85', unit: 'MPH', tag: null },
+                  { label: 'Swing\nSpeed', value: '85', unit: 'MPH', tag: null },
                   { label: 'Tempo', value: '3:1:1', unit: '', tag: 'Optimal' },
                   { label: 'Backswing', value: '0.92', unit: 'SEC', tag: null },
                 ].map(m => (
-                  <div key={m.label} className="text-center bg-white/[0.04] backdrop-blur border border-white/[0.06] rounded-2xl p-5">
-                    <div className="text-[11px] font-semibold text-[#888] mb-2.5 tracking-wide">{m.label}</div>
-                    <div className="font-serif text-[36px] md:text-[44px] font-medium text-[#F5EFE0] leading-none">{m.value}</div>
-                    {m.unit && <div className="text-[10px] text-[#777] font-semibold mt-2 tracking-wider">{m.unit}</div>}
-                    {m.tag && <span className="inline-block text-[10px] text-[#0A8F4F] bg-[#0A8F4F]/15 px-2.5 py-0.5 rounded-full mt-2 font-semibold">{m.tag}</span>}
-                    <svg width="100%" height="20" viewBox="0 0 100 20" className="mt-3"><path d="M0,12 Q15,4 30,10 T60,6 T90,8 T100,5" stroke="#DF9905" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7"/></svg>
+                  <div key={m.label} className="text-center bg-white/[0.04] backdrop-blur border border-white/[0.06] rounded-2xl p-3 md:p-5">
+                    <div className="text-[9px] md:text-[11px] font-semibold text-[#888] mb-2 tracking-wide whitespace-pre-line leading-tight">{m.label}</div>
+                    <div className="font-serif text-[28px] md:text-[44px] font-medium text-[#F5EFE0] leading-none">{m.value}</div>
+                    {m.unit && <div className="text-[9px] md:text-[10px] text-[#777] font-semibold mt-1.5 md:mt-2 tracking-wider">{m.unit}</div>}
+                    {m.tag && <span className="inline-block text-[9px] md:text-[10px] text-[#0A8F4F] bg-[#0A8F4F]/15 px-2 py-0.5 rounded-full mt-1.5 md:mt-2 font-semibold">{m.tag}</span>}
+                    <svg width="100%" height="16" viewBox="0 0 100 20" className="mt-2 md:mt-3"><path d="M0,12 Q15,4 30,10 T60,6 T90,8 T100,5" stroke="#DF9905" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.7"/></svg>
                   </div>
                 ))}
               </div>
