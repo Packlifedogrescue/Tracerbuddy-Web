@@ -67,7 +67,7 @@ export default function AboutPage() {
               We took the tools that elite coaches use — strokes gained, shot dispersion, club distance mapping — and rebuilt them into something you can open on the 1st tee without reading a manual.
             </p>
             <p className="text-[14.5px] text-[#555] leading-[1.75] mt-4">
-              Every round you play feeds into your profile. Every missed fairway, three-putt, and chunked chip gets logged, analysed, and turned into a coaching card that tells you exactly what to fix.
+              Every round you play feeds into your profile. Every missed fairway, three-putt, and chunked chip gets logged, analyzed, and turned into a coaching card that tells you exactly what to fix.
             </p>
           </div>
           <div className="flex flex-col gap-5">

@@ -250,7 +250,7 @@ export default function HomePage() {
             {
               num: '01', label: 'SCORING & ROUNDS',
               title: 'Digital Scorecards',
-              desc: 'Stroke play, stableford, match play, skins, best ball — every format covered.',
+              desc: 'Stroke play, Stableford, match play, skins, best ball — every format covered.',
               features: ['Auto-fill par & handicap', 'Stableford & match play', 'Skins & best ball modes', 'Round history per course', 'Export PDF scorecards'],
             },
             {
