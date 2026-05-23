@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, FileText, Map, Activity, Watch, Wrench,
   BarChart2, Settings2, Star, Gift, ChevronRight,
-  Brain, Target, Dumbbell, Trophy, Users, Flag, X, Check,
+  Brain, Target, Dumbbell, Trophy, Users, Flag, X, Check, Globe,
 } from 'lucide-react'
 import { fetchUserProfile } from '@/lib/supabase'
 
@@ -23,6 +23,7 @@ const nav = [
   { href: '/dashboard/tournament',   icon: Trophy,    label: 'Tournament'  },
   { href: '/dashboard/buddies',      icon: Users,     label: 'Buddies'     },
   { href: '/dashboard/stats',        icon: BarChart2, label: 'Insights'    },
+  { href: '/community',              icon: Globe,     label: 'Community'   },
   { href: '/dashboard/profile',      icon: Settings2, label: 'Settings'    },
 ]
 
