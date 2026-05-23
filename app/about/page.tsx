@@ -46,7 +46,7 @@ export default function AboutPage() {
           <div className="relative z-10 max-w-[680px]">
             <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-6">THE PROBLEM</div>
             <p className="font-serif text-[24px] md:text-[32px] font-medium text-[#F5EFE0] leading-[1.35] tracking-[-0.01em]">
-              The average golfer plays 25 rounds a year and never meaningfully improves — not because they don't practise, but because they're practising the wrong things.
+              The average golfer plays 25 rounds a year and never meaningfully improves — not because they don't practice, but because they're practicing the wrong things.
             </p>
             <p className="text-[15px] text-[#888] leading-[1.75] mt-6">
               Without data, every round is just a feeling. You think your driver is the problem. The numbers say it's your wedge game. You spend six months on the range fixing the wrong thing. TracerBuddy ends that cycle.
