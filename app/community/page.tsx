@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  MessageCircle, Share2, Flag, Lightbulb, HelpCircle,
+  MessageCircle, Share2, Lightbulb, HelpCircle,
   MapPin, Trophy, Plus, TrendingUp, CheckCheck,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -73,23 +73,62 @@ function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
 }
 
 export default function CommunityPage() {
-  const [posts, setPosts]             = useState<Post[]>([])
-  const [filter, setFilter]           = useState<string>('all')
-  const [loading, setLoading]         = useState(true)
-  const [userId, setUserId]           = useState<string | null>(null)
-  const [newPostOpen, setNewPostOpen] = useState(false)
-  const [page, setPage]               = useState(0)
-  const [hasMore, setHasMore]         = useState(true)
-  const [copiedId, setCopiedId]       = useState<string | null>(null)
+  const [posts, setPosts]                   = useState<Post[]>([])
+  const [filter, setFilter]                 = useState<string>('all')
+  const [loading, setLoading]               = useState(true)
+  const [userId, setUserId]                 = useState<string | null>(null)
+  const [userName, setUserName]             = useState<string | null>(null)
+  const [newPostOpen, setNewPostOpen]       = useState(false)
+  const [page, setPage]                     = useState(0)
+  const [hasMore, setHasMore]               = useState(true)
+  const [copiedId, setCopiedId]             = useState<string | null>(null)
+  const [stats, setStats]                   = useState({ golfers: 0, rounds: 0, tips: 0 })
+  const [typeCounts, setTypeCounts]         = useState<Record<string, number>>({})
+  const [topContributors, setTopContributors] = useState<{ name: string; count: number }[]>([])
   const PAGE_SIZE = 15
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
+    async function init() {
+      const { data: authData } = await supabase.auth.getUser()
+      if (authData.user) {
+        setUserId(authData.user.id)
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('display_name')
+          .eq('user_id', authData.user.id)
+          .single()
+        setUserName(profile?.display_name ?? authData.user.email?.split('@')[0] ?? null)
+      }
+
+      const { data } = await supabase
+        .from('community_posts')
+        .select('user_id, type, author_name')
+      if (data) {
+        const golfers = new Set(data.map((p: any) => p.user_id)).size
+        const rounds  = data.filter((p: any) => p.type === 'round_recap').length
+        const tips    = data.filter((p: any) => p.type === 'tip').length
+        setStats({ golfers, rounds, tips })
+
+        const counts: Record<string, number> = {}
+        for (const p of data) counts[p.type] = (counts[p.type] ?? 0) + 1
+        setTypeCounts(counts)
+
+        const authorMap: Record<string, number> = {}
+        for (const p of data) authorMap[p.author_name] = (authorMap[p.author_name] ?? 0) + 1
+        const sorted = Object.entries(authorMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([name, count]) => ({ name, count }))
+        setTopContributors(sorted)
+      }
+    }
+    init()
   }, [])
 
   useEffect(() => {
     setPosts([]); setPage(0); setHasMore(true)
     loadPosts(0, true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
 
   async function loadPosts(pageNum: number, reset = false) {
@@ -150,14 +189,42 @@ export default function CommunityPage() {
     navigator.clipboard.writeText(url).then(() => { setCopiedId(post.id); setTimeout(() => setCopiedId(null), 2000) })
   }
 
+  const totalPosts = Object.values(typeCounts).reduce((a, b) => a + b, 0)
+
   return (
     <div>
       {/* Hero banner */}
-      <div className="bg-[#0D2818] text-white">
+      <div
+        className="bg-[#0D2818] text-white"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px)',
+          backgroundSize: '22px 22px',
+        }}
+      >
         <div className="max-w-5xl mx-auto px-5 py-10 flex items-center justify-between gap-6">
           <div>
+            {userName && (
+              <p className="text-[12px] font-semibold text-[#7aab8a] tracking-wide mb-1.5">
+                Welcome back, {userName.split(' ')[0]}
+              </p>
+            )}
             <h1 className="font-serif text-[32px] md:text-[40px] font-medium tracking-tight leading-tight">Community</h1>
-            <p className="text-[14px] text-[#8fad9a] mt-2 max-w-sm">Share rounds, tips, and golf talk with fellow players.</p>
+            <p className="text-[14px] text-[#8fad9a] mt-1.5 max-w-sm">Share rounds, tips, and golf talk with fellow players.</p>
+            {(stats.golfers > 0 || stats.rounds > 0 || stats.tips > 0) && (
+              <div className="flex items-center gap-3 mt-3.5 flex-wrap">
+                <span className="text-[12px] text-[#6a9477]">
+                  <span className="font-bold text-white">{stats.golfers}</span> golfer{stats.golfers !== 1 ? 's' : ''}
+                </span>
+                <span className="text-[#2e5c3e]">·</span>
+                <span className="text-[12px] text-[#6a9477]">
+                  <span className="font-bold text-white">{stats.rounds}</span> rounds shared
+                </span>
+                <span className="text-[#2e5c3e]">·</span>
+                <span className="text-[12px] text-[#6a9477]">
+                  <span className="font-bold text-white">{stats.tips}</span> tips posted
+                </span>
+              </div>
+            )}
           </div>
           <button
             onClick={() => userId ? setNewPostOpen(true) : window.location.href = '/auth/login'}
@@ -175,19 +242,29 @@ export default function CommunityPage() {
           <div className="flex-1 min-w-0">
             {/* Filter tabs */}
             <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">
-              {FILTERS.map(f => (
-                <button
-                  key={f.value}
-                  onClick={() => setFilter(f.value)}
-                  className={`shrink-0 text-[12.5px] font-semibold px-4 py-2 rounded-xl transition-all ${
-                    filter === f.value
-                      ? 'bg-[#0D2818] text-white shadow-sm'
-                      : 'bg-white text-[#555] hover:bg-[#EDE8DC] border border-black/[0.06]'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+              {FILTERS.map(f => {
+                const count = f.value === 'all' ? totalPosts : (typeCounts[f.value] ?? 0)
+                return (
+                  <button
+                    key={f.value}
+                    onClick={() => setFilter(f.value)}
+                    className={`shrink-0 flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-xl transition-all ${
+                      filter === f.value
+                        ? 'bg-[#0D2818] text-white shadow-sm'
+                        : 'bg-white text-[#555] hover:bg-[#EDE8DC] border border-black/[0.06]'
+                    }`}
+                  >
+                    {f.label}
+                    {count > 0 && (
+                      <span className={`text-[10.5px] font-bold px-1.5 py-0.5 rounded-full ${
+                        filter === f.value ? 'bg-white/20 text-white' : 'bg-black/[0.07] text-[#777]'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
 
             {/* Posts */}
@@ -339,11 +416,33 @@ export default function CommunityPage() {
                     }`}
                   >
                     <span className={`w-2 h-2 rounded-full shrink-0 ${m.dot}`} />
-                    <span className={`text-[13px] font-semibold ${filter === key ? 'text-[#111]' : 'text-[#444]'}`}>{m.label}s</span>
+                    <span className={`flex-1 text-[13px] font-semibold ${filter === key ? 'text-[#111]' : 'text-[#444]'}`}>{m.label}s</span>
+                    {(typeCounts[key] ?? 0) > 0 && (
+                      <span className="text-[11px] font-bold text-[#aaa]">{typeCounts[key]}</span>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Top contributors */}
+            {topContributors.length > 0 && (
+              <div className="bg-white rounded-2xl border border-black/[0.06] overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#F0EBE0]">
+                  <h3 className="text-[11px] font-bold text-[#888] tracking-[0.15em]">TOP CONTRIBUTORS</h3>
+                </div>
+                <div className="p-2">
+                  {topContributors.map(({ name, count }, i) => (
+                    <div key={name} className="flex items-center gap-3 px-3 py-2">
+                      <span className="text-[11px] font-bold text-[#ccc] w-4 shrink-0">{i + 1}</span>
+                      <Avatar name={name} size="sm" />
+                      <span className="flex-1 text-[13px] font-semibold text-[#111] truncate">{name}</span>
+                      <span className="text-[11px] font-bold text-[#aaa] shrink-0">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* CTA */}
             <div className="bg-[#0D2818] text-[#F5EFE0] rounded-2xl p-5 relative overflow-hidden">
