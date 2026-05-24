@@ -27,7 +27,7 @@ export default function CommunityHeader() {
         {/* Left: logo + nav */}
         <div className="flex items-center gap-8">
           <Link href="/">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-10 w-auto" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-14 w-auto" />
           </Link>
           <nav className="hidden sm:flex items-center gap-6">
             <Link href="/community" className="text-[13px] font-semibold text-[#111] border-b-2 border-[#DF9905] pb-0.5">

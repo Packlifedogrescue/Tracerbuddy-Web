@@ -156,7 +156,6 @@ export default function CommunityPage() {
       <div className="bg-[#0D2818] text-white">
         <div className="max-w-5xl mx-auto px-5 py-10 flex items-center justify-between gap-6">
           <div>
-            <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.2em] mb-2">TRACERBUDDY</div>
             <h1 className="font-serif text-[32px] md:text-[40px] font-medium tracking-tight leading-tight">Community</h1>
             <p className="text-[14px] text-[#8fad9a] mt-2 max-w-sm">Share rounds, tips, and golf talk with fellow players.</p>
           </div>
