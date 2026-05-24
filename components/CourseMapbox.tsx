@@ -101,7 +101,7 @@ export default function CourseMapbox({
   const prevHole   = currentIdx > 0 ? sortedNums[currentIdx - 1] : null
   const nextHole   = currentIdx < sortedNums.length - 1 ? sortedNums[currentIdx + 1] : null
 
-  // ── Initial fit + terrain ────────────────────────────────────────────────────
+  // ── Initial terrain setup ────────────────────────────────────────────────────
   const onLoad = useCallback(() => {
     if (!mapRef.current) return
     const map = mapRef.current.getMap() as any
@@ -116,25 +116,27 @@ export default function CourseMapbox({
       })
       map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 })
     } catch (_) {}
+  }, [])
 
-    const allHoles = holesRef.current
-    if (allHoles.length === 0) return
+  // ── Fit to full course whenever holes arrive or map finishes loading ──────────
+  // Runs on both map load and holes prop change so async data is handled correctly.
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || holes.length === 0 || selectedHole != null) return
     const pts: [number, number][] = []
-    allHoles.forEach(h => {
+    holes.forEach(h => {
       const tLat = parseNum(h.TeeLatitude);  const tLng = parseNum(h.TeeLongitude)
       const gLat = parseNum(h.GreenLatitude); const gLng = parseNum(h.GreenLongitude)
       if (tLat && tLng) pts.push([tLng, tLat])
       if (gLat && gLng) pts.push([gLng, gLat])
     })
-    if (pts.length >= 2) {
-      const lngs = pts.map(p => p[0])
-      const lats = pts.map(p => p[1])
-      mapRef.current.fitBounds(
-        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-        { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 20 },
-      )
-    }
-  }, [])
+    if (pts.length < 2) return
+    const lngs = pts.map(p => p[0])
+    const lats  = pts.map(p => p[1])
+    mapRef.current.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 20 },
+    )
+  }, [mapLoaded, holes, selectedHole])
 
   // ── Fly when selectedHole or mapLoaded changes ────────────────────────────────
   // Using getMap().flyTo() (raw mapbox-gl instance) for guaranteed compatibility.
