@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import NotificationBell from '@/components/NotificationBell'
 
 export default function CommunityHeader() {
   const [user, setUser]   = useState<{ name: string } | null>(null)
@@ -41,6 +42,7 @@ export default function CommunityHeader() {
           {ready && (
             user ? (
               <>
+                <NotificationBell />
                 <div className="hidden sm:flex items-center gap-2 text-[13px] text-[#555]">
                   <div className="w-7 h-7 rounded-full bg-[#0D2818] flex items-center justify-center text-white text-[11px] font-bold">
                     {user.name.charAt(0).toUpperCase()}

@@ -1,20 +1,16 @@
 'use client'
 import type { ReactNode } from 'react'
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import UserInfo from '@/components/UserInfo'
 import CommandPalette from '@/components/CommandPalette'
-import NotificationPanel from '@/components/NotificationPanel'
-import { Search, Bell } from 'lucide-react'
+import NotificationBell from '@/components/NotificationBell'
+import { Search } from 'lucide-react'
 import { track } from '@/lib/analytics'
-import { supabase } from '@/lib/supabase'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const [bellOpen, setBellOpen]       = useState(false)
-  const [searchOpen, setSearchOpen]   = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
-  const bellRef  = useRef<HTMLDivElement>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
 
   // Auto page-view tracking on every navigation
@@ -22,15 +18,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const page = pathname.replace('/dashboard', '') || 'home'
     track('page_view', { page })
   }, [pathname])
-
-  // Close bell on outside click
-  useEffect(() => {
-    function handle(e: MouseEvent) {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false)
-    }
-    document.addEventListener('mousedown', handle)
-    return () => document.removeEventListener('mousedown', handle)
-  }, [])
 
   // Cmd+K / Ctrl+K to open search
   const openSearch = useCallback(() => setSearchOpen(true), [])
@@ -44,29 +31,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', handle)
     return () => window.removeEventListener('keydown', handle)
   }, [openSearch])
-
-  // Compute unread count from pending buddy requests + unread stored IDs
-  useEffect(() => {
-    async function count() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { count: pending } = await supabase
-        .from('buddy_connections')
-        .select('*', { count: 'exact', head: true })
-        .eq('buddy_id', user.id)
-        .eq('status', 'pending')
-      // Also count recent rounds not in read list
-      const { count: roundCount } = await supabase
-        .from('rounds')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-      const readStored: string[] = JSON.parse(localStorage.getItem('tb_read_notifs') || '[]')
-      const totalEstimated = (pending ?? 0) + Math.min(roundCount ?? 0, 5)
-      const unread = Math.max(0, totalEstimated - readStored.length)
-      setUnreadCount(Math.min(unread, 9))
-    }
-    count()
-  }, [bellOpen])
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#F5EFE0]">
@@ -98,22 +62,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Right: bell + user */}
         <div className="ml-auto flex items-center gap-2">
 
-          {/* Notification bell */}
-          <div ref={bellRef} className="relative">
-            <button
-              onClick={() => setBellOpen(o => !o)}
-              className="relative w-9 h-9 rounded-full hover:bg-[#F5EFE0] flex items-center justify-center transition-colors"
-            >
-              <Bell className="w-[18px] h-[18px] text-gray-500" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[#DF9905] rounded-full border-2 border-white flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-white leading-none px-0.5">{unreadCount}</span>
-                </span>
-              )}
-            </button>
-
-            {bellOpen && <NotificationPanel onClose={() => setBellOpen(false)} />}
-          </div>
+          <NotificationBell />
 
           <UserInfo />
         </div>
