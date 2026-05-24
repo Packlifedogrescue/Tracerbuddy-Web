@@ -330,23 +330,18 @@ export default function CommunityPage() {
                 <h3 className="text-[11px] font-bold text-[#888] tracking-[0.15em]">POST TYPES</h3>
               </div>
               <div className="p-2">
-                {Object.entries(TYPE_META).map(([key, m]) => {
-                  const Icon = m.icon
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setFilter(filter === key ? 'all' : key)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                        filter === key ? 'bg-[#F5EFE0]' : 'hover:bg-[#F7F4EE]'
-                      }`}
-                    >
-                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${m.bg}`}>
-                        <Icon className={`w-3.5 h-3.5 ${m.text}`} />
-                      </span>
-                      <span className={`text-[13px] font-semibold ${filter === key ? 'text-[#111]' : 'text-[#444]'}`}>{m.label}s</span>
-                    </button>
-                  )
-                })}
+                {Object.entries(TYPE_META).map(([key, m]) => (
+                  <button
+                    key={key}
+                    onClick={() => setFilter(filter === key ? 'all' : key)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
+                      filter === key ? 'bg-[#F5EFE0]' : 'hover:bg-[#F7F4EE]'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${m.dot}`} />
+                    <span className={`text-[13px] font-semibold ${filter === key ? 'text-[#111]' : 'text-[#444]'}`}>{m.label}s</span>
+                  </button>
+                ))}
               </div>
             </div>
 
