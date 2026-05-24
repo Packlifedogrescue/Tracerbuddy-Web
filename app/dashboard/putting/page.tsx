@@ -135,7 +135,7 @@ export default function PuttingPage() {
         <div>
             <div className="flex items-center gap-2">
             <h1 className="text-[26px] font-black text-[#111] tracking-tight">PuttBuddy</h1>
-            {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+            
           </div>
           <p className="text-[13px] text-gray-400 mt-0.5">Stop counting putts. Start fixing them.</p>
         </div>

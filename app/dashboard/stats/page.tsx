@@ -66,7 +66,7 @@ export default function StatsPage() {
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-[26px] font-black text-[#111] tracking-tight">Stats Overview</h1>
-          {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+          
         </div>
         <p className="text-[13.5px] text-gray-400 mt-0.5">
           Based on {r.length} round{r.length !== 1 ? 's' : ''} tracked

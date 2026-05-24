@@ -316,7 +316,7 @@ export default function DashboardPage() {
             <h1 className="text-[26px] font-black text-[#111] tracking-tight leading-tight">
               Welcome back, {firstName}
             </h1>
-            {live && <span className="flex items-center gap-1 text-[10px] font-bold text-[#22A06B] bg-green-50 px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse inline-block" />Live</span>}
+            
           </div>
           <p className="text-[13.5px] text-gray-400 mt-0.5">
             {totalRounds > 0
@@ -702,7 +702,6 @@ export default function DashboardPage() {
                 <Watch className="w-3.5 h-3.5 text-[#C9A84C]" />
                 <span className="text-[13px] font-bold text-[#111]">Apple Watch</span>
               </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F0FFF4] text-[#22A06B]">Live</span>
             </div>
             <p className="text-[11.5px] text-gray-400 leading-relaxed mb-3">
               Swing speed, shot detection, and GPS yardages — all tracked from your wrist without touching your phone.
