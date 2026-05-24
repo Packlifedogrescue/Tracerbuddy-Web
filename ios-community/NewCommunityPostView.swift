@@ -170,7 +170,7 @@ struct NewCommunityPostView: View {
         if let profile = try? await SupabaseClient.shared
             .from("user_profiles")
             .select("display_name")
-            .eq("user_id", value: user.id.uuidString)
+            .eq("id", value: user.id.uuidString)
             .single()
             .execute()
             .value as [String: String]?,
