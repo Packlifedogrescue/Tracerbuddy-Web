@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
     // Trend: compare last 5 vs prior 5
     const recentDiffs = differentials.slice(0, 5)
     const priorDiffs = differentials.slice(5, 10)
-    const recentAvg = recentDiffs.reduce((s, d) => s + d, 0) / recentDiffs.length
-    const priorAvg = priorDiffs.length ? priorDiffs.reduce((s, d) => s + d, 0) / priorDiffs.length : recentAvg
+    const recentAvg = recentDiffs.reduce((s: number, d: number) => s + d, 0) / recentDiffs.length
+    const priorAvg = priorDiffs.length ? priorDiffs.reduce((s: number, d: number) => s + d, 0) / priorDiffs.length : recentAvg
     const trend = recentAvg < priorAvg - 0.5 ? 'improving' : recentAvg > priorAvg + 0.5 ? 'regressing' : 'stable'
 
     return NextResponse.json({
