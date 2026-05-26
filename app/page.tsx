@@ -113,7 +113,7 @@ export default function HomePage() {
               src="/images/hero-phone.png"
               alt="TracerBuddy app on iPhone"
               width={1024} height={1536}
-              className="relative max-h-[750px] w-auto drop-shadow-[0_40px_80px_rgba(26,26,26,0.2)] mix-blend-multiply"
+              className="relative max-h-[680px] w-auto drop-shadow-[0_40px_80px_rgba(26,26,26,0.2)] mix-blend-multiply"
               priority
             />
           </Reveal>
