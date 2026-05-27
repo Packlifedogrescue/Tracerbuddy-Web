@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAIL = 'miller.brett88@gmail.com'
+const ADMIN_EMAIL = 'brett@tracerbuddy.com'
 
 const sb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,7 +10,7 @@ const sb = () => createClient(
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('x-admin-email')
-  if (authHeader !== ADMIN_EMAIL) {
+  if (authHeader?.toLowerCase() !== ADMIN_EMAIL) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
