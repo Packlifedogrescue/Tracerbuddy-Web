@@ -42,7 +42,6 @@ export async function GET(req: NextRequest) {
     db.from('rounds').select('played_at').gte('played_at', weekStart).order('played_at', { ascending: true }),
   ])
 
-  // Tally top courses
   const courseCount: Record<string, number> = {}
   for (const r of topCourses ?? []) {
     if (r.course_name) courseCount[r.course_name] = (courseCount[r.course_name] || 0) + 1
@@ -52,7 +51,6 @@ export async function GET(req: NextRequest) {
     .slice(0, 5)
     .map(([name, count]) => ({ name, count }))
 
-  // Daily rounds for mini chart (last 7 days)
   const dayBuckets: Record<string, number> = {}
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000)

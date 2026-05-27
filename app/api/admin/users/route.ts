@@ -35,7 +35,6 @@ export async function GET(req: NextRequest) {
   const { data: users, count, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Get round counts per user
   const userIds = (users ?? []).map((u: any) => u.id)
   const { data: roundCounts } = await db
     .from('rounds')
@@ -47,7 +46,6 @@ export async function GET(req: NextRequest) {
     countMap[r.user_id] = (countMap[r.user_id] || 0) + 1
   }
 
-  // Get last active (most recent round)
   const { data: lastRounds } = await db
     .from('rounds')
     .select('user_id, played_at')
@@ -69,7 +67,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ users: enriched, total: count ?? 0, page, limit })
 }
 
-// DELETE a user (soft delete — clear personal data)
 export async function DELETE(req: NextRequest) {
   const authHeader = req.headers.get('x-admin-email')
   if (authHeader !== ADMIN_EMAIL) {
