@@ -1,7 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Users, Flag, Map, TrendingUp, Activity, UserPlus } from 'lucide-react'
+import {
+  Users, Flag, Map, TrendingUp, Activity, UserPlus,
+  Target, Dumbbell, Trophy, MessageSquare, GitCommit, Disc,
+} from 'lucide-react'
 import { format } from 'date-fns'
 
 async function adminFetch(path: string, email: string) {
@@ -10,7 +13,7 @@ async function adminFetch(path: string, email: string) {
 }
 
 function StatCard({ icon: Icon, label, value, sub, color = '#DF9905' }: {
-  icon: any; label: string; value: string | number; sub?: string; color?: string
+  icon: any; label: string; value: string | number | null; sub?: string; color?: string
 }) {
   return (
     <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-5">
@@ -20,7 +23,9 @@ function StatCard({ icon: Icon, label, value, sub, color = '#DF9905' }: {
         </div>
         <span className="text-[11px] font-semibold tracking-[0.12em] text-gray-500 uppercase">{label}</span>
       </div>
-      <div className="text-3xl font-bold text-white">{value.toLocaleString()}</div>
+      <div className="text-3xl font-bold text-white">
+        {value != null ? value.toLocaleString() : '—'}
+      </div>
       {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
     </div>
   )
@@ -77,13 +82,34 @@ export default function AdminOverview() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard icon={Users}     label="Total Users"      value={data.totalUsers}   sub={`+${data.newUsersWeek} this week`} />
-        <StatCard icon={Flag}      label="Total Rounds"     value={data.totalRounds}  sub={`${data.roundsToday} today`} color="#4ADE80" />
-        <StatCard icon={Map}       label="Courses"          value={data.totalCourses} color="#60A5FA" />
-        <StatCard icon={Activity}  label="Rounds This Week" value={data.roundsWeek}   color="#A78BFA" />
-        <StatCard icon={UserPlus}  label="New Users (7d)"   value={data.newUsersWeek} color="#F472B6" />
-        <StatCard icon={TrendingUp} label="Rounds Today"    value={data.roundsToday}  color="#34D399" />
+      <div>
+        <h2 className="text-xs font-semibold tracking-[0.1em] text-gray-600 uppercase mb-3">Users & Rounds</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard icon={Users}    label="Total Users"      value={data.totalUsers}   sub={`+${data.newUsersWeek} this week`} />
+          <StatCard icon={UserPlus} label="New (7 days)"     value={data.newUsersWeek} color="#F472B6" />
+          <StatCard icon={Flag}     label="Total Rounds"     value={data.totalRounds}  sub={`${data.roundsToday} today`} color="#4ADE80" />
+          <StatCard icon={Activity} label="Rounds This Week" value={data.roundsWeek}   color="#A78BFA" />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xs font-semibold tracking-[0.1em] text-gray-600 uppercase mb-3">Performance Data</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard icon={TrendingUp} label="Avg Score"      value={data.avgScore}      sub="across all rounds" color="#34D399" />
+          <StatCard icon={Map}        label="Courses Played" value={data.totalCourses}  color="#60A5FA" />
+          <StatCard icon={GitCommit}  label="Holes Tracked"  value={data.totalHoleStats} color="#F59E0B" />
+          <StatCard icon={Target}     label="Swing Videos"   value={data.totalSwings}   color="#EC4899" />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xs font-semibold tracking-[0.1em] text-gray-600 uppercase mb-3">App Activity</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard icon={Dumbbell}      label="Practice Sessions" value={data.totalPractice}    color="#8B5CF6" />
+          <StatCard icon={Disc}          label="Putts Logged"      value={data.totalPutts}       color="#06B6D4" />
+          <StatCard icon={Trophy}        label="Tournaments"       value={data.totalTournaments} color="#F97316" />
+          <StatCard icon={MessageSquare} label="Community Posts"   value={data.totalPosts}       color="#84CC16" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -33,6 +33,13 @@ export async function GET(req: NextRequest) {
     { count: totalRounds },
     { count: roundsToday },
     { count: roundsWeek },
+    { count: totalHoleStats },
+    { count: totalPractice },
+    { count: totalSwings },
+    { count: totalPutts },
+    { count: totalPosts },
+    { count: totalTournaments },
+    { data: allScores },
     { data: topCourses },
     { data: dailyRounds },
     { data: allCourseNames },
@@ -42,10 +49,20 @@ export async function GET(req: NextRequest) {
     safe(db.from('rounds').select('*', { count: 'exact', head: true })),
     safe(db.from('rounds').select('*', { count: 'exact', head: true }).gte('created_at', todayStart)),
     safe(db.from('rounds').select('*', { count: 'exact', head: true }).gte('created_at', weekStart)),
+    safe(db.from('hole_stats').select('*', { count: 'exact', head: true })),
+    safe(db.from('practice_sessions').select('*', { count: 'exact', head: true })),
+    safe(db.from('swing_data').select('*', { count: 'exact', head: true })),
+    safe(db.from('putt_data').select('*', { count: 'exact', head: true })),
+    safe(db.from('community_posts').select('*', { count: 'exact', head: true })),
+    safe(db.from('tournament_results').select('*', { count: 'exact', head: true })),
+    safe(db.from('rounds').select('total_score').not('total_score', 'is', null)),
     safe(db.from('rounds').select('course_name').gte('created_at', monthStart)),
     safe(db.from('rounds').select('created_at').gte('created_at', weekStart).order('created_at', { ascending: true })),
     safe(db.from('rounds').select('course_name')),
   ])
+
+  const scores = (allScores ?? []).map((r: any) => r.total_score).filter((s: any) => s != null)
+  const avgScore = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null
 
   let recentSignups: any[] = []
   try {
@@ -87,14 +104,21 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    totalUsers:    totalUsers   ?? 0,
-    newUsersWeek:  newUsersWeek ?? 0,
-    totalRounds:   totalRounds  ?? 0,
-    roundsToday:   roundsToday  ?? 0,
-    roundsWeek:    roundsWeek   ?? 0,
+    totalUsers:       totalUsers       ?? 0,
+    newUsersWeek:     newUsersWeek     ?? 0,
+    totalRounds:      totalRounds      ?? 0,
+    roundsToday:      roundsToday      ?? 0,
+    roundsWeek:       roundsWeek       ?? 0,
     totalCourses,
+    avgScore,
+    totalHoleStats:   totalHoleStats   ?? 0,
+    totalPractice:    totalPractice    ?? 0,
+    totalSwings:      totalSwings      ?? 0,
+    totalPutts:       totalPutts       ?? 0,
+    totalPosts:       totalPosts       ?? 0,
+    totalTournaments: totalTournaments ?? 0,
     recentSignups,
-    topCourses:    topCoursesList,
-    dailyRounds:   Object.entries(dayBuckets).map(([date, count]) => ({ date, count })),
+    topCourses:       topCoursesList,
+    dailyRounds:      Object.entries(dayBuckets).map(([date, count]) => ({ date, count })),
   })
 }
