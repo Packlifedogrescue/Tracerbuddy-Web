@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
 
     const db = sb()
 
-    // Pull rounds with user info from auth
     const { data: rounds, count, error } = await db
       .from('rounds')
       .select('id, user_id, course_name, course_par, total_score, played_at, gir_count, putts, fairways_hit', { count: 'exact' })
@@ -31,24 +30,35 @@ export async function GET(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Get auth users to map user_id -> email
-    const { data: { users: authUsers } } = await db.auth.admin.listUsers()
-    const userMap: Record<string, string> = {}
-    for (const u of authUsers ?? []) userMap[u.id] = u.email ?? u.id
+    // Get auth users to map user_id -> email/name
+    const listResult = await db.auth.admin.listUsers()
+    const authUsers  = listResult.data?.users ?? []
+    const userEmailMap: Record<string, string> = {}
+    const userNameMap:  Record<string, string> = {}
+    for (const u of authUsers) {
+      if (u.email) userEmailMap[u.id] = u.email
+      const m = u.user_metadata ?? {}
+      const name = m.full_name || m.name || m.display_name || null
+      if (name) userNameMap[u.id] = name
+    }
 
     // Get display names from profiles
-    const userIds = [...new Set((rounds ?? []).map((r: any) => r.user_id))]
-    const { data: profiles } = await db
-      .from('user_profiles')
-      .select('id, display_name')
-      .in('id', userIds)
+    const roundList = rounds ?? []
+    const userIdSet: Record<string, boolean> = {}
+    for (const r of roundList) userIdSet[r.user_id] = true
+    const userIds = Object.keys(userIdSet)
+
+    const { data: profiles } = userIds.length
+      ? await db.from('user_profiles').select('id, display_name').in('id', userIds)
+      : { data: [] }
+
     const profileMap: Record<string, string> = {}
     for (const p of profiles ?? []) if (p.display_name) profileMap[p.id] = p.display_name
 
-    const enriched = (rounds ?? []).map((r: any) => ({
+    const enriched = roundList.map((r: any) => ({
       ...r,
-      player_email:   userMap[r.user_id]    ?? 'Unknown',
-      display_name:   profileMap[r.user_id] ?? null,
+      player_email:  userEmailMap[r.user_id] ?? 'Unknown',
+      display_name:  profileMap[r.user_id]   || userNameMap[r.user_id] || null,
     }))
 
     return NextResponse.json({ rounds: enriched, total: count ?? 0, page, limit })
