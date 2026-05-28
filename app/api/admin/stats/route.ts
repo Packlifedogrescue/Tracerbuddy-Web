@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAIL = 'miller.brett88@gmail.com'
+const ADMIN_EMAILS = ['miller.brett88@gmail.com', 'brett@tracerbuddy.com']
 
 const sb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,7 +15,7 @@ function getName(user: any): string {
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('x-admin-email')
-  if (authHeader !== ADMIN_EMAIL) {
+  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
@@ -47,7 +47,6 @@ export async function GET(req: NextRequest) {
     safe(db.from('rounds').select('course_name')),
   ])
 
-  // Recent signups from auth (has actual names)
   let recentSignups: any[] = []
   try {
     const { data: authData } = await db.auth.admin.listUsers()
@@ -62,14 +61,12 @@ export async function GET(req: NextRequest) {
       }))
   } catch {}
 
-  // Count unique courses from rounds
   const uniqueCourses: Record<string, boolean> = {}
   for (const r of allCourseNames ?? []) {
     if (r.course_name) uniqueCourses[r.course_name] = true
   }
   const totalCourses = Object.keys(uniqueCourses).length
 
-  // Tally top courses (last 30 days)
   const courseCount: Record<string, number> = {}
   for (const r of topCourses ?? []) {
     if (r.course_name) courseCount[r.course_name] = (courseCount[r.course_name] || 0) + 1
@@ -79,7 +76,6 @@ export async function GET(req: NextRequest) {
     .slice(0, 5)
     .map(([name, count]) => ({ name, count }))
 
-  // Daily rounds chart (last 7 days)
   const dayBuckets: Record<string, number> = {}
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000)

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAIL = 'miller.brett88@gmail.com'
+const ADMIN_EMAILS = ['miller.brett88@gmail.com', 'brett@tracerbuddy.com']
 
 const sb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,7 +10,7 @@ const sb = () => createClient(
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('x-admin-email')
-  if (authHeader !== ADMIN_EMAIL) {
+  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Aggregate unique courses from rounds
   const courseMap: Record<string, { roundCount: number; totalScore: number; scoreCount: number; lastPlayed: string }> = {}
   for (const r of rounds ?? []) {
     const name = r.course_name

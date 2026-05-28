@@ -8,7 +8,7 @@ import {
   LogOut, Shield, ChevronRight,
 } from 'lucide-react'
 
-const ADMIN_EMAIL = 'brett@tracerbuddy.com'
+const ADMIN_EMAILS = ['miller.brett88@gmail.com', 'brett@tracerbuddy.com']
 
 const NAV = [
   { href: '/admin',         label: 'Overview',  icon: LayoutDashboard },
@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      if (user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
         setAllowed(true)
       } else {
         router.replace('/dashboard')
@@ -89,7 +89,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <main className="flex-1 overflow-auto">
         <header className="h-16 border-b border-white/[0.06] flex items-center px-8 gap-3">
-          {/* Logo — invert to white on dark background */}
           <img
             src="/images/logo-horizontal.png"
             alt="TracerBuddy"

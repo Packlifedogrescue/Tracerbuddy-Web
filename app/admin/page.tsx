@@ -4,8 +4,6 @@ import { supabase } from '@/lib/supabase'
 import { Users, Flag, Map, TrendingUp, Activity, UserPlus } from 'lucide-react'
 import { format } from 'date-fns'
 
-const ADMIN_EMAIL = 'miller.brett88@gmail.com'
-
 async function adminFetch(path: string, email: string) {
   const res = await fetch(path, { headers: { 'x-admin-email': email } })
   return res.json()
@@ -64,6 +62,12 @@ export default function AdminOverview() {
     </div>
   )
 
+  if (!data || data.error) return (
+    <div className="flex items-center justify-center h-64 text-gray-500 text-sm">
+      Failed to load stats. Check that your admin email matches.
+    </div>
+  )
+
   return (
     <div className="space-y-8">
       <div>
@@ -73,19 +77,17 @@ export default function AdminOverview() {
         </p>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard icon={Users}     label="Total Users"     value={data.totalUsers}   sub={`+${data.newUsersWeek} this week`} />
-        <StatCard icon={Flag}      label="Total Rounds"    value={data.totalRounds}  sub={`${data.roundsToday} today`} color="#4ADE80" />
-        <StatCard icon={Map}       label="Courses"         value={data.totalCourses} color="#60A5FA" />
-        <StatCard icon={Activity}  label="Rounds This Week" value={data.roundsWeek}  color="#A78BFA" />
-        <StatCard icon={UserPlus}  label="New Users (7d)"  value={data.newUsersWeek} color="#F472B6" />
-        <StatCard icon={TrendingUp} label="Rounds Today"   value={data.roundsToday}  color="#34D399" />
+        <StatCard icon={Users}     label="Total Users"      value={data.totalUsers}   sub={`+${data.newUsersWeek} this week`} />
+        <StatCard icon={Flag}      label="Total Rounds"     value={data.totalRounds}  sub={`${data.roundsToday} today`} color="#4ADE80" />
+        <StatCard icon={Map}       label="Courses"          value={data.totalCourses} color="#60A5FA" />
+        <StatCard icon={Activity}  label="Rounds This Week" value={data.roundsWeek}   color="#A78BFA" />
+        <StatCard icon={UserPlus}  label="New Users (7d)"   value={data.newUsersWeek} color="#F472B6" />
+        <StatCard icon={TrendingUp} label="Rounds Today"    value={data.roundsToday}  color="#34D399" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Daily rounds chart */}
         <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-6">
           <h2 className="text-sm font-semibold text-white mb-1">Rounds — Last 7 Days</h2>
           <p className="text-xs text-gray-500 mb-5">Daily round completions</p>
@@ -99,7 +101,6 @@ export default function AdminOverview() {
           </div>
         </div>
 
-        {/* Top courses */}
         <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-6">
           <h2 className="text-sm font-semibold text-white mb-1">Top Courses (30 days)</h2>
           <p className="text-xs text-gray-500 mb-5">Most played courses</p>
@@ -127,7 +128,6 @@ export default function AdminOverview() {
           </div>
         </div>
 
-        {/* Recent signups */}
         <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-6 lg:col-span-2">
           <h2 className="text-sm font-semibold text-white mb-1">Recent Signups</h2>
           <p className="text-xs text-gray-500 mb-5">Latest 5 user registrations</p>

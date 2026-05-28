@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAIL = 'miller.brett88@gmail.com'
+const ADMIN_EMAILS = ['miller.brett88@gmail.com', 'brett@tracerbuddy.com']
 
 const sb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,7 +15,7 @@ function getName(user: any): string {
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('x-admin-email')
-  if (authHeader !== ADMIN_EMAIL) {
+  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
 
   const db = sb()
 
-  // Fetch all auth users (has real names)
   const { data: authData, error: authError } = await db.auth.admin.listUsers()
   if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
 
@@ -40,7 +39,6 @@ export async function GET(req: NextRequest) {
     lastActive: null as string | null,
   }))
 
-  // Search filter
   if (search) {
     const q = search.toLowerCase()
     users = users.filter(u =>
@@ -48,7 +46,6 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  // Sort by newest first
   users.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
   const total = users.length
@@ -56,7 +53,6 @@ export async function GET(req: NextRequest) {
   const userIds = pageUsers.map(u => u.id)
 
   if (userIds.length > 0) {
-    // Get handicap from user_profiles
     const { data: profiles } = await db
       .from('user_profiles')
       .select('id, handicap')
@@ -66,7 +62,6 @@ export async function GET(req: NextRequest) {
       if (p.handicap != null) handicapMap[p.id] = p.handicap
     }
 
-    // Round counts per user
     const { data: roundRows } = await db
       .from('rounds')
       .select('user_id')
@@ -76,7 +71,6 @@ export async function GET(req: NextRequest) {
       countMap[r.user_id] = (countMap[r.user_id] || 0) + 1
     }
 
-    // Last active (most recent round)
     const { data: lastRounds } = await db
       .from('rounds')
       .select('user_id, created_at')
@@ -99,7 +93,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const authHeader = req.headers.get('x-admin-email')
-  if (authHeader !== ADMIN_EMAIL) {
+  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
