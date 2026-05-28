@@ -53,6 +53,7 @@ export default function AdminUsers() {
           <p className="text-gray-500 text-sm mt-1">{total.toLocaleString()} total accounts</p>
         </div>
 
+        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
@@ -64,6 +65,7 @@ export default function AdminUsers() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="bg-[#161616] border border-white/[0.06] rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -97,7 +99,7 @@ export default function AdminUsers() {
                     <div className="w-7 h-7 rounded-full bg-[#DF9905]/20 flex items-center justify-center shrink-0 text-[11px] font-bold text-[#DF9905]">
                       {(u.display_name || u.email || '?')[0].toUpperCase()}
                     </div>
-                    <span className="text-white font-medium truncate max-w-[140px]">{u.display_name || 'No name'}</span>
+                    <span className="text-white font-medium truncate max-w-[140px]">{u.display_name || u.email?.split('@')[0] || 'Unknown'}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-gray-400 truncate max-w-[180px]">{u.email || '—'}</td>
@@ -126,6 +128,7 @@ export default function AdminUsers() {
           </tbody>
         </table>
 
+        {/* Pagination */}
         {pages > 1 && (
           <div className="border-t border-white/[0.06] px-5 py-3 flex items-center justify-between">
             <span className="text-xs text-gray-500">
