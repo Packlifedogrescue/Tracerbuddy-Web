@@ -16,6 +16,7 @@ export default function AdminRounds() {
   const [total,   setTotal]   = useState(0)
   const [page,    setPage]    = useState(1)
   const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState<string | null>(null)
   const [email,   setEmail]   = useState('')
   const limit = 25
 
@@ -28,9 +29,11 @@ export default function AdminRounds() {
   const load = useCallback(async () => {
     if (!email) return
     setLoading(true)
+    setError(null)
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-    const res  = await fetch(`/api/admin/rounds?${params}`, { headers: { 'x-admin-email': email } })
+    const res = await fetch(`/api/admin/rounds?${params}`, { headers: { 'x-admin-email': email } })
     const data = await res.json()
+    if (data.error) { setError(data.error); setLoading(false); return }
     setRounds(data.rounds ?? [])
     setTotal(data.total ?? 0)
     setLoading(false)
@@ -57,6 +60,8 @@ export default function AdminRounds() {
         <p className="text-gray-500 text-sm mt-1">{total.toLocaleString()} total rounds logged</p>
       </div>
 
+      {error && <p className="text-red-400 text-sm">Error: {error}</p>}
+
       <div className="bg-[#161616] border border-white/[0.06] rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -73,22 +78,18 @@ export default function AdminRounds() {
           </thead>
           <tbody>
             {loading && (
-              <tr>
-                <td colSpan={8} className="text-center py-12">
-                  <div className="w-5 h-5 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin mx-auto" />
-                </td>
-              </tr>
+              <tr><td colSpan={8} className="text-center py-12">
+                <div className="w-5 h-5 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin mx-auto" />
+              </td></tr>
             )}
             {!loading && rounds.length === 0 && (
-              <tr>
-                <td colSpan={8} className="text-center py-12 text-gray-600 text-sm">No rounds found</td>
-              </tr>
+              <tr><td colSpan={8} className="text-center py-12 text-gray-600 text-sm">No rounds found</td></tr>
             )}
             {!loading && rounds.map(r => (
               <tr key={r.id} className="border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                 <td className="px-5 py-3">
-                  <div className="text-white font-medium text-xs">{r.user_profiles?.display_name || 'Unknown'}</div>
-                  <div className="text-gray-600 text-[11px]">{r.user_profiles?.email || '—'}</div>
+                  <div className="text-white font-medium text-xs">{r.display_name || r.player_email}</div>
+                  {r.display_name && <div className="text-gray-600 text-[11px]">{r.player_email}</div>}
                 </td>
                 <td className="px-4 py-3 text-gray-300 max-w-[160px] truncate">{r.course_name || '—'}</td>
                 <td className="px-4 py-3 text-center text-white font-bold">{r.total_score ?? '—'}</td>
@@ -101,10 +102,8 @@ export default function AdminRounds() {
                   {r.played_at ? format(new Date(r.played_at), 'MMM d, yyyy') : '—'}
                 </td>
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => deleteRound(r.id, r.course_name)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-all"
-                  >
+                  <button onClick={() => deleteRound(r.id, r.course_name)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-all">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </td>
@@ -115,22 +114,14 @@ export default function AdminRounds() {
 
         {pages > 1 && (
           <div className="border-t border-white/[0.06] px-5 py-3 flex items-center justify-between">
-            <span className="text-xs text-gray-500">
-              Page {page} of {pages} · {total.toLocaleString()} rounds
-            </span>
+            <span className="text-xs text-gray-500">Page {page} of {pages} · {total.toLocaleString()} rounds</span>
             <div className="flex gap-2">
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage(p => p - 1)}
-                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button
-                disabled={page >= pages}
-                onClick={() => setPage(p => p + 1)}
-                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white hover:border-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
+              <button disabled={page >= pages} onClick={() => setPage(p => p + 1)}
+                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>

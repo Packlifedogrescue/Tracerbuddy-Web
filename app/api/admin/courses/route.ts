@@ -8,50 +8,53 @@ const sb = () => createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
+// Courses are derived from rounds data — no separate courses table
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('x-admin-email')
-  if (authHeader?.toLowerCase() !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  try {
+    const authHeader = req.headers.get('x-admin-email')
+    if (authHeader?.toLowerCase() !== ADMIN_EMAIL) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const search = searchParams.get('search') ?? ''
+
+    const db = sb()
+
+    const { data: rounds, error } = await db
+      .from('rounds')
+      .select('course_name, course_par, course_rating, slope_rating, played_at')
+      .not('course_name', 'is', null)
+      .order('played_at', { ascending: false })
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Aggregate unique courses
+    const courseMap: Record<string, any> = {}
+    for (const r of rounds ?? []) {
+      const name = r.course_name
+      if (!courseMap[name]) {
+        courseMap[name] = {
+          id:            name,
+          name,
+          par:           r.course_par    ?? null,
+          course_rating: r.course_rating ?? null,
+          slope_rating:  r.slope_rating  ?? null,
+          roundCount:    0,
+          lastPlayed:    r.played_at,
+        }
+      }
+      courseMap[name].roundCount++
+    }
+
+    let courses = Object.values(courseMap).sort((a: any, b: any) => b.roundCount - a.roundCount)
+
+    if (search) {
+      courses = courses.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()))
+    }
+
+    return NextResponse.json({ courses, total: courses.length })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
-
-  const { searchParams } = new URL(req.url)
-  const page   = parseInt(searchParams.get('page')  ?? '1')
-  const limit  = parseInt(searchParams.get('limit') ?? '25')
-  const search = searchParams.get('search') ?? ''
-  const offset = (page - 1) * limit
-
-  const db = sb()
-
-  let query = db
-    .from('courses')
-    .select('id, name, city, state, country, par, course_rating, slope_rating, created_at', { count: 'exact' })
-    .order('name', { ascending: true })
-    .range(offset, offset + limit - 1)
-
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,city.ilike.%${search}%,state.ilike.%${search}%`)
-  }
-
-  const { data: courses, count, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ courses: courses ?? [], total: count ?? 0, page, limit })
-}
-
-export async function PATCH(req: NextRequest) {
-  const authHeader = req.headers.get('x-admin-email')
-  if (authHeader?.toLowerCase() !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-  }
-
-  const { id, ...updates } = await req.json()
-  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-
-  const allowed = ['name', 'city', 'state', 'country', 'par', 'course_rating', 'slope_rating']
-  const safe = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)))
-
-  const { error } = await sb().from('courses').update(safe).eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ updated: true })
 }
