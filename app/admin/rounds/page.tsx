@@ -14,22 +14,17 @@ export default function AdminRounds() {
   const limit = 25
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email) setEmail(user.email)
-    })
+    supabase.auth.getUser().then(({ data: { user } }) => { if (user?.email) setEmail(user.email) })
   }, [])
 
   const load = useCallback(async () => {
     if (!email) return
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
     const res  = await fetch(`/api/admin/rounds?${params}`, { headers: { 'x-admin-email': email } })
     const data = await res.json()
     if (data.error) { setError(data.error); setLoading(false); return }
-    setRounds(data.rounds ?? [])
-    setTotal(data.total ?? 0)
-    setLoading(false)
+    setRounds(data.rounds ?? []); setTotal(data.total ?? 0); setLoading(false)
   }, [email, page])
 
   useEffect(() => { load() }, [load])
@@ -52,9 +47,7 @@ export default function AdminRounds() {
         <h1 className="text-2xl font-bold text-white">Rounds</h1>
         <p className="text-gray-500 text-sm mt-1">{total.toLocaleString()} total rounds logged</p>
       </div>
-
       {error && <p className="text-red-400 text-sm">Error: {error}</p>}
-
       <div className="bg-[#161616] border border-white/[0.06] rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -67,14 +60,10 @@ export default function AdminRounds() {
             </tr>
           </thead>
           <tbody>
-            {loading && (
-              <tr><td colSpan={5} className="text-center py-12">
-                <div className="w-5 h-5 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin mx-auto" />
-              </td></tr>
-            )}
-            {!loading && rounds.length === 0 && (
-              <tr><td colSpan={5} className="text-center py-12 text-gray-600 text-sm">No rounds found</td></tr>
-            )}
+            {loading && <tr><td colSpan={5} className="text-center py-12">
+              <div className="w-5 h-5 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin mx-auto" />
+            </td></tr>}
+            {!loading && rounds.length === 0 && <tr><td colSpan={5} className="text-center py-12 text-gray-600 text-sm">No rounds found</td></tr>}
             {!loading && rounds.map(r => (
               <tr key={r.id} className="border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                 <td className="px-5 py-3">
@@ -84,7 +73,7 @@ export default function AdminRounds() {
                 <td className="px-4 py-3 text-gray-300 max-w-[200px] truncate">{r.course_name || '—'}</td>
                 <td className="px-4 py-3 text-center text-white font-bold">{r.total_score ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
-                  {r.played_at ? format(new Date(r.played_at), 'MMM d, yyyy') : '—'}
+                  {r.created_at ? format(new Date(r.created_at), 'MMM d, yyyy') : '—'}
                 </td>
                 <td className="px-4 py-3">
                   <button onClick={() => deleteRound(r.id, r.course_name)}
@@ -96,7 +85,6 @@ export default function AdminRounds() {
             ))}
           </tbody>
         </table>
-
         {pages > 1 && (
           <div className="border-t border-white/[0.06] px-5 py-3 flex items-center justify-between">
             <span className="text-xs text-gray-500">Page {page} of {pages} · {total.toLocaleString()} rounds</span>

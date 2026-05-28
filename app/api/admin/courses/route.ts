@@ -17,33 +17,33 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const search = searchParams.get('search') ?? ''
-
     const db = sb()
 
-    // Only select columns we know exist
     const { data: rounds, error } = await db
       .from('rounds')
-      .select('course_name, total_score, played_at')
+      .select('course_name, total_score, created_at')
       .not('course_name', 'is', null)
-      .order('played_at', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Aggregate unique courses from rounds data
     const courseMap: Record<string, any> = {}
     for (const r of rounds ?? []) {
       const name = r.course_name
       if (!courseMap[name]) {
-        courseMap[name] = { id: name, name, roundCount: 0, lastPlayed: r.played_at }
+        courseMap[name] = { id: name, name, roundCount: 0, lastPlayed: r.created_at, scores: [] }
       }
       courseMap[name].roundCount++
+      if (r.total_score) courseMap[name].scores.push(r.total_score)
     }
 
-    let courses = Object.values(courseMap).sort((a: any, b: any) => b.roundCount - a.roundCount)
+    let courses = Object.values(courseMap).map((c: any) => ({
+      ...c,
+      avgScore: c.scores.length ? Math.round(c.scores.reduce((a: number, b: number) => a + b, 0) / c.scores.length) : null,
+      scores: undefined,
+    })).sort((a: any, b: any) => b.roundCount - a.roundCount)
 
-    if (search) {
-      courses = courses.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()))
-    }
+    if (search) courses = courses.filter((c: any) => c.name.toLowerCase().includes(search.toLowerCase()))
 
     return NextResponse.json({ courses, total: courses.length })
   } catch (e: any) {

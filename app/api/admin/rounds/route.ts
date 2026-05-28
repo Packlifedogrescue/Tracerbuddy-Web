@@ -22,24 +22,22 @@ export async function GET(req: NextRequest) {
 
     const db = sb()
 
-    // Only select columns we know exist
     const { data: rounds, count, error } = await db
       .from('rounds')
-      .select('id, user_id, course_name, total_score, played_at', { count: 'exact' })
-      .order('played_at', { ascending: false })
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Map user_id -> email/name from auth
     const listResult = await db.auth.admin.listUsers()
     const authUsers  = listResult.data?.users ?? []
     const userEmailMap: Record<string, string> = {}
     const userNameMap:  Record<string, string> = {}
     for (const u of authUsers) {
       if (u.email) userEmailMap[u.id] = u.email
-      const m = u.user_metadata ?? {}
-      const name = (m as any).full_name || (m as any).name || (m as any).display_name || null
+      const m = u.user_metadata as any
+      const name = m?.full_name || m?.name || m?.display_name || null
       if (name) userNameMap[u.id] = name
     }
 

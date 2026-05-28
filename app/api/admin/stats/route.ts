@@ -21,49 +21,79 @@ export async function GET(req: NextRequest) {
     const weekStart  = new Date(Date.now() - 7  * 86400000).toISOString()
     const monthStart = new Date(Date.now() - 30 * 86400000).toISOString()
 
-    const safeCount = async (query: any) => {
-      try { const { count } = await query; return count ?? 0 } catch { return 0 }
-    }
-    const safeData = async (query: any) => {
-      try { const { data } = await query; return data ?? [] } catch { return [] }
-    }
+    const safe = async (q: any) => { try { return await q } catch { return { data: null, count: 0 } } }
 
-    const [totalUsers, newUsersWeek, totalRounds, roundsToday, roundsWeek, totalCourses,
-           recentSignups, topCoursesRaw, dailyRoundsRaw] = await Promise.all([
-      safeCount(db.from('user_profiles').select('*', { count: 'exact', head: true })),
-      safeCount(db.from('user_profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekStart)),
-      safeCount(db.from('rounds').select('*', { count: 'exact', head: true })),
-      safeCount(db.from('rounds').select('*', { count: 'exact', head: true }).gte('played_at', todayStart)),
-      safeCount(db.from('rounds').select('*', { count: 'exact', head: true }).gte('played_at', weekStart)),
-      safeCount(db.from('courses').select('*', { count: 'exact', head: true })),
-      safeData(db.from('user_profiles').select('id, display_name, email, created_at').order('created_at', { ascending: false }).limit(5)),
-      safeData(db.from('rounds').select('course_name').gte('played_at', monthStart)),
-      safeData(db.from('rounds').select('played_at').gte('played_at', weekStart).order('played_at', { ascending: true })),
+    const [
+      usersResult,
+      newUsersResult,
+      totalRoundsResult,
+      roundsTodayResult,
+      roundsWeekResult,
+      recentSignupsResult,
+      topCoursesResult,
+      dailyRoundsResult,
+      totalShotsResult,
+      avgScoreResult,
+    ] = await Promise.all([
+      safe(db.from('user_profiles').select('*', { count: 'exact', head: true })),
+      safe(db.from('user_profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekStart)),
+      safe(db.from('rounds').select('*', { count: 'exact', head: true })),
+      safe(db.from('rounds').select('*', { count: 'exact', head: true }).gte('created_at', todayStart)),
+      safe(db.from('rounds').select('*', { count: 'exact', head: true }).gte('created_at', weekStart)),
+      safe(db.from('user_profiles').select('id, display_name, email, created_at').order('created_at', { ascending: false }).limit(5)),
+      safe(db.from('rounds').select('course_name').gte('created_at', monthStart)),
+      safe(db.from('rounds').select('created_at').gte('created_at', weekStart).order('created_at', { ascending: true })),
+      safe(db.from('shots').select('*', { count: 'exact', head: true })),
+      safe(db.from('rounds').select('total_score').not('total_score', 'is', null).limit(200)),
     ])
 
+    // Auth users for recent signups
+    const listResult = await db.auth.admin.listUsers()
+    const authUsers  = listResult.data?.users ?? []
+    const recentAuth = authUsers
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5)
+      .map((u: any) => ({
+        id: u.id,
+        email: u.email,
+        display_name: (u.user_metadata as any)?.full_name || (u.user_metadata as any)?.name || null,
+        created_at: u.created_at,
+      }))
+
+    // Top courses
     const courseCount: Record<string, number> = {}
-    for (const r of topCoursesRaw) {
+    for (const r of topCoursesResult.data ?? []) {
       if (r.course_name) courseCount[r.course_name] = (courseCount[r.course_name] || 0) + 1
     }
     const topCourses = Object.entries(courseCount)
       .sort((a, b) => b[1] - a[1]).slice(0, 5)
       .map(([name, count]) => ({ name, count }))
 
+    // Daily rounds (7 days)
     const dayBuckets: Record<string, number> = {}
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000)
-      dayBuckets[d.toISOString().split('T')[0]] = 0
+      dayBuckets[new Date(Date.now() - i * 86400000).toISOString().split('T')[0]] = 0
     }
-    for (const r of dailyRoundsRaw) {
-      const day = r.played_at?.split('T')[0]
-      if (day && dayBuckets[day] !== undefined) dayBuckets[day]++
+    for (const r of dailyRoundsResult.data ?? []) {
+      const day = (r.created_at ?? '').split('T')[0]
+      if (dayBuckets[day] !== undefined) dayBuckets[day]++
     }
 
+    // Avg score
+    const scores = (avgScoreResult.data ?? []).map((r: any) => r.total_score).filter(Boolean)
+    const avgScore = scores.length ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null
+
     return NextResponse.json({
-      totalUsers, newUsersWeek, totalRounds, roundsToday, roundsWeek, totalCourses,
-      recentSignups,
+      totalUsers:    authUsers.length,
+      newUsersWeek:  newUsersResult.count  ?? 0,
+      totalRounds:   totalRoundsResult.count ?? 0,
+      roundsToday:   roundsTodayResult.count ?? 0,
+      roundsWeek:    roundsWeekResult.count  ?? 0,
+      totalShots:    totalShotsResult.count  ?? 0,
+      avgScore,
+      recentSignups: recentAuth,
       topCourses,
-      dailyRounds: Object.entries(dayBuckets).map(([date, count]) => ({ date, count })),
+      dailyRounds:   Object.entries(dayBuckets).map(([date, count]) => ({ date, count })),
     })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })

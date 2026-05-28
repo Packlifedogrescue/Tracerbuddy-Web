@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Users, Flag, Map, TrendingUp, Activity, UserPlus } from 'lucide-react'
+import { Users, Flag, Map, Activity, Target, TrendingUp, UserPlus, Crosshair } from 'lucide-react'
 import { format } from 'date-fns'
 
 async function adminFetch(path: string, email: string) {
@@ -11,7 +11,7 @@ async function adminFetch(path: string, email: string) {
 }
 
 function StatCard({ icon: Icon, label, value, sub, color = '#DF9905' }: {
-  icon: any; label: string; value: string | number; sub?: string; color?: string
+  icon: any; label: string; value: string | number | null; sub?: string; color?: string
 }) {
   return (
     <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-5">
@@ -21,7 +21,7 @@ function StatCard({ icon: Icon, label, value, sub, color = '#DF9905' }: {
         </div>
         <span className="text-[11px] font-semibold tracking-[0.12em] text-gray-500 uppercase">{label}</span>
       </div>
-      <div className="text-3xl font-bold text-white">{Number(value).toLocaleString()}</div>
+      <div className="text-3xl font-bold text-white">{value != null ? Number(value).toLocaleString() : '—'}</div>
       {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
     </div>
   )
@@ -32,11 +32,9 @@ function Sparkbar({ data }: { data: { date: string; count: number }[] }) {
   return (
     <div className="flex items-end gap-1 h-12">
       {data.map(({ date, count }) => (
-        <div key={date} className="flex-1 flex flex-col items-center gap-1">
-          <div
-            className="w-full rounded-sm bg-[#DF9905] transition-all"
-            style={{ height: `${Math.max((count / max) * 100, 4)}%`, opacity: count === 0 ? 0.2 : 0.85 }}
-          />
+        <div key={date} className="flex-1">
+          <div className="w-full rounded-sm bg-[#DF9905]"
+            style={{ height: `${Math.max((count / max) * 100, 4)}%`, opacity: count === 0 ? 0.2 : 0.85 }} />
         </div>
       ))}
     </div>
@@ -45,7 +43,8 @@ function Sparkbar({ data }: { data: { date: string; count: number }[] }) {
 
 const EMPTY = {
   totalUsers: 0, newUsersWeek: 0, totalRounds: 0, roundsToday: 0,
-  roundsWeek: 0, totalCourses: 0, recentSignups: [], topCourses: [], dailyRounds: [],
+  roundsWeek: 0, totalShots: 0, avgScore: null,
+  recentSignups: [], topCourses: [], dailyRounds: [],
 }
 
 export default function AdminOverview() {
@@ -67,36 +66,30 @@ export default function AdminOverview() {
       <div className="w-6 h-6 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin" />
     </div>
   )
-
-  if (error) return (
-    <div className="flex items-center justify-center h-64">
-      <p className="text-red-400 text-sm">Failed to load stats: {error}</p>
-    </div>
-  )
+  if (error) return <p className="text-red-400 text-sm">Failed to load: {error}</p>
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white">Overview</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {format(new Date(), 'EEEE, MMMM d, yyyy')}
-        </p>
+        <p className="text-gray-500 text-sm mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard icon={Users}      label="Total Users"      value={data.totalUsers}   sub={`+${data.newUsersWeek} this week`} />
-        <StatCard icon={Flag}       label="Total Rounds"     value={data.totalRounds}  sub={`${data.roundsToday} today`} color="#4ADE80" />
-        <StatCard icon={Map}        label="Courses"          value={data.totalCourses} color="#60A5FA" />
-        <StatCard icon={Activity}   label="Rounds This Week" value={data.roundsWeek}   color="#A78BFA" />
-        <StatCard icon={UserPlus}   label="New Users (7d)"   value={data.newUsersWeek} color="#F472B6" />
-        <StatCard icon={TrendingUp} label="Rounds Today"     value={data.roundsToday}  color="#34D399" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={Users}     label="Total Users"   value={data.totalUsers}  sub={`+${data.newUsersWeek} this week`} />
+        <StatCard icon={Flag}      label="Total Rounds"  value={data.totalRounds} sub={`${data.roundsToday} today`} color="#4ADE80" />
+        <StatCard icon={Crosshair} label="Total Shots"   value={data.totalShots}  color="#60A5FA" />
+        <StatCard icon={Target}    label="Avg Score"     value={data.avgScore}    sub="across all rounds" color="#F472B6" />
+        <StatCard icon={Activity}  label="Rounds / Week" value={data.roundsWeek}  color="#A78BFA" />
+        <StatCard icon={UserPlus}  label="New Users (7d)" value={data.newUsersWeek} color="#FB923C" />
+        <StatCard icon={Flag}      label="Rounds Today"  value={data.roundsToday} color="#34D399" />
+        <StatCard icon={TrendingUp} label="Courses Played" value={data.topCourses?.length ?? 0} sub="unique (30 days)" color="#E879F9" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-6">
           <h2 className="text-sm font-semibold text-white mb-1">Rounds — Last 7 Days</h2>
-          <p className="text-xs text-gray-500 mb-5">Daily round completions</p>
+          <p className="text-xs text-gray-500 mb-4">Daily round completions</p>
           {data.dailyRounds?.length > 0 && <Sparkbar data={data.dailyRounds} />}
           <div className="flex justify-between mt-2">
             {(data.dailyRounds ?? []).map((d: any) => (
@@ -109,11 +102,9 @@ export default function AdminOverview() {
 
         <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-6">
           <h2 className="text-sm font-semibold text-white mb-1">Top Courses (30 days)</h2>
-          <p className="text-xs text-gray-500 mb-5">Most played courses</p>
+          <p className="text-xs text-gray-500 mb-4">Most played</p>
           <div className="space-y-3">
-            {(data.topCourses ?? []).length === 0 && (
-              <p className="text-gray-600 text-sm">No round data yet</p>
-            )}
+            {(data.topCourses ?? []).length === 0 && <p className="text-gray-600 text-sm">No data yet</p>}
             {(data.topCourses ?? []).map((c: any, i: number) => (
               <div key={c.name} className="flex items-center gap-3">
                 <span className="text-[11px] font-bold text-gray-600 w-4 text-right">{i + 1}</span>
@@ -123,10 +114,8 @@ export default function AdminOverview() {
                     <span className="text-xs text-gray-400 ml-2 shrink-0">{c.count} rounds</span>
                   </div>
                   <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#DF9905] rounded-full"
-                      style={{ width: `${(c.count / data.topCourses[0].count) * 100}%` }}
-                    />
+                    <div className="h-full bg-[#DF9905] rounded-full"
+                      style={{ width: `${(c.count / data.topCourses[0].count) * 100}%` }} />
                   </div>
                 </div>
               </div>
@@ -136,11 +125,9 @@ export default function AdminOverview() {
 
         <div className="bg-[#161616] border border-white/[0.06] rounded-xl p-6 lg:col-span-2">
           <h2 className="text-sm font-semibold text-white mb-1">Recent Signups</h2>
-          <p className="text-xs text-gray-500 mb-5">Latest 5 user registrations</p>
+          <p className="text-xs text-gray-500 mb-4">Latest 5 registrations</p>
           <div className="space-y-2">
-            {(data.recentSignups ?? []).length === 0 && (
-              <p className="text-gray-600 text-sm">No users yet</p>
-            )}
+            {(data.recentSignups ?? []).length === 0 && <p className="text-gray-600 text-sm">No users yet</p>}
             {(data.recentSignups ?? []).map((u: any) => (
               <div key={u.id} className="flex items-center gap-4 py-2.5 border-b border-white/[0.04] last:border-0">
                 <div className="w-8 h-8 rounded-full bg-[#DF9905]/20 flex items-center justify-center shrink-0">
@@ -150,7 +137,7 @@ export default function AdminOverview() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-white truncate">{u.display_name || 'No name'}</div>
-                  <div className="text-xs text-gray-500 truncate">{u.email || '—'}</div>
+                  <div className="text-xs text-gray-500 truncate">{u.email}</div>
                 </div>
                 <div className="text-xs text-gray-500 shrink-0">
                   {u.created_at ? format(new Date(u.created_at), 'MMM d, yyyy') : '—'}
@@ -159,7 +146,6 @@ export default function AdminOverview() {
             ))}
           </div>
         </div>
-
       </div>
     </div>
   )
