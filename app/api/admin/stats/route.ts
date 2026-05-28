@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     safe(db.from('rounds').select('course_name')),
   ])
 
-  const scores = (allScores ?? []).map((r: any) => r.total_score).filter((s: any) => s != null)
+  const scores = (allScores ?? []).map((r: any) => r.total_score).filter((s: any) => s != null && s > 0)
   const avgScore = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null
 
   let recentSignups: any[] = []
