@@ -79,7 +79,7 @@ export default function PrivacyPage() {
             <h2>4. Sharing Your Information</h2>
             <p>We do not sell your personal data. We share data only in the following circumstances:</p>
             <ul>
-              <li><strong>Service providers:</strong> trusted third parties that help us operate the Service (e.g., Supabase for database hosting, Mapbox for course maps, Apple for in-app purchases). These providers are contractually bound to protect your data.</li>
+              <li><strong>Service providers:</strong> trusted third parties that help us operate the Service (e.g., Supabase for database hosting, Apple Maps for course maps, Apple for in-app purchases). These providers are contractually bound to protect your data.</li>
               <li><strong>Buddy Battles:</strong> when you connect with another TracerBuddy user, your display name and selected stats are visible to that user. You control what you share.</li>
               <li><strong>Legal requirements:</strong> if required by law, court order, or to protect the rights and safety of our users or the public.</li>
             </ul>
