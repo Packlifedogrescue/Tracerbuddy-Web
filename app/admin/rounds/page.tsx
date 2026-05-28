@@ -4,13 +4,6 @@ import { supabase } from '@/lib/supabase'
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
-function toPar(score: number, par: number) {
-  const diff = score - par
-  if (diff === 0) return <span className="text-gray-400">E</span>
-  if (diff > 0)  return <span className="text-red-400">+{diff}</span>
-  return <span className="text-green-400">{diff}</span>
-}
-
 export default function AdminRounds() {
   const [rounds,  setRounds]  = useState<any[]>([])
   const [total,   setTotal]   = useState(0)
@@ -31,7 +24,7 @@ export default function AdminRounds() {
     setLoading(true)
     setError(null)
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-    const res = await fetch(`/api/admin/rounds?${params}`, { headers: { 'x-admin-email': email } })
+    const res  = await fetch(`/api/admin/rounds?${params}`, { headers: { 'x-admin-email': email } })
     const data = await res.json()
     if (data.error) { setError(data.error); setLoading(false); return }
     setRounds(data.rounds ?? [])
@@ -69,21 +62,18 @@ export default function AdminRounds() {
               <th className="text-left px-5 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Player</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Course</th>
               <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Score</th>
-              <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">+/-</th>
-              <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">GIR</th>
-              <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Putts</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Date</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={8} className="text-center py-12">
+              <tr><td colSpan={5} className="text-center py-12">
                 <div className="w-5 h-5 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin mx-auto" />
               </td></tr>
             )}
             {!loading && rounds.length === 0 && (
-              <tr><td colSpan={8} className="text-center py-12 text-gray-600 text-sm">No rounds found</td></tr>
+              <tr><td colSpan={5} className="text-center py-12 text-gray-600 text-sm">No rounds found</td></tr>
             )}
             {!loading && rounds.map(r => (
               <tr key={r.id} className="border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors">
@@ -91,13 +81,8 @@ export default function AdminRounds() {
                   <div className="text-white font-medium text-xs">{r.display_name || r.player_email}</div>
                   {r.display_name && <div className="text-gray-600 text-[11px]">{r.player_email}</div>}
                 </td>
-                <td className="px-4 py-3 text-gray-300 max-w-[160px] truncate">{r.course_name || '—'}</td>
+                <td className="px-4 py-3 text-gray-300 max-w-[200px] truncate">{r.course_name || '—'}</td>
                 <td className="px-4 py-3 text-center text-white font-bold">{r.total_score ?? '—'}</td>
-                <td className="px-4 py-3 text-center font-medium">
-                  {r.total_score && r.course_par ? toPar(r.total_score, r.course_par) : '—'}
-                </td>
-                <td className="px-4 py-3 text-center text-gray-400">{r.gir_count ?? '—'}</td>
-                <td className="px-4 py-3 text-center text-gray-400">{r.putts ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
                   {r.played_at ? format(new Date(r.played_at), 'MMM d, yyyy') : '—'}
                 </td>
@@ -117,11 +102,11 @@ export default function AdminRounds() {
             <span className="text-xs text-gray-500">Page {page} of {pages} · {total.toLocaleString()} rounds</span>
             <div className="flex gap-2">
               <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button disabled={page >= pages} onClick={() => setPage(p => p + 1)}
-                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                className="w-7 h-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>

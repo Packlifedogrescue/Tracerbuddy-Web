@@ -8,7 +8,6 @@ const sb = () => createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-// Courses are derived from rounds data — no separate courses table
 export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get('x-admin-email')
@@ -21,28 +20,21 @@ export async function GET(req: NextRequest) {
 
     const db = sb()
 
+    // Only select columns we know exist
     const { data: rounds, error } = await db
       .from('rounds')
-      .select('course_name, course_par, course_rating, slope_rating, played_at')
+      .select('course_name, total_score, played_at')
       .not('course_name', 'is', null)
       .order('played_at', { ascending: false })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Aggregate unique courses
+    // Aggregate unique courses from rounds data
     const courseMap: Record<string, any> = {}
     for (const r of rounds ?? []) {
       const name = r.course_name
       if (!courseMap[name]) {
-        courseMap[name] = {
-          id:            name,
-          name,
-          par:           r.course_par    ?? null,
-          course_rating: r.course_rating ?? null,
-          slope_rating:  r.slope_rating  ?? null,
-          roundCount:    0,
-          lastPlayed:    r.played_at,
-        }
+        courseMap[name] = { id: name, name, roundCount: 0, lastPlayed: r.played_at }
       }
       courseMap[name].roundCount++
     }
