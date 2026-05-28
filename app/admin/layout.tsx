@@ -8,7 +8,7 @@ import {
   LogOut, Shield, ChevronRight,
 } from 'lucide-react'
 
-const ADMIN_EMAIL = 'Brett@TracerBuddy.com'
+const ADMIN_EMAIL = 'brett@tracerbuddy.com'
 
 const NAV = [
   { href: '/admin',         label: 'Overview',  icon: LayoutDashboard },
@@ -88,9 +88,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <header className="h-16 border-b border-white/[0.06] flex items-center px-8">
-          <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-9 w-auto opacity-90" />
-          <span className="ml-3 text-[11px] font-semibold tracking-[0.15em] text-[#DF9905] uppercase bg-[#DF9905]/10 px-2 py-0.5 rounded">
+        <header className="h-16 border-b border-white/[0.06] flex items-center px-8 gap-3">
+          {/* Logo — invert to white on dark background */}
+          <img
+            src="/images/logo-horizontal.png"
+            alt="TracerBuddy"
+            className="h-8 w-auto"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
+          <span className="text-[11px] font-semibold tracking-[0.15em] text-[#DF9905] uppercase bg-[#DF9905]/10 px-2 py-0.5 rounded">
             Admin
           </span>
         </header>
