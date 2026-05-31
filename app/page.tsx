@@ -172,7 +172,7 @@ export default function HomePage() {
                 { stat: '42,000+', label: 'Courses',          sub: 'in 100+ countries'      },
                 { stat: '18',      label: 'Metrics Per Round', sub: 'GIR, putts, SG & more' },
                 { stat: '50+',     label: 'Features',          sub: 'across 6 categories'   },
-                { stat: '2',       label: 'Rounds Free',       sub: 'no credit card needed'  },
+                { stat: '1',       label: 'Round Free',        sub: 'no credit card needed'  },
               ].map(s => (
                 <div key={s.label}>
                   <div className="font-serif text-[32px] md:text-[40px] font-medium text-[#1A1A1A] leading-none">{s.stat}</div>
