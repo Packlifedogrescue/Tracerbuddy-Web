@@ -59,10 +59,9 @@ export async function GET(req: NextRequest) {
   // ── 2. Call GolfAPI.io ───────────────────────────────────────────────────
   try {
     const params = new URLSearchParams()
-    if (raw)   params.set('name', raw)       // docs: 'name' not 'search'
+    if (raw)   params.set('name', raw)
     if (state) params.set('state', state)
     if (city)  params.set('city', city)
-    params.set('country', 'usa')             // default to USA
 
     const res  = await fetch(`${GOLF_BASE}/courses?${params.toString()}`, {
       headers: { Authorization: `Bearer ${GOLF_KEY}` },  // docs: Bearer token
