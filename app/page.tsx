@@ -204,7 +204,7 @@ export default function HomePage() {
           <div className="bg-white rounded-xl p-7 border border-black/[0.06]">
             <div className="text-[13px] font-bold text-[#1A1A1A] mb-3">Monthly</div>
             <div className="flex items-baseline gap-1.5 mb-5">
-              <span className="text-[36px] font-bold text-[#1A1A1A] leading-none">$24.99</span>
+              <span className="text-[36px] font-bold text-[#1A1A1A] leading-none">$9.99</span>
               <span className="text-[13px] text-[#888]">/ month</span>
             </div>
             <div className="space-y-2.5 mb-6">
@@ -224,11 +224,11 @@ export default function HomePage() {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1A1A1A] text-[#B8860B] text-[10px] font-bold px-3 py-1 rounded-full tracking-wider">BEST VALUE</div>
             <div className="text-[13px] font-bold text-[#1A1A1A] mb-3">Yearly</div>
             <div className="flex items-baseline gap-1.5 mb-5">
-              <span className="text-[36px] font-bold text-[#1A1A1A] leading-none">$199.99</span>
+              <span className="text-[36px] font-bold text-[#1A1A1A] leading-none">$79.99</span>
               <span className="text-[13px] text-[#888]">/ year</span>
             </div>
             <div className="space-y-2.5 mb-6">
-              {['Full access', 'Save $99.89 compared to monthly', 'Best for serious golfers'].map(item => (
+              {['Full access', 'Save $40 compared to monthly', 'Best for serious golfers'].map(item => (
                 <div key={item} className="flex items-start gap-2">
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#B8860B" strokeWidth="1.8" strokeLinecap="round"/></svg>
                   <span className="text-[13px] text-[#444]">{item}</span>
