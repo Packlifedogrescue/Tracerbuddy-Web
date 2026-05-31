@@ -75,11 +75,9 @@ function buildCoursePayload(course: any, coordinates: any[]) {
   }
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { courseId: string } },
-) {
-  const { courseId } = params
+export async function GET(req: NextRequest) {
+  const courseId = req.nextUrl.searchParams.get('id') ?? req.nextUrl.searchParams.get('courseId') ?? ''
+  if (!courseId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
   const GOLF_KEY = process.env.GOLF_API_KEY!
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
