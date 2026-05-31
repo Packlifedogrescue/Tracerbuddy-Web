@@ -68,7 +68,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-3 mb-8">
               <Link href="/auth/signup" className="premium-btn-gold">
-                Start Free — 2 Rounds
+                Start Free — 1 Round
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11L9 7L5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
               </Link>
               <a href="#features" className="premium-btn-ghost">
@@ -92,7 +92,7 @@ export default function HomePage() {
             <div className="flex items-center gap-5 text-[12px] text-[#888]">
               <div className="flex items-center gap-1.5">
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
-                2 rounds free
+                1 round free
               </div>
               <div className="flex items-center gap-1.5">
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -429,10 +429,10 @@ export default function HomePage() {
             <div className="h-full bg-white border border-black/[0.05] rounded-2xl p-8 hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] transition-shadow">
               <div className="text-[13px] font-bold text-[#1A1A1A] mb-3 tracking-wide">MONTHLY</div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="font-serif text-[48px] font-medium text-[#1A1A1A] leading-none">$24.99</span>
+                <span className="font-serif text-[48px] font-medium text-[#1A1A1A] leading-none">$9.99</span>
                 <span className="text-[14px] text-[#888]">/ month</span>
               </div>
-              <p className="text-[13px] text-[#888] mb-6">First 2 rounds free, then $24.99/mo</p>
+              <p className="text-[13px] text-[#888] mb-6">First round free, then $9.99/mo</p>
               <div className="space-y-3 mb-8">
                 {['Full app access on iOS + Web', 'Apple Watch SwingTrace', 'AI Coach Cards every round', 'Cancel anytime'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
@@ -441,19 +441,19 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <Link href="/auth/signup" className="premium-btn-ghost w-full">Try Free — 2 Rounds</Link>
+              <Link href="/auth/signup" className="premium-btn-ghost w-full">Try Free — 1 Round</Link>
             </div>
           </Reveal>
 
           <Reveal delay={150}>
             <div className="h-full bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-8 relative shadow-[0_20px_60px_rgba(223,153,5,0.18)] border border-[#DF9905]/40">
-              <div className="absolute -top-3 right-6 bg-[#DF9905] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE $99</div>
+              <div className="absolute -top-3 right-6 bg-[#DF9905] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE $40</div>
               <div className="text-[13px] font-bold text-[#DF9905] mb-3 tracking-wide">YEARLY</div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="font-serif text-[48px] font-medium leading-none">$199.99</span>
+                <span className="font-serif text-[48px] font-medium leading-none">$79.99</span>
                 <span className="text-[14px] text-[#888]">/ year</span>
               </div>
-              <p className="text-[13px] text-[#888] mb-6">Just $16.67/month, billed annually</p>
+              <p className="text-[13px] text-[#888] mb-6">Just $6.67/month, billed annually</p>
               <div className="space-y-3 mb-8">
                 {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Tournament & match-play modes'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
@@ -462,7 +462,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <Link href="/auth/signup" className="premium-btn-gold w-full">Try Free — 2 Rounds</Link>
+              <Link href="/auth/signup" className="premium-btn-gold w-full">Try Free — 1 Round</Link>
             </div>
           </Reveal>
         </div>
@@ -478,10 +478,10 @@ export default function HomePage() {
                 <h3 className="font-serif text-white text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] max-w-[500px]">
                   Every round should<br />make you <span className="italic text-[#DF9905]">better.</span>
                 </h3>
-                <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Start free. Play two full rounds on us. No credit card required.</p>
+                <p className="text-[14.5px] text-[#aaa] mt-4 max-w-[460px]">Start free. Play your first round on us. No credit card required.</p>
               </div>
               <Link href="/auth/signup" className="premium-btn-gold shrink-0">
-                Start Free — 2 Rounds
+                Start Free — 1 Round
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 11L9 7L5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
               </Link>
             </div>
