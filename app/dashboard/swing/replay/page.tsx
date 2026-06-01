@@ -22,13 +22,18 @@ const FRAMES = [
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// Full swing arc: address (bottom-center) → top of backswing (upper-right)
-//   → impact (bottom-center loop) → follow-through finish (upper-left)
-const ARC_PATH   = 'M 355 462 C 490 350, 610 120, 580 68 C 550 20, 300 400, 350 462 C 300 400, 140 120, 120 68'
-const ARC_LENGTH = 1600
-// Path fraction breakpoints (approximate arc-length proportions)
-const BS_END_P   = 0.33   // backswing ends / top of backswing
-const IMPACT_P   = 0.68   // downswing completes / impact
+// Full swing oval: address (bottom-RIGHT) → top of backswing (upper-right)
+//   → impact (bottom-LEFT, ~150px offset) → follow-through (upper-left)
+// Offset prevents V-shape — the two arcs form a proper teardrop oval.
+const ARC_PATH   = 'M 455 460 C 575 295, 645 112, 592 66 C 538 18, 265 368, 298 456 C 252 350, 138 145, 118 68'
+const ARC_LENGTH = 1520
+const BS_END_P   = 0.32   // backswing ends at top of backswing
+const IMPACT_P   = 0.68   // downswing completes at impact
+
+// Segment control points matching ARC_PATH
+const SEG1 = { p0:[455,460], p1:[575,295], p2:[645,112], p3:[592,66]  }
+const SEG2 = { p0:[592,66],  p1:[538,18],  p2:[265,368], p3:[298,456] }
+const SEG3 = { p0:[298,456], p1:[252,350], p2:[138,145], p3:[118,68]  }
 
 function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: number[]): [number, number] {
   const mt = 1 - t
@@ -40,11 +45,14 @@ function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: nu
 
 function getDotXY(p: number): [number, number] {
   if (p <= BS_END_P) {
-    return cubicBezier(p / BS_END_P, [355,462],[490,350],[610,120],[580,68])
+    const s = SEG1
+    return cubicBezier(p / BS_END_P, s.p0, s.p1, s.p2, s.p3)
   } else if (p <= IMPACT_P) {
-    return cubicBezier((p - BS_END_P) / (IMPACT_P - BS_END_P), [580,68],[550,20],[300,400],[350,462])
+    const s = SEG2
+    return cubicBezier((p - BS_END_P) / (IMPACT_P - BS_END_P), s.p0, s.p1, s.p2, s.p3)
   } else {
-    return cubicBezier((p - IMPACT_P) / (1 - IMPACT_P), [350,462],[300,400],[140,120],[120,68])
+    const s = SEG3
+    return cubicBezier((p - IMPACT_P) / (1 - IMPACT_P), s.p0, s.p1, s.p2, s.p3)
   }
 }
 
@@ -258,9 +266,9 @@ export default function SwingReplayPage() {
                   className="absolute bottom-0 transition-opacity"
                   style={{
                     opacity: frameOpacity(f.p),
-                    left:    `${2 + i * 15}%`,
+                    left:    `${-4 + i * 16}%`,
                     height:  '100%',
-                    width:   '20%',
+                    width:   '28%',
                     transitionDuration: '80ms',
                     zIndex: 5 + i,
                   }}
