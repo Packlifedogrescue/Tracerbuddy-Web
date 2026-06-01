@@ -22,15 +22,16 @@ const FRAMES = [
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// C-shaped arc: draws from top-of-backswing → impact → follow-through finish.
-// Only animates during the downswing + follow-through phases (not during backswing).
-// A dim static guide shows the backswing rail.
-const ARC_PATH   = 'M 555 68 C 648 265, 468 438, 335 460 C 285 446, 155 252, 120 72'
-const ARC_LENGTH = 1080
-const C_SPLIT    = 0.50  // fraction of arc before impact (C portion vs follow-through)
+// Arc traces the club-head path during the DOWNSWING:
+//   upper-left (top of backswing) → sweeps right-down → impact (lower-center) → follow-through tail (right)
+// This matches the premium mockup fishhook shape.
+const ARC_PATH   = 'M 115 65 C 175 90, 300 395, 375 458 C 440 465, 580 440, 650 400'
+const ARC_LENGTH = 880
+// Fraction of arc length before impact point (tuned to IMPACT_P timing)
+const C_SPLIT    = 0.54
 
-// Backswing guide path (always dim, used for dot during backswing phase)
-const BS_GUIDE   = 'M 345 455 C 488 372, 588 200, 555 68'
+// Dim backswing guide: shows club path from address up-left to top of backswing
+const BS_GUIDE   = 'M 375 458 C 280 400, 150 220, 115 65'
 
 const BS_END_P = 0.32   // top of backswing
 const IMPACT_P = 0.68   // impact
@@ -43,16 +44,19 @@ function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: nu
   ]
 }
 
-// Dot follows backswing guide during backswing, then tracks the C arc tip
+// Dot on backswing guide during backswing, then leads the drawing arc tip
 function getDotXY(p: number): [number, number] {
   if (p <= BS_END_P) {
-    return cubicBezier(p / BS_END_P, [345,455],[488,372],[588,200],[555,68])
+    // Club head travels from address up-left to top of backswing
+    return cubicBezier(p / BS_END_P, [375,458],[280,400],[150,220],[115,65])
   }
   const cT = (p - BS_END_P) / (1 - BS_END_P)
   if (cT <= C_SPLIT) {
-    return cubicBezier(cT / C_SPLIT, [555,68],[648,265],[468,438],[335,460])
+    // Downswing: dot at tip of growing arc, segment 1
+    return cubicBezier(cT / C_SPLIT, [115,65],[175,90],[300,395],[375,458])
   }
-  return cubicBezier((cT - C_SPLIT) / (1 - C_SPLIT), [335,460],[285,446],[155,252],[120,72])
+  // Follow-through: dot continues on segment 2
+  return cubicBezier((cT - C_SPLIT) / (1 - C_SPLIT), [375,458],[440,465],[580,440],[650,400])
 }
 
 // Snap to nearest keyframe — clean single-frame display with CSS fade between snaps
@@ -69,43 +73,36 @@ function getActiveFrame(p: number): { key: string; label: string } {
 function ImpactBurst() {
   return (
     <div className="absolute pointer-events-none" style={{ bottom: '10%', left: '50%', transform: 'translateX(-50%)' }}>
-      {[...Array(16)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            width: 3,
-            height: 48,
-            background: 'linear-gradient(to top, #E8C060, transparent)',
-            transform: `rotate(${i * 22.5}deg)`,
-            transformOrigin: '50% 100%',
-            bottom: 0,
-            left: '50%',
-            marginLeft: -1.5,
-            animation: 'burst 0.55s ease-out forwards',
-          }}
-        />
+      {/* 24 spark rays */}
+      {[...Array(24)].map((_, i) => (
+        <div key={i} className="absolute rounded-full" style={{
+          width: i % 3 === 0 ? 4 : 2.5,
+          height: i % 3 === 0 ? 64 : 44,
+          background: `linear-gradient(to top, ${i % 3 === 0 ? '#FFE08A' : '#E8C060'}, transparent)`,
+          transform: `rotate(${i * 15}deg)`,
+          transformOrigin: '50% 100%',
+          bottom: 0, left: '50%',
+          marginLeft: i % 3 === 0 ? -2 : -1.25,
+          animation: 'burst 0.65s ease-out forwards',
+        }} />
       ))}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: 60, height: 60,
-          background: 'radial-gradient(circle, rgba(201,168,76,0.95) 0%, transparent 70%)',
-          top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)',
-          animation: 'glow-pulse 0.55s ease-out forwards',
-        }}
-      />
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: 100, height: 100,
-          background: 'radial-gradient(circle, rgba(201,168,76,0.3) 0%, transparent 70%)',
-          top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)',
-          animation: 'glow-pulse2 0.7s ease-out forwards',
-        }}
-      />
+      {/* Inner flash */}
+      <div className="absolute rounded-full" style={{
+        width: 24, height: 24,
+        background: 'radial-gradient(circle, #fff 0%, #FFE08A 50%, transparent 100%)',
+        top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+        animation: 'flash 0.2s ease-out forwards',
+      }} />
+      {/* Ring pulses */}
+      {[60, 100, 150].map((size, i) => (
+        <div key={size} className="absolute rounded-full" style={{
+          width: size, height: size,
+          border: `1px solid rgba(201,168,76,${0.7 - i * 0.2})`,
+          top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+          animation: `ring-pulse ${0.5 + i * 0.15}s ease-out forwards`,
+          animationDelay: `${i * 0.06}s`,
+        }} />
+      ))}
     </div>
   )
 }
@@ -194,145 +191,191 @@ export default function SwingReplayPage() {
     <>
       <style>{`
         @keyframes burst {
-          0%   { opacity: 1; transform: rotate(var(--r)) scaleY(0.1); }
-          60%  { opacity: 0.9; }
-          100% { opacity: 0; transform: rotate(var(--r)) scaleY(1) translateY(-24px); }
+          0%   { opacity: 1; scaleY: 0.1; }
+          60%  { opacity: 0.85; }
+          100% { opacity: 0; transform: rotate(var(--r,0)) scaleY(1.2) translateY(-28px); }
         }
-        @keyframes glow-pulse {
-          0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
-          100% { transform: translate(-50%,-50%) scale(3.5); opacity: 0; }
-        }
-        @keyframes glow-pulse2 {
-          0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 0.8; }
+        @keyframes flash {
+          0%   { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
           100% { transform: translate(-50%,-50%) scale(4);   opacity: 0; }
+        }
+        @keyframes ring-pulse {
+          0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
+          100% { transform: translate(-50%,-50%) scale(2.2); opacity: 0; }
+        }
+        @keyframes dot-pulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.4; }
         }
         input[type=range]::-webkit-slider-thumb {
           -webkit-appearance: none;
-          width: 20px; height: 20px;
+          width: 18px; height: 18px;
           border-radius: 50%;
-          background: #C9A84C;
+          background: radial-gradient(circle, #FFE08A 0%, #C9A84C 100%);
           cursor: pointer;
-          box-shadow: 0 0 8px rgba(201,168,76,0.6);
+          box-shadow: 0 0 0 3px rgba(201,168,76,0.2), 0 0 12px rgba(201,168,76,0.5);
         }
-        input[type=range]::-webkit-slider-runnable-track {
-          height: 4px; border-radius: 2px;
-        }
+        input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; }
       `}</style>
 
-      <div className="min-h-screen flex flex-col" style={{ background: '#080808', color: '#fff' }}>
+      {/* Page — warm charcoal background */}
+      <div className="min-h-screen flex flex-col" style={{
+        background: 'radial-gradient(ellipse at 20% 60%, #110d07 0%, #080604 55%, #070504 100%)',
+        color: '#fff',
+      }}>
 
         {/* Top bar */}
-        <div className="flex items-center justify-between px-5 py-4 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
           <div className="flex items-center gap-3">
-            <Link href="/dashboard/swing" className="text-gray-500 hover:text-white transition-colors">
-              <ChevronLeft className="w-5 h-5" />
+            <Link href="/dashboard/swing"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <ChevronLeft className="w-4 h-4 text-gray-400" />
             </Link>
-            <span className="font-black text-lg" style={{ color: '#C9A84C' }}>TB</span>
-            <span className="font-light text-gray-300">TracerBuddy</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-black text-[15px]" style={{ color: '#C9A84C' }}>TB</span>
+              <span className="text-[13px] font-light" style={{ color: 'rgba(255,255,255,0.35)' }}>·</span>
+              <span className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>SwingTrace</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 rounded-full px-4 py-1.5 border" style={{ borderColor: '#C9A84C33', background: '#C9A84C11' }}>
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#C9A84C' }} />
-            <span className="text-xs font-bold tracking-widest" style={{ color: '#C9A84C' }}>SWING REPLAY</span>
+
+          <div className="flex items-center gap-2 rounded-full px-4 py-1.5"
+            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)' }}>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C9A84C', animation: 'dot-pulse 2s ease-in-out infinite' }} />
+            <span className="text-[10px] font-bold tracking-[0.18em]" style={{ color: '#C9A84C' }}>SWING REPLAY</span>
           </div>
-          <button className="text-gray-500 hover:text-white"><MoreHorizontal className="w-5 h-5" /></button>
+
+          <button className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <MoreHorizontal className="w-4 h-4 text-gray-600" />
+          </button>
         </div>
 
         {/* Main area */}
-        <div className="flex flex-1 gap-3 px-5 min-h-0">
+        <div className="flex flex-1 gap-3 px-4 pt-3 pb-2 min-h-0">
 
-          {/* Left metrics */}
-          <div className="flex flex-col gap-2.5 w-40 shrink-0">
+          {/* Left metrics — glass cards */}
+          <div className="flex flex-col gap-2 w-[148px] shrink-0">
             {[
-              { icon: '◎', label: 'CLUB SPEED',   value: `${m.clubSpeed}`,          unit: 'mph' },
-              { icon: '↻', label: 'ATTACK ANGLE', value: `${m.attackAngle}°`,        unit: '' },
-              { icon: '∿', label: 'TEMPO RATIO',  value: `${m.tempoRatio}:1`,         unit: '' },
-              { icon: '↗', label: 'CLUB PATH',    value: `${Math.abs(m.clubPath)}°`, unit: m.clubPath < 0 ? 'IN→OUT' : 'OUT→IN' },
-            ].map(({ icon, label, value, unit }) => (
-              <div key={label} className="flex-1 rounded-2xl p-3 flex flex-col justify-between" style={{ background: '#131313', border: '1px solid #222' }}>
-                <div style={{ color: '#C9A84C', fontSize: 16 }}>{icon}</div>
+              { label: 'CLUB SPEED',   value: `${m.clubSpeed}`,          unit: 'mph',    accent: '#C9A84C' },
+              { label: 'ATTACK ANGLE', value: `${m.attackAngle}°`,        unit: '',       accent: '#7EC8A4' },
+              { label: 'TEMPO RATIO',  value: `${m.tempoRatio}:1`,         unit: '',       accent: '#8BA7D4' },
+              { label: 'CLUB PATH',    value: `${Math.abs(m.clubPath)}°`, unit: m.clubPath < 0 ? 'IN→OUT' : 'OUT→IN', accent: '#D4967A' },
+            ].map(({ label, value, unit, accent }) => (
+              <div key={label} className="flex-1 rounded-2xl p-3.5 flex flex-col justify-between relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderLeft: `2px solid ${accent}`,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
+                }}>
+                {/* Subtle top-right accent glow */}
+                <div className="absolute top-0 right-0 w-16 h-16 rounded-full pointer-events-none"
+                  style={{ background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)`, transform: 'translate(30%, -30%)' }} />
+                <div className="text-[9px] font-bold tracking-[0.18em] mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>{label}</div>
                 <div>
-                  <div className="text-[8px] font-bold tracking-widest mb-1" style={{ color: '#555' }}>{label}</div>
-                  <div className="font-black text-2xl leading-none">{value}</div>
-                  {unit && <div className="text-[8px] font-bold tracking-wider mt-0.5" style={{ color: '#555' }}>{unit}</div>}
+                  <div className="font-black text-[26px] leading-none tracking-tight" style={{ color: '#fff' }}>{value}</div>
+                  {unit && <div className="text-[9px] font-semibold tracking-widest mt-1" style={{ color: accent }}>{unit}</div>}
                 </div>
               </div>
             ))}
           </div>
 
           {/* Animation canvas */}
-          <div className="flex-1 relative rounded-3xl overflow-hidden" style={{ background: '#0C0C0C' }}>
+          <div className="flex-1 relative rounded-2xl overflow-hidden" style={{
+            background: 'radial-gradient(ellipse at 50% 15%, #0f0d09 0%, #060504 100%)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            boxShadow: 'inset 0 0 60px rgba(0,0,0,0.5)',
+          }}>
+            {/* Stage spotlight from above */}
+            <div className="absolute top-0 left-1/2 pointer-events-none"
+              style={{ width: '70%', height: '65%', transform: 'translateX(-50%)',
+                background: 'radial-gradient(ellipse at 50% 0%, rgba(255,220,130,0.06) 0%, transparent 70%)' }} />
 
-            {/* Ground glow */}
-            <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
-              style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(180,110,20,0.22) 0%, transparent 65%)' }} />
+            {/* Dramatic ground glow */}
+            <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+              height: '40%',
+              background: `
+                radial-gradient(ellipse at 50% 100%, rgba(201,168,76,0.28) 0%, rgba(180,110,20,0.10) 45%, transparent 70%),
+                linear-gradient(to top, rgba(201,168,76,0.05) 0%, transparent 100%)
+              `,
+            }} />
 
-            {/* Animated golfer — nearest keyframe at full opacity, CSS fade on snap */}
+            {/* Golfer — nearest keyframe, CSS fade on snap */}
             {FRAMES.map((f) => (
-              <img
-                key={f.key}
-                src={`/images/swing/${f.key}.png`}
-                alt={f.label}
+              <img key={f.key} src={`/images/swing/${f.key}.png`} alt={f.label}
                 className="absolute bottom-0 pointer-events-none"
                 style={{
-                  opacity:     f.key === activeFrame.key ? 1 : 0,
-                  height:      '92%',
-                  width:       'auto',
-                  maxWidth:    '72%',
-                  left:        '50%',
-                  transform:   'translateX(-50%)',
-                  objectFit:   'contain',
+                  opacity:        f.key === activeFrame.key ? 1 : 0,
+                  height:         '92%',
+                  width:          'auto',
+                  maxWidth:       '72%',
+                  left:           '50%',
+                  transform:      'translateX(-50%)',
+                  objectFit:      'contain',
                   objectPosition: 'bottom center',
-                  transition:  `opacity ${fadeMs}ms ease-in-out`,
-                  zIndex:      10,
-                  willChange:  'opacity',
+                  transition:     `opacity ${fadeMs}ms ease-in-out`,
+                  zIndex:         10,
+                  willChange:     'opacity',
                 }}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ))}
 
-            {/* Position label */}
-            <div className="absolute bottom-14 left-0 right-0 flex justify-center pointer-events-none" style={{ zIndex: 20 }}>
-              <div className="text-[9px] font-bold tracking-[0.2em] px-3 py-1 rounded-full"
-                style={{ color: '#C9A84C', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.15)' }}>
+            {/* Position badge */}
+            <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none" style={{ zIndex: 20 }}>
+              <div className="text-[9px] font-black tracking-[0.22em] px-3 py-1 rounded-full"
+                style={{ color: '#C9A84C', background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.22)' }}>
                 {activeFrame.label.toUpperCase()}
               </div>
             </div>
 
-            {/* Gold arc SVG */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              viewBox="0 0 700 520"
-              preserveAspectRatio="none"
-            >
+            {/* Arc SVG — three-layer glow for depth */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox="0 0 700 520" preserveAspectRatio="none">
               <defs>
-                <filter id="arcglow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="5" result="blur" />
+                <filter id="arc-wide" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="16" />
+                </filter>
+                <filter id="arc-mid" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="6" result="blur" />
                   <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                 </filter>
                 <filter id="dotglow" x="-200%" y="-200%" width="500%" height="500%">
-                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feGaussianBlur stdDeviation="6" result="blur" />
                   <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                 </filter>
+                <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FFE08A" />
+                  <stop offset="60%" stopColor="#C9A84C" />
+                  <stop offset="100%" stopColor="#A07828" />
+                </linearGradient>
               </defs>
 
-              {/* Dim backswing guide rail — always visible */}
-              <path d={BS_GUIDE} fill="none" stroke="#C9A84C" strokeWidth="1.5"
-                opacity="0.14" strokeLinecap="round" strokeDasharray="6 6" />
+              {/* Backswing guide — subtle dashed rail */}
+              <path d={BS_GUIDE} fill="none" stroke="#C9A84C" strokeWidth="1.2"
+                opacity="0.12" strokeLinecap="round" strokeDasharray="5 7" />
 
-              {/* C arc glow halo */}
-              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="14" opacity="0.15"
-                filter="url(#arcglow)" strokeLinecap="round"
+              {/* Arc layer 1: wide ambient bloom */}
+              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="32" opacity="0.07"
+                filter="url(#arc-wide)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
-              {/* C arc main line */}
-              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="2.5"
-                filter="url(#arcglow)" strokeLinecap="round"
+              {/* Arc layer 2: medium glow halo */}
+              <path d={ARC_PATH} fill="none" stroke="#E8C060" strokeWidth="10" opacity="0.22"
+                filter="url(#arc-mid)" strokeLinecap="round"
+                strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
+              {/* Arc layer 3: bright core line */}
+              <path d={ARC_PATH} fill="none" stroke="url(#arcGrad)" strokeWidth="2.5"
+                filter="url(#arc-mid)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
 
-              {/* Traveling club-head dot */}
+              {/* Club-head dot */}
               {progress > 0 && progress < 1 && (
                 <>
-                  <circle cx={dotX} cy={dotY} r="9" fill="rgba(201,168,76,0.25)" filter="url(#dotglow)" />
-                  <circle cx={dotX} cy={dotY} r="5" fill="#E8C060" filter="url(#dotglow)" />
+                  <circle cx={dotX} cy={dotY} r="14" fill="rgba(255,224,138,0.12)" filter="url(#arc-wide)" />
+                  <circle cx={dotX} cy={dotY} r="6"  fill="rgba(201,168,76,0.35)"  filter="url(#dotglow)" />
+                  <circle cx={dotX} cy={dotY} r="3.5" fill="#FFF4D0" filter="url(#dotglow)" />
                 </>
               )}
             </svg>
@@ -341,32 +384,23 @@ export default function SwingReplayPage() {
             {showImpact && <ImpactBurst />}
 
             {/* Speed badge */}
-            <button
-              onClick={cycleSpeed}
-              className="absolute bottom-4 right-4 rounded-xl px-3 py-1.5 text-sm font-bold transition-colors"
-              style={{ background: '#1a1a1a', border: '1px solid #333', color: '#fff' }}
-            >
-              {speed.toFixed(1)}x
+            <button onClick={cycleSpeed}
+              className="absolute bottom-3 right-3 rounded-xl px-3 py-1.5 text-[11px] font-black tracking-wider transition-all hover:opacity-80"
+              style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>
+              {speed.toFixed(1)}×
             </button>
           </div>
 
-          {/* Right view buttons */}
-          <div className="flex flex-col gap-2.5 w-12 shrink-0">
-            {[
-              { label: '3D',  active: true },
-              { label: '👤', active: false },
-              { label: '◎',  active: false },
-              { label: '📊', active: false },
-            ].map(({ label, active }) => (
-              <button
-                key={label}
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold transition-colors"
+          {/* Right tabs */}
+          <div className="flex flex-col gap-2 w-11 shrink-0">
+            {(['DTL', 'FO', '45°', '↑'] as const).map((label, i) => (
+              <button key={label}
+                className="w-11 h-11 rounded-xl flex items-center justify-center text-[10px] font-black tracking-wide transition-all"
                 style={{
-                  background: active ? 'rgba(201,168,76,0.1)' : '#131313',
-                  border: `1px solid ${active ? '#C9A84C' : '#222'}`,
-                  color: active ? '#C9A84C' : '#555',
-                }}
-              >
+                  background: i === 0 ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${i === 0 ? 'rgba(201,168,76,0.35)' : 'rgba(255,255,255,0.06)'}`,
+                  color: i === 0 ? '#C9A84C' : 'rgba(255,255,255,0.2)',
+                }}>
                 {label}
               </button>
             ))}
@@ -374,46 +408,54 @@ export default function SwingReplayPage() {
         </div>
 
         {/* Bottom timeline */}
-        <div className="px-5 pt-4 pb-6 shrink-0">
+        <div className="px-4 pt-3 pb-5 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
           <div className="flex items-center gap-4 mb-3">
-            <button onClick={handlePlay} className="text-white transition-opacity hover:opacity-70">
+            {/* Play/pause — gold circle button */}
+            <button onClick={handlePlay}
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95"
+              style={{ background: isPlaying ? 'rgba(201,168,76,0.15)' : '#C9A84C', boxShadow: '0 0 20px rgba(201,168,76,0.35)' }}>
               {isPlaying
-                ? <Pause className="w-6 h-6 fill-white" />
-                : <Play  className="w-6 h-6 fill-white" />}
+                ? <Pause className="w-4 h-4" style={{ color: '#C9A84C' }} />
+                : <Play  className="w-4 h-4 fill-black text-black ml-0.5" />}
             </button>
 
-            <div className="flex-1">
-              <input
-                type="range" min="0" max="100"
+            {/* Scrubber with phase markers */}
+            <div className="flex-1 relative">
+              <input type="range" min="0" max="100"
                 value={Math.round(progress * 100)}
                 onChange={e => handleScrub(Number(e.target.value) / 100)}
-                className="w-full cursor-pointer"
+                className="w-full cursor-pointer relative z-10"
                 style={{
-                  WebkitAppearance: 'none',
-                  height: 4,
-                  borderRadius: 2,
-                  background: `linear-gradient(to right, #C9A84C ${progress * 100}%, #2a2a2a ${progress * 100}%)`,
-                  outline: 'none',
+                  WebkitAppearance: 'none', height: 3, borderRadius: 2, outline: 'none',
+                  background: `linear-gradient(to right, #C9A84C ${progress * 100}%, rgba(255,255,255,0.1) ${progress * 100}%)`,
                 }}
               />
+              {/* Phase marker ticks */}
+              {[BS_END_P, IMPACT_P].map((p) => (
+                <div key={p} className="absolute top-1/2 -translate-y-1/2 w-px pointer-events-none"
+                  style={{ left: `${p * 100}%`, height: 10, background: 'rgba(201,168,76,0.35)', zIndex: 20 }} />
+              ))}
             </div>
 
-            <button
-              onClick={() => { setIsPlaying(false); setProgress(0); setImpactFired(false) }}
-              className="text-gray-500 hover:text-white transition-colors"
-            >
-              <RotateCcw className="w-4 h-4" />
+            <button onClick={() => { setIsPlaying(false); setProgress(0); setImpactFired(false) }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:opacity-70"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
             </button>
           </div>
 
           {/* Phase labels */}
-          <div className="flex justify-between px-8">
-            <span className="text-[9px] font-bold tracking-widest"
-              style={{ color: progress < BS_END_P ? '#C9A84C' : '#444' }}>BACKSWING</span>
-            <span className="text-[9px] font-bold tracking-widest"
-              style={{ color: progress >= BS_END_P && progress <= IMPACT_P ? '#C9A84C' : '#444' }}>IMPACT</span>
-            <span className="text-[9px] font-bold tracking-widest"
-              style={{ color: progress > IMPACT_P ? '#C9A84C' : '#444' }}>FOLLOW THROUGH</span>
+          <div className="flex justify-between px-10">
+            {[
+              { label: 'BACKSWING',     active: progress < BS_END_P },
+              { label: 'IMPACT',        active: progress >= BS_END_P && progress <= IMPACT_P },
+              { label: 'FOLLOW THRU',   active: progress > IMPACT_P },
+            ].map(({ label, active }) => (
+              <span key={label} className="text-[8px] font-black tracking-[0.18em] transition-colors"
+                style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.18)' }}>
+                {label}
+              </span>
+            ))}
           </div>
         </div>
       </div>
