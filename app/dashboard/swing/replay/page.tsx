@@ -56,6 +56,22 @@ function getDotXY(p: number): [number, number] {
   }
 }
 
+// Returns the two adjacent frames with cross-fade opacities for the current progress
+function getBlendedFrames(p: number): { key: string; label: string; opacity: number }[] {
+  for (let i = 0; i < FRAMES.length - 1; i++) {
+    const a = FRAMES[i], b = FRAMES[i + 1]
+    if (p >= a.p && p < b.p) {
+      const t = (p - a.p) / (b.p - a.p)
+      return [
+        { key: a.key, label: a.label, opacity: 1 - t },
+        { key: b.key, label: b.label, opacity: t },
+      ]
+    }
+  }
+  const last = FRAMES[FRAMES.length - 1]
+  return [{ key: last.key, label: last.label, opacity: 1 }]
+}
+
 function ImpactBurst() {
   return (
     <div className="absolute pointer-events-none" style={{ bottom: '10%', left: '50%', transform: 'translateX(-50%)' }}>
@@ -172,15 +188,10 @@ export default function SwingReplayPage() {
 
   const cycleSpeed = () => setSpeed(s => s === 0.5 ? 1.0 : s === 1.0 ? 2.0 : 0.5)
 
-  const frameOpacity = (fp: number) => {
-    const d = Math.abs(progress - fp)
-    if (d < 0.12) return 1.0
-    if (d < 0.35) return 0.65
-    return 0.40
-  }
-
-  const dashOffset = ARC_LENGTH * (1 - Math.min(progress, 1))
+  const dashOffset  = ARC_LENGTH * (1 - Math.min(progress, 1))
   const [dotX, dotY] = progress > 0 && progress < 1 ? getDotXY(progress) : [0, 0]
+  const blended     = getBlendedFrames(progress)
+  const activeLabel = blended.reduce((a, b) => a.opacity > b.opacity ? a : b).label
 
   return (
     <>
@@ -258,29 +269,40 @@ export default function SwingReplayPage() {
             <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
               style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(180,110,20,0.22) 0%, transparent 65%)' }} />
 
-            {/* Golfer frames */}
-            <div className="absolute inset-0">
-              {FRAMES.map((f, i) => (
-                <div
+            {/* Animated golfer — single frame cross-fading between keyframes */}
+            {FRAMES.map((f) => {
+              const frame   = blended.find(b => b.key === f.key)
+              const opacity = frame?.opacity ?? 0
+              return (
+                <img
                   key={f.key}
-                  className="absolute bottom-0 transition-opacity"
+                  src={`/images/swing/${f.key}.png`}
+                  alt={f.label}
+                  className="absolute bottom-0 pointer-events-none"
                   style={{
-                    opacity: frameOpacity(f.p),
-                    left:    `${-4 + i * 16}%`,
-                    height:  '100%',
-                    width:   '28%',
-                    transitionDuration: '80ms',
-                    zIndex: 5 + i,
+                    opacity,
+                    height:      '92%',
+                    width:       'auto',
+                    maxWidth:    '72%',
+                    left:        '50%',
+                    transform:   'translateX(-50%)',
+                    objectFit:   'contain',
+                    objectPosition: 'bottom center',
+                    transition:  'opacity 35ms linear',
+                    zIndex:      10,
+                    display:     opacity < 0.005 ? 'none' : 'block',
                   }}
-                >
-                  <img
-                    src={`/images/swing/${f.key}.png`}
-                    alt={f.label}
-                    className="h-full w-full object-contain object-bottom"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  />
-                </div>
-              ))}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              )
+            })}
+
+            {/* Position label */}
+            <div className="absolute bottom-14 left-0 right-0 flex justify-center pointer-events-none" style={{ zIndex: 20 }}>
+              <div className="text-[9px] font-bold tracking-[0.2em] px-3 py-1 rounded-full"
+                style={{ color: '#C9A84C', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.15)' }}>
+                {activeLabel.toUpperCase()}
+              </div>
             </div>
 
             {/* Gold arc SVG */}
