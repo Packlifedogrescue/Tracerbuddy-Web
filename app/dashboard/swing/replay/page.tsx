@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { Play, Pause, ChevronLeft, ChevronRight, MoreHorizontal, Zap, RotateCcw, Activity, TrendingUp } from 'lucide-react'
+import { Play, Pause, ChevronLeft, MoreHorizontal, RotateCcw } from 'lucide-react'
 
 const MOCK_METRICS = {
   clubSpeed:        94.0,
@@ -10,49 +10,82 @@ const MOCK_METRICS = {
   clubPath:         -1.4,
   backswingMs:      800,
   downswingMs:      260,
+  followthruMs:     450,
 }
 
 const FRAMES = [
   { key: 'swing_address',       label: 'Address',     p: 0.00 },
   { key: 'swing_halfway_back',  label: 'Halfway',     p: 0.20 },
-  { key: 'swing_top',           label: 'Top',         p: 0.40 },
-  { key: 'swing_downswing',     label: 'Downswing',   p: 0.62 },
-  { key: 'swing_impact',        label: 'Impact',      p: 0.75 },
+  { key: 'swing_top',           label: 'Top',         p: 0.33 },
+  { key: 'swing_downswing',     label: 'Downswing',   p: 0.55 },
+  { key: 'swing_impact',        label: 'Impact',      p: 0.68 },
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// Smooth rounded arch: address(bottom-left) → rounded peak(top-center) → impact(bottom-center) → finish(top-right)
-const ARC_PATH = 'M 108 468 C 180 55, 460 55, 528 468 C 562 375, 600 205, 638 72'
-const ARC_LENGTH = 920
+// Full swing arc: address (bottom-center) → top of backswing (upper-right)
+//   → impact (bottom-center loop) → follow-through finish (upper-left)
+const ARC_PATH   = 'M 355 462 C 490 350, 610 120, 580 68 C 550 20, 300 400, 350 462 C 300 400, 140 120, 120 68'
+const ARC_LENGTH = 1600
+// Path fraction breakpoints (approximate arc-length proportions)
+const BS_END_P   = 0.33   // backswing ends / top of backswing
+const IMPACT_P   = 0.68   // downswing completes / impact
+
+function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: number[]): [number, number] {
+  const mt = 1 - t
+  return [
+    mt**3*p0[0] + 3*mt**2*t*p1[0] + 3*mt*t**2*p2[0] + t**3*p3[0],
+    mt**3*p0[1] + 3*mt**2*t*p1[1] + 3*mt*t**2*p2[1] + t**3*p3[1],
+  ]
+}
+
+function getDotXY(p: number): [number, number] {
+  if (p <= BS_END_P) {
+    return cubicBezier(p / BS_END_P, [355,462],[490,350],[610,120],[580,68])
+  } else if (p <= IMPACT_P) {
+    return cubicBezier((p - BS_END_P) / (IMPACT_P - BS_END_P), [580,68],[550,20],[300,400],[350,462])
+  } else {
+    return cubicBezier((p - IMPACT_P) / (1 - IMPACT_P), [350,462],[300,400],[140,120],[120,68])
+  }
+}
 
 function ImpactBurst() {
   return (
-    <div className="absolute pointer-events-none" style={{ bottom: '26%', left: '51%', transform: 'translateX(-50%)' }}>
-      {[...Array(12)].map((_, i) => (
+    <div className="absolute pointer-events-none" style={{ bottom: '10%', left: '50%', transform: 'translateX(-50%)' }}>
+      {[...Array(16)].map((_, i) => (
         <div
           key={i}
           className="absolute rounded-full"
           style={{
             width: 3,
-            height: Math.random() * 40 + 20,
-            background: 'linear-gradient(to top, #C9A84C, transparent)',
-            transform: `rotate(${i * 30}deg)`,
+            height: 48,
+            background: 'linear-gradient(to top, #E8C060, transparent)',
+            transform: `rotate(${i * 22.5}deg)`,
             transformOrigin: '50% 100%',
             bottom: 0,
             left: '50%',
             marginLeft: -1.5,
-            animation: 'burst 0.5s ease-out forwards',
+            animation: 'burst 0.55s ease-out forwards',
           }}
         />
       ))}
       <div
         className="absolute rounded-full"
         style={{
-          width: 40, height: 40,
-          background: 'radial-gradient(circle, rgba(201,168,76,0.9) 0%, transparent 70%)',
+          width: 60, height: 60,
+          background: 'radial-gradient(circle, rgba(201,168,76,0.95) 0%, transparent 70%)',
           top: '50%', left: '50%',
           transform: 'translate(-50%,-50%)',
-          animation: 'glow-pulse 0.5s ease-out forwards',
+          animation: 'glow-pulse 0.55s ease-out forwards',
+        }}
+      />
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: 100, height: 100,
+          background: 'radial-gradient(circle, rgba(201,168,76,0.3) 0%, transparent 70%)',
+          top: '50%', left: '50%',
+          transform: 'translate(-50%,-50%)',
+          animation: 'glow-pulse2 0.7s ease-out forwards',
         }}
       />
     </div>
@@ -65,11 +98,9 @@ export default function SwingReplayPage() {
   const [speed,       setSpeed]       = useState(1.0)
   const [showImpact,  setShowImpact]  = useState(false)
   const [impactFired, setImpactFired] = useState(false)
-  const rafRef       = useRef<number | null>(null)
-  const startRef     = useRef<number>(0)
-  const startPRef    = useRef<number>(0)
-  const m            = MOCK_METRICS
-  const totalMs      = (m.backswingMs + m.downswingMs) / speed
+  const rafRef   = useRef<number | null>(null)
+  const startRef = useRef<number>(0)
+  const m        = MOCK_METRICS
 
   const stopAnim = useCallback(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
@@ -77,34 +108,36 @@ export default function SwingReplayPage() {
 
   useEffect(() => {
     if (!isPlaying) { stopAnim(); return }
-    startRef.current  = performance.now()
-    startPRef.current = progress >= 1 ? 0 : progress
+    startRef.current = performance.now()
 
-    // Backswing = 0→0.45 over backswingMs, Downswing = 0.45→1.0 over downswingMs
-    const backswingMs  = m.backswingMs / speed
-    const downswingMs  = m.downswingMs / speed
-    const IMPACT_P     = 0.62  // where impact occurs on the arc
+    const bsMs = m.backswingMs   / speed
+    const dsMs = m.downswingMs   / speed
+    const ftMs = m.followthruMs  / speed
 
     const tick = (now: number) => {
       const elapsed = now - startRef.current
       let newP: number
 
-      if (elapsed < backswingMs) {
-        // Slow backswing phase
-        newP = startPRef.current + (elapsed / backswingMs) * IMPACT_P
+      if (elapsed < bsMs) {
+        // Slow backswing: 0 → BS_END_P
+        newP = (elapsed / bsMs) * BS_END_P
+      } else if (elapsed < bsMs + dsMs) {
+        // Fast downswing: BS_END_P → IMPACT_P
+        const ds = elapsed - bsMs
+        newP = BS_END_P + (ds / dsMs) * (IMPACT_P - BS_END_P)
       } else {
-        // Fast downswing + follow-through
-        const ds = elapsed - backswingMs
-        newP = IMPACT_P + (ds / (downswingMs * 3)) * (1 - IMPACT_P)
+        // Follow-through: IMPACT_P → 1.0
+        const ft = elapsed - bsMs - dsMs
+        newP = IMPACT_P + (ft / ftMs) * (1 - IMPACT_P)
       }
 
       newP = Math.min(newP, 1)
       setProgress(newP)
 
-      if (newP >= 0.60 && newP < 0.65 && !impactFired) {
+      if (newP >= IMPACT_P - 0.03 && newP < IMPACT_P + 0.02 && !impactFired) {
         setShowImpact(true)
         setImpactFired(true)
-        setTimeout(() => setShowImpact(false), 600)
+        setTimeout(() => setShowImpact(false), 650)
       }
       if (newP < 1) {
         rafRef.current = requestAnimationFrame(tick)
@@ -118,7 +151,8 @@ export default function SwingReplayPage() {
   }, [isPlaying, speed])
 
   const handlePlay = () => {
-    if (progress >= 1) { setProgress(0); setImpactFired(false) }
+    setProgress(0)
+    setImpactFired(false)
     setIsPlaying(p => !p)
   }
 
@@ -133,28 +167,28 @@ export default function SwingReplayPage() {
   const frameOpacity = (fp: number) => {
     const d = Math.abs(progress - fp)
     if (d < 0.12) return 1.0
-    if (d < 0.35) return 0.7
-    return 0.45
+    if (d < 0.35) return 0.65
+    return 0.40
   }
 
   const dashOffset = ARC_LENGTH * (1 - Math.min(progress, 1))
-
-  // Dot position along the arc (approx)
-  const dotProgress = Math.min(progress, 1)
-  const dotX = 95  + (610 - 95)  * dotProgress
-  const dotY = 55  + (200 - 55)  * Math.sin(dotProgress * Math.PI) * -1 + (200 - 55) * dotProgress * 0.8
+  const [dotX, dotY] = progress > 0 && progress < 1 ? getDotXY(progress) : [0, 0]
 
   return (
     <>
       <style>{`
         @keyframes burst {
-          0%   { opacity: 1; transform: rotate(var(--r)) scaleY(0.2); }
-          60%  { opacity: 0.8; }
-          100% { opacity: 0; transform: rotate(var(--r)) scaleY(1) translateY(-20px); }
+          0%   { opacity: 1; transform: rotate(var(--r)) scaleY(0.1); }
+          60%  { opacity: 0.9; }
+          100% { opacity: 0; transform: rotate(var(--r)) scaleY(1) translateY(-24px); }
         }
         @keyframes glow-pulse {
-          0%   { transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
-          100% { transform: translate(-50%,-50%) scale(3);   opacity: 0; }
+          0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
+          100% { transform: translate(-50%,-50%) scale(3.5); opacity: 0; }
+        }
+        @keyframes glow-pulse2 {
+          0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 0.8; }
+          100% { transform: translate(-50%,-50%) scale(4);   opacity: 0; }
         }
         input[type=range]::-webkit-slider-thumb {
           -webkit-appearance: none;
@@ -193,10 +227,10 @@ export default function SwingReplayPage() {
           {/* Left metrics */}
           <div className="flex flex-col gap-2.5 w-40 shrink-0">
             {[
-              { icon: '◎', label: 'CLUB SPEED',    value: `${m.clubSpeed}`, unit: 'mph' },
-              { icon: '↻', label: 'ATTACK ANGLE',  value: `${m.attackAngle}°`, unit: '' },
-              { icon: '∿', label: 'TEMPO RATIO',   value: `${m.tempoRatio}:1`, unit: '' },
-              { icon: '↗', label: 'CLUB PATH',     value: `${Math.abs(m.clubPath)}°`, unit: m.clubPath < 0 ? 'IN→OUT' : 'OUT→IN' },
+              { icon: '◎', label: 'CLUB SPEED',   value: `${m.clubSpeed}`,          unit: 'mph' },
+              { icon: '↻', label: 'ATTACK ANGLE', value: `${m.attackAngle}°`,        unit: '' },
+              { icon: '∿', label: 'TEMPO RATIO',  value: `${m.tempoRatio}:1`,         unit: '' },
+              { icon: '↗', label: 'CLUB PATH',    value: `${Math.abs(m.clubPath)}°`, unit: m.clubPath < 0 ? 'IN→OUT' : 'OUT→IN' },
             ].map(({ icon, label, value, unit }) => (
               <div key={label} className="flex-1 rounded-2xl p-3 flex flex-col justify-between" style={{ background: '#131313', border: '1px solid #222' }}>
                 <div style={{ color: '#C9A84C', fontSize: 16 }}>{icon}</div>
@@ -212,9 +246,9 @@ export default function SwingReplayPage() {
           {/* Animation canvas */}
           <div className="flex-1 relative rounded-3xl overflow-hidden" style={{ background: '#0C0C0C' }}>
 
-            {/* Ambient ground glow */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-              style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(201,168,76,0.08) 0%, transparent 70%)' }} />
+            {/* Ground glow */}
+            <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
+              style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(180,110,20,0.22) 0%, transparent 65%)' }} />
 
             {/* Golfer frames */}
             <div className="absolute inset-0">
@@ -223,10 +257,10 @@ export default function SwingReplayPage() {
                   key={f.key}
                   className="absolute bottom-0 transition-opacity"
                   style={{
-                    opacity:    frameOpacity(f.p),
-                    left:       `${2 + i * 15}%`,
-                    height:     '100%',
-                    width:      '20%',
+                    opacity: frameOpacity(f.p),
+                    left:    `${2 + i * 15}%`,
+                    height:  '100%',
+                    width:   '20%',
                     transitionDuration: '80ms',
                     zIndex: 5 + i,
                   }}
@@ -235,10 +269,7 @@ export default function SwingReplayPage() {
                     src={`/images/swing/${f.key}.png`}
                     alt={f.label}
                     className="h-full w-full object-contain object-bottom"
-                    onError={(e) => {
-                      const el = e.target as HTMLImageElement
-                      el.style.display = 'none'
-                    }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 </div>
               ))}
@@ -256,44 +287,26 @@ export default function SwingReplayPage() {
                   <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                 </filter>
                 <filter id="dotglow" x="-200%" y="-200%" width="500%" height="500%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feGaussianBlur stdDeviation="5" result="blur" />
                   <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                 </filter>
               </defs>
 
-              {/* Glow layer */}
-              <path
-                d={ARC_PATH}
-                fill="none"
-                stroke="#C9A84C"
-                strokeWidth="10"
-                opacity="0.25"
-                filter="url(#arcglow)"
-                strokeLinecap="round"
-                strokeDasharray={ARC_LENGTH}
-                strokeDashoffset={dashOffset}
-              />
-              {/* Main line */}
-              <path
-                d={ARC_PATH}
-                fill="none"
-                stroke="#C9A84C"
-                strokeWidth="2.5"
-                filter="url(#arcglow)"
-                strokeLinecap="round"
-                strokeDasharray={ARC_LENGTH}
-                strokeDashoffset={dashOffset}
-              />
+              {/* Glow halo */}
+              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="12" opacity="0.18"
+                filter="url(#arcglow)" strokeLinecap="round"
+                strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
+              {/* Main arc */}
+              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="2.5"
+                filter="url(#arcglow)" strokeLinecap="round"
+                strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
 
-              {/* Traveling dot */}
+              {/* Traveling club-head dot */}
               {progress > 0 && progress < 1 && (
-                <circle
-                  cx={dotX}
-                  cy={dotY}
-                  r="6"
-                  fill="#C9A84C"
-                  filter="url(#dotglow)"
-                />
+                <>
+                  <circle cx={dotX} cy={dotY} r="9" fill="rgba(201,168,76,0.25)" filter="url(#dotglow)" />
+                  <circle cx={dotX} cy={dotY} r="5" fill="#E8C060" filter="url(#dotglow)" />
+                </>
               )}
             </svg>
 
@@ -310,7 +323,7 @@ export default function SwingReplayPage() {
             </button>
           </div>
 
-          {/* Right buttons */}
+          {/* Right view buttons */}
           <div className="flex flex-col gap-2.5 w-12 shrink-0">
             {[
               { label: '3D',  active: true },
@@ -358,16 +371,22 @@ export default function SwingReplayPage() {
               />
             </div>
 
-            <button onClick={() => { setIsPlaying(false); setProgress(0); setImpactFired(false) }}
-              className="text-gray-500 hover:text-white transition-colors">
+            <button
+              onClick={() => { setIsPlaying(false); setProgress(0); setImpactFired(false) }}
+              className="text-gray-500 hover:text-white transition-colors"
+            >
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
 
+          {/* Phase labels */}
           <div className="flex justify-between px-8">
-            <span className="text-[9px] font-bold tracking-widest" style={{ color: '#444' }}>BACKSWING</span>
-            <span className="text-[9px] font-bold tracking-widest" style={{ color: progress >= 0.65 && progress <= 0.85 ? '#C9A84C' : '#444' }}>IMPACT</span>
-            <span className="text-[9px] font-bold tracking-widest" style={{ color: '#444' }}>FOLLOW THROUGH</span>
+            <span className="text-[9px] font-bold tracking-widest"
+              style={{ color: progress < BS_END_P ? '#C9A84C' : '#444' }}>BACKSWING</span>
+            <span className="text-[9px] font-bold tracking-widest"
+              style={{ color: progress >= BS_END_P && progress <= IMPACT_P ? '#C9A84C' : '#444' }}>IMPACT</span>
+            <span className="text-[9px] font-bold tracking-widest"
+              style={{ color: progress > IMPACT_P ? '#C9A84C' : '#444' }}>FOLLOW THROUGH</span>
           </div>
         </div>
       </div>
