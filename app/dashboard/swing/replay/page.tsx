@@ -207,9 +207,9 @@ export default function SwingReplayPage() {
                   className="absolute bottom-0 transition-opacity"
                   style={{
                     opacity:    frameOpacity(f.p),
-                    left:       `${8 + i * 14}%`,
-                    height:     '88%',
-                    width:      '18%',
+                    left:       `${4 + i * 15}%`,
+                    height:     '100%',
+                    width:      '22%',
                     transitionDuration: '80ms',
                     zIndex: 5 + i,
                   }}
@@ -219,7 +219,6 @@ export default function SwingReplayPage() {
                     alt={f.label}
                     className="h-full w-full object-contain object-bottom"
                     onError={(e) => {
-                      // Placeholder when image not yet uploaded
                       const el = e.target as HTMLImageElement
                       el.style.display = 'none'
                     }}
