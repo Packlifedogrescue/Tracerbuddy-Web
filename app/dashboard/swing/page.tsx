@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
-import { Activity, Zap, TrendingUp } from 'lucide-react'
+import { Activity, Zap, TrendingUp, PlayCircle } from 'lucide-react'
 import ProGate from '@/components/ProGate'
+import Link from 'next/link'
 
 export default function SwingPage() {
   const [swings,  setSwings]  = useState<any[]>([])
@@ -56,9 +57,19 @@ export default function SwingPage() {
   return (
     <ProGate feature="Swing Data" description="Apple Watch swing speed tracking with trend analysis and per-club breakdowns — see if you're getting faster over time.">
     <div className="p-6 md:p-8 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-[26px] font-black text-[#111] tracking-tight">SwingTrace</h1>
-        <p className="text-[13.5px] text-gray-400 mt-0.5">Apple Watch swing speed — {swings.length} swings logged</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-[26px] font-black text-[#111] tracking-tight">SwingTrace</h1>
+          <p className="text-[13.5px] text-gray-400 mt-0.5">Apple Watch swing speed — {swings.length} swings logged</p>
+        </div>
+        <Link
+          href="/dashboard/swing/replay"
+          className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-bold transition-all hover:opacity-90"
+          style={{ background: '#0A0A0A', color: '#C9A84C', border: '1px solid #C9A84C33' }}
+        >
+          <PlayCircle className="w-4 h-4" />
+          Swing Replay
+        </Link>
       </div>
 
       {/* KPIs */}
