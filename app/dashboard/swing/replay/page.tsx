@@ -22,18 +22,20 @@ const FRAMES = [
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// Full swing oval: address (bottom-RIGHT) → top of backswing (upper-right)
-//   → impact (bottom-LEFT, ~150px offset) → follow-through (upper-left)
-// Offset prevents V-shape — the two arcs form a proper teardrop oval.
-const ARC_PATH   = 'M 455 460 C 575 295, 645 112, 592 66 C 538 18, 265 368, 298 456 C 252 350, 138 145, 118 68'
+// Full swing oval: address (bottom-right) → top of backswing (upper-right)
+//   → impact (bottom-center) → follow-through (upper-left)
+// G1-smooth junctions: each segment's start tangent matches the previous end tangent.
+// Top junction: seg1 ends going left-down (-60,17) → seg2 starts with same direction.
+// Impact junction: seg2 ends going left (-100,26) → seg3 starts with same direction.
+const ARC_PATH   = 'M 455 460 C 570 310, 650 55, 590 72 C 530 89, 400 430, 300 456 C 200 482, 130 180, 118 70'
 const ARC_LENGTH = 1520
 const BS_END_P   = 0.32   // backswing ends at top of backswing
 const IMPACT_P   = 0.68   // downswing completes at impact
 
-// Segment control points matching ARC_PATH
-const SEG1 = { p0:[455,460], p1:[575,295], p2:[645,112], p3:[592,66]  }
-const SEG2 = { p0:[592,66],  p1:[538,18],  p2:[265,368], p3:[298,456] }
-const SEG3 = { p0:[298,456], p1:[252,350], p2:[138,145], p3:[118,68]  }
+// Segment control points matching ARC_PATH exactly
+const SEG1 = { p0:[455,460], p1:[570,310], p2:[650,55],  p3:[590,72]  }
+const SEG2 = { p0:[590,72],  p1:[530,89],  p2:[400,430], p3:[300,456] }
+const SEG3 = { p0:[300,456], p1:[200,482], p2:[130,180], p3:[118,70]  }
 
 function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: number[]): [number, number] {
   const mt = 1 - t
@@ -270,6 +272,7 @@ export default function SwingReplayPage() {
               style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(180,110,20,0.22) 0%, transparent 65%)' }} />
 
             {/* Animated golfer — single frame cross-fading between keyframes */}
+            {/* All frames stay in DOM so CSS transitions run uninterrupted */}
             {FRAMES.map((f) => {
               const frame   = blended.find(b => b.key === f.key)
               const opacity = frame?.opacity ?? 0
@@ -288,9 +291,9 @@ export default function SwingReplayPage() {
                     transform:   'translateX(-50%)',
                     objectFit:   'contain',
                     objectPosition: 'bottom center',
-                    transition:  'opacity 35ms linear',
+                    transition:  'opacity 90ms ease-in-out',
                     zIndex:      10,
-                    display:     opacity < 0.005 ? 'none' : 'block',
+                    willChange:  'opacity',
                   }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                 />
