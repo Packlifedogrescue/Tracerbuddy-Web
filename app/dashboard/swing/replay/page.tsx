@@ -36,19 +36,60 @@ function frameLabel(i: number, total: number): string {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Arc traces the club-head path during the DOWNSWING:
-//   upper-left (top of backswing) → sweeps right-down → impact (lower-center) → follow-through tail (right)
-// This matches the premium mockup fishhook shape.
-const ARC_PATH   = 'M 115 65 C 175 90, 300 395, 375 458 C 440 465, 580 440, 650 400'
-const ARC_LENGTH = 880
-// Fraction of arc length before impact point (tuned to IMPACT_P timing)
-const C_SPLIT    = 0.54
-
-// Dim backswing guide: shows club path from address up-left to top of backswing
-const BS_GUIDE   = 'M 375 458 C 280 400, 150 220, 115 65'
-
 const BS_END_P = 0.32   // top of backswing
 const IMPACT_P = 0.68   // impact
+const C_SPLIT  = 0.54   // fraction of arc before impact (tuned to IMPACT_P timing)
+
+// Dim backswing guide: always fixed — shows club path from address up to top
+const BS_GUIDE = 'M 375 458 C 280 400, 150 220, 115 65'
+
+// ─── Data-driven arc ─────────────────────────────────────────────────────────
+// The arc shape is computed from real swing metrics every render.
+//
+//  attackAngle → steepness of the downswing arc at impact
+//    • -8° steep digger : arc arrives nearly vertical
+//    • -3° typical iron  : 45° approach (baseline)
+//    • +2° driver sweep  : shallow, almost horizontal
+//
+//  clubPath → direction of the follow-through tail after impact
+//    • negative IN→OUT   : tail extends further to the right
+//    • positive OUT→IN   : tail curves back left (fade/slice path)
+//
+//  clubSpeed → glow intensity (faster = brighter arc)
+//
+function computeSwingArc(attackAngle: number, clubPath: number, clubSpeed: number) {
+  const ix = 375, iy = 458   // impact point (fixed in canvas)
+  const topX = 115, topY = 65
+
+  // Attack angle shifts CP2 (control point before impact):
+  //   steeper (more negative) → CP2 moves up & right → arc arrives more vertical
+  //   shallower (positive)    → CP2 moves down & left → arc arrives near-horizontal
+  const steep  = attackAngle - (-3)         // 0 at baseline -3°; negative = shallower, positive = steeper
+  const cp2x   = Math.round(300 - steep * 4)
+  const cp2y   = Math.round(395 + steep * 10)
+
+  // Club path shifts the follow-through control points and endpoint:
+  //   IN→OUT (negative) → tail extends rightward
+  //   OUT→IN (positive) → tail curls back left
+  const ft1x = Math.round(440 - clubPath * 8)
+  const ft2x = Math.round(580 - clubPath * 14)
+  const ft3x = Math.round(650 - clubPath * 14)
+  const ft1y = Math.round(465 + clubPath * 4)
+  const ft2y = Math.round(440 + clubPath * 5)
+  const ft3y = Math.round(400 + clubPath * 5)
+
+  const arcPath = `M ${topX} ${topY} C 175 90, ${cp2x} ${cp2y}, ${ix} ${iy} C ${ft1x} ${ft1y}, ${ft2x} ${ft2y}, ${ft3x} ${ft3y}`
+
+  // Glow intensity scales with speed (90 mph = 1.0 baseline)
+  const glowScale = Math.min(1.8, Math.max(0.5, clubSpeed / 90))
+
+  // Segment control points for dot tracking
+  const seg1 = { p0:[topX,topY], p1:[175,90], p2:[cp2x,cp2y], p3:[ix,iy] }
+  const seg2 = { p0:[ix,iy], p1:[ft1x,ft1y], p2:[ft2x,ft2y], p3:[ft3x,ft3y] }
+
+  return { arcPath, glowScale, seg1, seg2 }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: number[]): [number, number] {
   const mt = 1 - t
@@ -58,19 +99,20 @@ function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: nu
   ]
 }
 
-// Dot on backswing guide during backswing, then leads the drawing arc tip
-function getDotXY(p: number): [number, number] {
+// Dot tracks the backswing guide during backswing, then leads the drawing arc tip
+function getDotXY(
+  p: number,
+  seg1: { p0:number[], p1:number[], p2:number[], p3:number[] },
+  seg2: { p0:number[], p1:number[], p2:number[], p3:number[] },
+): [number, number] {
   if (p <= BS_END_P) {
-    // Club head travels from address up-left to top of backswing
     return cubicBezier(p / BS_END_P, [375,458],[280,400],[150,220],[115,65])
   }
   const cT = (p - BS_END_P) / (1 - BS_END_P)
   if (cT <= C_SPLIT) {
-    // Downswing: dot at tip of growing arc, segment 1
-    return cubicBezier(cT / C_SPLIT, [115,65],[175,90],[300,395],[375,458])
+    return cubicBezier(cT / C_SPLIT, seg1.p0, seg1.p1, seg1.p2, seg1.p3)
   }
-  // Follow-through: dot continues on segment 2
-  return cubicBezier((cT - C_SPLIT) / (1 - C_SPLIT), [375,458],[440,465],[580,440],[650,400])
+  return cubicBezier((cT - C_SPLIT) / (1 - C_SPLIT), seg2.p0, seg2.p1, seg2.p2, seg2.p3)
 }
 
 // Snap to nearest keyframe — clean single-frame display with CSS fade between snaps
@@ -193,10 +235,14 @@ export default function SwingReplayPage() {
 
   const cycleSpeed = () => setSpeed(s => s === 0.5 ? 1.0 : s === 1.0 ? 2.0 : 0.5)
 
+  // Compute data-driven arc shape from real swing metrics
+  const { arcPath, glowScale, seg1, seg2 } = computeSwingArc(m.attackAngle, m.clubPath, m.clubSpeed)
+  const ARC_LENGTH = 880  // approximate — constant enough for dasharray purposes
+
   // Arc only draws during downswing + follow-through (after top of backswing)
   const cArcProgress = Math.max(0, (progress - BS_END_P) / (1 - BS_END_P))
   const dashOffset   = ARC_LENGTH * (1 - cArcProgress)
-  const [dotX, dotY] = progress > 0 && progress < 1 ? getDotXY(progress) : [0, 0]
+  const [dotX, dotY] = progress > 0 && progress < 1 ? getDotXY(progress, seg1, seg2) : [0, 0]
   const activeFrame  = getActiveFrame(progress)
   // Scale fade duration to frame count — more frames = shorter fade needed
   // Downswing (260ms) has the most frames packed tightly, so use shortest fade there
@@ -375,16 +421,18 @@ export default function SwingReplayPage() {
               <path d={BS_GUIDE} fill="none" stroke="#C9A84C" strokeWidth="1.2"
                 opacity="0.12" strokeLinecap="round" strokeDasharray="5 7" />
 
-              {/* Arc layer 1: wide ambient bloom */}
-              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="32" opacity="0.07"
+              {/* Arc layer 1: wide ambient bloom — scales with club speed */}
+              <path d={arcPath} fill="none" stroke="#C9A84C" strokeWidth="32"
+                opacity={0.07 * glowScale}
                 filter="url(#arc-wide)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
               {/* Arc layer 2: medium glow halo */}
-              <path d={ARC_PATH} fill="none" stroke="#E8C060" strokeWidth="10" opacity="0.22"
+              <path d={arcPath} fill="none" stroke="#E8C060" strokeWidth="10"
+                opacity={0.22 * glowScale}
                 filter="url(#arc-mid)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
               {/* Arc layer 3: bright core line */}
-              <path d={ARC_PATH} fill="none" stroke="url(#arcGrad)" strokeWidth="2.5"
+              <path d={arcPath} fill="none" stroke="url(#arcGrad)" strokeWidth="2.5"
                 filter="url(#arc-mid)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
 
