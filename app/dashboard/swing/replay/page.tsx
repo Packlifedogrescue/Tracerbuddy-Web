@@ -21,9 +21,9 @@ const FRAMES = [
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// Single smooth swing arc: ball(bottom-left) → top of backswing → back down through impact → finish(top-right)
-const ARC_PATH = 'M 110 470 C 160 380, 220 180, 310 62 C 400 145, 455 330, 525 465 C 565 380, 600 210, 638 72'
-const ARC_LENGTH = 880
+// Smooth rounded arch: address(bottom-left) → rounded peak(top-center) → impact(bottom-center) → finish(top-right)
+const ARC_PATH = 'M 108 468 C 180 55, 460 55, 528 468 C 562 375, 600 205, 638 72'
+const ARC_LENGTH = 920
 
 function ImpactBurst() {
   return (
