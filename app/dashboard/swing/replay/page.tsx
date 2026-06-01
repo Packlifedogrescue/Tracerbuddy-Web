@@ -21,9 +21,9 @@ const FRAMES = [
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// Gold arc traces club head path: address(bottom-left) → top-of-backswing → impact(bottom-center) → finish(top-right)
-const ARC_PATH = 'M 105 475 C 155 420, 185 350, 215 300 C 260 230, 290 110, 325 60 C 362 105, 392 200, 418 255 C 455 330, 492 425, 525 468 C 558 390, 592 220, 628 78'
-const ARC_LENGTH = 950
+// Single smooth swing arc: ball(bottom-left) → top of backswing → back down through impact → finish(top-right)
+const ARC_PATH = 'M 110 470 C 160 380, 220 180, 310 62 C 400 145, 455 330, 525 465 C 565 380, 600 210, 638 72'
+const ARC_LENGTH = 880
 
 function ImpactBurst() {
   return (
@@ -80,11 +80,28 @@ export default function SwingReplayPage() {
     startRef.current  = performance.now()
     startPRef.current = progress >= 1 ? 0 : progress
 
+    // Backswing = 0→0.45 over backswingMs, Downswing = 0.45→1.0 over downswingMs
+    const backswingMs  = m.backswingMs / speed
+    const downswingMs  = m.downswingMs / speed
+    const IMPACT_P     = 0.62  // where impact occurs on the arc
+
     const tick = (now: number) => {
-      const elapsed  = now - startRef.current
-      const newP     = Math.min(startPRef.current + elapsed / totalMs, 1)
+      const elapsed = now - startRef.current
+      let newP: number
+
+      if (elapsed < backswingMs) {
+        // Slow backswing phase
+        newP = startPRef.current + (elapsed / backswingMs) * IMPACT_P
+      } else {
+        // Fast downswing + follow-through
+        const ds = elapsed - backswingMs
+        newP = IMPACT_P + (ds / (downswingMs * 3)) * (1 - IMPACT_P)
+      }
+
+      newP = Math.min(newP, 1)
       setProgress(newP)
-      if (newP >= 0.73 && newP < 0.78 && !impactFired) {
+
+      if (newP >= 0.60 && newP < 0.65 && !impactFired) {
         setShowImpact(true)
         setImpactFired(true)
         setTimeout(() => setShowImpact(false), 600)
