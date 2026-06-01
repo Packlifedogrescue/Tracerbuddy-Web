@@ -13,14 +13,28 @@ const MOCK_METRICS = {
   followthruMs:     450,
 }
 
-const FRAMES = [
-  { key: 'swing_address',       label: 'Address',     p: 0.00 },
-  { key: 'swing_halfway_back',  label: 'Halfway',     p: 0.20 },
-  { key: 'swing_top',           label: 'Top',         p: 0.33 },
-  { key: 'swing_downswing',     label: 'Downswing',   p: 0.55 },
-  { key: 'swing_impact',        label: 'Impact',      p: 0.68 },
-  { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
-]
+// ─── Frame configuration ────────────────────────────────────────────────────
+// Upload files to /public/images/swing/ named swing_01.png … swing_NN.png
+// Change FRAME_COUNT to match however many you have (6 → 24).
+// The animation distributes them evenly across the full swing timeline.
+const FRAME_COUNT = 6   // ← update this as you add more frames
+
+const FRAMES = Array.from({ length: FRAME_COUNT }, (_, i) => ({
+  key:   `swing_${String(i + 1).padStart(2, '0')}`,
+  label: frameLabel(i, FRAME_COUNT),
+  p:     i / Math.max(FRAME_COUNT - 1, 1),
+}))
+
+function frameLabel(i: number, total: number): string {
+  const p = i / Math.max(total - 1, 1)
+  if (p < 0.05)  return 'Address'
+  if (p < 0.30)  return 'Backswing'
+  if (p < 0.38)  return 'Top'
+  if (p < 0.65)  return 'Downswing'
+  if (p < 0.75)  return 'Impact'
+  return 'Finish'
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Arc traces the club-head path during the DOWNSWING:
 //   upper-left (top of backswing) → sweeps right-down → impact (lower-center) → follow-through tail (right)
@@ -184,8 +198,12 @@ export default function SwingReplayPage() {
   const dashOffset   = ARC_LENGTH * (1 - cArcProgress)
   const [dotX, dotY] = progress > 0 && progress < 1 ? getDotXY(progress) : [0, 0]
   const activeFrame  = getActiveFrame(progress)
-  // Faster transition during the quick downswing phase, slower otherwise
-  const fadeMs       = progress >= BS_END_P && progress <= IMPACT_P ? 45 : 80
+  // Scale fade duration to frame count — more frames = shorter fade needed
+  // Downswing (260ms) has the most frames packed tightly, so use shortest fade there
+  const msPerFrame   = FRAME_COUNT > 1 ? 1510 / FRAME_COUNT : 250
+  const fadeMs       = progress >= BS_END_P && progress <= IMPACT_P
+    ? Math.max(12, msPerFrame * 0.4)   // very short during fast downswing
+    : Math.max(30, msPerFrame * 0.6)   // slightly longer during slow phases
 
   return (
     <>
