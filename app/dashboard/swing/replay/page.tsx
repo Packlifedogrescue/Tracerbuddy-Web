@@ -21,9 +21,9 @@ const FRAMES = [
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// Gold arc bezier path across the 6 swing positions (in SVG viewBox 0 0 700 520)
-const ARC_PATH = 'M 95 55 C 140 25, 185 15, 215 70 C 245 125, 255 190, 285 270 C 315 350, 390 390, 480 340 C 540 305, 590 260, 610 200'
-const ARC_LENGTH = 680
+// Gold arc traces club head path: address(bottom-left) → top-of-backswing → impact(bottom-center) → finish(top-right)
+const ARC_PATH = 'M 105 475 C 155 420, 185 350, 215 300 C 260 230, 290 110, 325 60 C 362 105, 392 200, 418 255 C 455 330, 492 425, 525 468 C 558 390, 592 220, 628 78'
+const ARC_LENGTH = 950
 
 function ImpactBurst() {
   return (
@@ -116,8 +116,8 @@ export default function SwingReplayPage() {
   const frameOpacity = (fp: number) => {
     const d = Math.abs(progress - fp)
     if (d < 0.12) return 1.0
-    if (d < 0.30) return 0.35
-    return 0.15
+    if (d < 0.35) return 0.7
+    return 0.45
   }
 
   const dashOffset = ARC_LENGTH * (1 - Math.min(progress, 1))
@@ -207,9 +207,9 @@ export default function SwingReplayPage() {
                   className="absolute bottom-0 transition-opacity"
                   style={{
                     opacity:    frameOpacity(f.p),
-                    left:       `${4 + i * 15}%`,
+                    left:       `${2 + i * 15}%`,
                     height:     '100%',
-                    width:      '22%',
+                    width:      '20%',
                     transitionDuration: '80ms',
                     zIndex: 5 + i,
                   }}
