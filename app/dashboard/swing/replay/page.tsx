@@ -22,20 +22,18 @@ const FRAMES = [
   { key: 'swing_finish',        label: 'Finish',      p: 1.00 },
 ]
 
-// Full swing oval: address (bottom-right) → top of backswing (upper-right)
-//   → impact (bottom-center) → follow-through (upper-left)
-// G1-smooth junctions: each segment's start tangent matches the previous end tangent.
-// Top junction: seg1 ends going left-down (-60,17) → seg2 starts with same direction.
-// Impact junction: seg2 ends going left (-100,26) → seg3 starts with same direction.
-const ARC_PATH   = 'M 455 460 C 570 310, 650 55, 590 72 C 530 89, 400 430, 300 456 C 200 482, 130 180, 118 70'
-const ARC_LENGTH = 1520
-const BS_END_P   = 0.32   // backswing ends at top of backswing
-const IMPACT_P   = 0.68   // downswing completes at impact
+// C-shaped arc: draws from top-of-backswing → impact → follow-through finish.
+// Only animates during the downswing + follow-through phases (not during backswing).
+// A dim static guide shows the backswing rail.
+const ARC_PATH   = 'M 555 68 C 648 265, 468 438, 335 460 C 285 446, 155 252, 120 72'
+const ARC_LENGTH = 1080
+const C_SPLIT    = 0.50  // fraction of arc before impact (C portion vs follow-through)
 
-// Segment control points matching ARC_PATH exactly
-const SEG1 = { p0:[455,460], p1:[570,310], p2:[650,55],  p3:[590,72]  }
-const SEG2 = { p0:[590,72],  p1:[530,89],  p2:[400,430], p3:[300,456] }
-const SEG3 = { p0:[300,456], p1:[200,482], p2:[130,180], p3:[118,70]  }
+// Backswing guide path (always dim, used for dot during backswing phase)
+const BS_GUIDE   = 'M 345 455 C 488 372, 588 200, 555 68'
+
+const BS_END_P = 0.32   // top of backswing
+const IMPACT_P = 0.68   // impact
 
 function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: number[]): [number, number] {
   const mt = 1 - t
@@ -45,33 +43,27 @@ function cubicBezier(t: number, p0: number[], p1: number[], p2: number[], p3: nu
   ]
 }
 
+// Dot follows backswing guide during backswing, then tracks the C arc tip
 function getDotXY(p: number): [number, number] {
   if (p <= BS_END_P) {
-    const s = SEG1
-    return cubicBezier(p / BS_END_P, s.p0, s.p1, s.p2, s.p3)
-  } else if (p <= IMPACT_P) {
-    const s = SEG2
-    return cubicBezier((p - BS_END_P) / (IMPACT_P - BS_END_P), s.p0, s.p1, s.p2, s.p3)
-  } else {
-    const s = SEG3
-    return cubicBezier((p - IMPACT_P) / (1 - IMPACT_P), s.p0, s.p1, s.p2, s.p3)
+    return cubicBezier(p / BS_END_P, [345,455],[488,372],[588,200],[555,68])
   }
+  const cT = (p - BS_END_P) / (1 - BS_END_P)
+  if (cT <= C_SPLIT) {
+    return cubicBezier(cT / C_SPLIT, [555,68],[648,265],[468,438],[335,460])
+  }
+  return cubicBezier((cT - C_SPLIT) / (1 - C_SPLIT), [335,460],[285,446],[155,252],[120,72])
 }
 
-// Returns the two adjacent frames with cross-fade opacities for the current progress
-function getBlendedFrames(p: number): { key: string; label: string; opacity: number }[] {
-  for (let i = 0; i < FRAMES.length - 1; i++) {
-    const a = FRAMES[i], b = FRAMES[i + 1]
-    if (p >= a.p && p < b.p) {
-      const t = (p - a.p) / (b.p - a.p)
-      return [
-        { key: a.key, label: a.label, opacity: 1 - t },
-        { key: b.key, label: b.label, opacity: t },
-      ]
-    }
+// Snap to nearest keyframe — clean single-frame display with CSS fade between snaps
+function getActiveFrame(p: number): { key: string; label: string } {
+  let best = FRAMES[0]
+  let bestDist = Math.abs(p - FRAMES[0].p)
+  for (const f of FRAMES) {
+    const d = Math.abs(p - f.p)
+    if (d < bestDist) { bestDist = d; best = f }
   }
-  const last = FRAMES[FRAMES.length - 1]
-  return [{ key: last.key, label: last.label, opacity: 1 }]
+  return best
 }
 
 function ImpactBurst() {
@@ -190,10 +182,13 @@ export default function SwingReplayPage() {
 
   const cycleSpeed = () => setSpeed(s => s === 0.5 ? 1.0 : s === 1.0 ? 2.0 : 0.5)
 
-  const dashOffset  = ARC_LENGTH * (1 - Math.min(progress, 1))
+  // Arc only draws during downswing + follow-through (after top of backswing)
+  const cArcProgress = Math.max(0, (progress - BS_END_P) / (1 - BS_END_P))
+  const dashOffset   = ARC_LENGTH * (1 - cArcProgress)
   const [dotX, dotY] = progress > 0 && progress < 1 ? getDotXY(progress) : [0, 0]
-  const blended     = getBlendedFrames(progress)
-  const activeLabel = blended.reduce((a, b) => a.opacity > b.opacity ? a : b).label
+  const activeFrame  = getActiveFrame(progress)
+  // Faster transition during the quick downswing phase, slower otherwise
+  const fadeMs       = progress >= BS_END_P && progress <= IMPACT_P ? 45 : 80
 
   return (
     <>
@@ -271,40 +266,35 @@ export default function SwingReplayPage() {
             <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
               style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(180,110,20,0.22) 0%, transparent 65%)' }} />
 
-            {/* Animated golfer — single frame cross-fading between keyframes */}
-            {/* All frames stay in DOM so CSS transitions run uninterrupted */}
-            {FRAMES.map((f) => {
-              const frame   = blended.find(b => b.key === f.key)
-              const opacity = frame?.opacity ?? 0
-              return (
-                <img
-                  key={f.key}
-                  src={`/images/swing/${f.key}.png`}
-                  alt={f.label}
-                  className="absolute bottom-0 pointer-events-none"
-                  style={{
-                    opacity,
-                    height:      '92%',
-                    width:       'auto',
-                    maxWidth:    '72%',
-                    left:        '50%',
-                    transform:   'translateX(-50%)',
-                    objectFit:   'contain',
-                    objectPosition: 'bottom center',
-                    transition:  'opacity 90ms ease-in-out',
-                    zIndex:      10,
-                    willChange:  'opacity',
-                  }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                />
-              )
-            })}
+            {/* Animated golfer — nearest keyframe at full opacity, CSS fade on snap */}
+            {FRAMES.map((f) => (
+              <img
+                key={f.key}
+                src={`/images/swing/${f.key}.png`}
+                alt={f.label}
+                className="absolute bottom-0 pointer-events-none"
+                style={{
+                  opacity:     f.key === activeFrame.key ? 1 : 0,
+                  height:      '92%',
+                  width:       'auto',
+                  maxWidth:    '72%',
+                  left:        '50%',
+                  transform:   'translateX(-50%)',
+                  objectFit:   'contain',
+                  objectPosition: 'bottom center',
+                  transition:  `opacity ${fadeMs}ms ease-in-out`,
+                  zIndex:      10,
+                  willChange:  'opacity',
+                }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            ))}
 
             {/* Position label */}
             <div className="absolute bottom-14 left-0 right-0 flex justify-center pointer-events-none" style={{ zIndex: 20 }}>
               <div className="text-[9px] font-bold tracking-[0.2em] px-3 py-1 rounded-full"
                 style={{ color: '#C9A84C', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.15)' }}>
-                {activeLabel.toUpperCase()}
+                {activeFrame.label.toUpperCase()}
               </div>
             </div>
 
@@ -325,11 +315,15 @@ export default function SwingReplayPage() {
                 </filter>
               </defs>
 
-              {/* Glow halo */}
-              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="12" opacity="0.18"
+              {/* Dim backswing guide rail — always visible */}
+              <path d={BS_GUIDE} fill="none" stroke="#C9A84C" strokeWidth="1.5"
+                opacity="0.14" strokeLinecap="round" strokeDasharray="6 6" />
+
+              {/* C arc glow halo */}
+              <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="14" opacity="0.15"
                 filter="url(#arcglow)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
-              {/* Main arc */}
+              {/* C arc main line */}
               <path d={ARC_PATH} fill="none" stroke="#C9A84C" strokeWidth="2.5"
                 filter="url(#arcglow)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
