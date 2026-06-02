@@ -160,9 +160,10 @@ export default function SwingReplayPage() {
   const [speed,       setSpeed]       = useState(1.0)
   const [showImpact,  setShowImpact]  = useState(false)
   const [impactFired, setImpactFired] = useState(false)
-  const rafRef   = useRef<number | null>(null)
-  const startRef = useRef<number>(0)
-  const m        = MOCK_METRICS
+  const rafRef      = useRef<number | null>(null)
+  const startRef    = useRef<number>(0)
+  const arcPathRef  = useRef<SVGPathElement>(null)
+  const m           = MOCK_METRICS
 
   const stopAnim = useCallback(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
@@ -233,7 +234,20 @@ export default function SwingReplayPage() {
   // Arc only draws during downswing + follow-through (after top of backswing)
   const cArcProgress = Math.max(0, (progress - BS_END_P) / (1 - BS_END_P))
   const dashOffset   = ARC_LENGTH * (1 - cArcProgress)
-  const [dotX, dotY] = progress > 0 && progress < 1 ? getDotXY(progress, seg1, seg2) : [0, 0]
+  // Dot position: backswing uses bezier math; arc phase uses getPointAtLength
+  // so the dot sits exactly at the drawn arc tip (arc-length parameterised).
+  let dotX = 0, dotY = 0
+  if (progress > 0 && progress < 1) {
+    if (progress <= BS_END_P) {
+      ;[dotX, dotY] = getDotXY(progress, seg1, seg2)
+    } else if (arcPathRef.current) {
+      const cP = (progress - BS_END_P) / (1 - BS_END_P)
+      const pt = arcPathRef.current.getPointAtLength(arcPathRef.current.getTotalLength() * cP)
+      dotX = pt.x; dotY = pt.y
+    } else {
+      ;[dotX, dotY] = getDotXY(progress, seg1, seg2)
+    }
+  }
   const activeFrame  = getActiveFrame(progress)
   // Scale fade duration to frame count — more frames = shorter fade needed
   // Downswing (260ms) has the most frames packed tightly, so use shortest fade there
@@ -422,13 +436,13 @@ export default function SwingReplayPage() {
                 opacity={0.22 * glowScale}
                 filter="url(#arc-mid)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
-              {/* Arc layer 3: bright core line */}
-              <path d={arcPath} fill="none" stroke="url(#arcGrad)" strokeWidth="2.5"
+              {/* Arc layer 3: bright core line — ref used for getPointAtLength dot tracking */}
+              <path ref={arcPathRef} d={arcPath} fill="none" stroke="url(#arcGrad)" strokeWidth="2.5"
                 filter="url(#arc-mid)" strokeLinecap="round"
                 strokeDasharray={ARC_LENGTH} strokeDashoffset={dashOffset} />
 
-              {/* Club-head dot */}
-              {progress > 0 && progress < 1 && (
+              {/* Club-head dot — only when we have a valid position */}
+              {progress > 0 && progress < 1 && (dotX !== 0 || dotY !== 0) && (
                 <>
                   <circle cx={dotX} cy={dotY} r="14" fill="rgba(255,224,138,0.12)" filter="url(#arc-wide)" />
                   <circle cx={dotX} cy={dotY} r="6"  fill="rgba(201,168,76,0.35)"  filter="url(#dotglow)" />
