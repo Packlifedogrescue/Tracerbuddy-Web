@@ -73,17 +73,17 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="p-8 max-w-7xl">
+    <div className="p-4 md:p-8 max-w-7xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6 md:mb-8">
         <div>
-          <h1 className="text-3xl font-black text-white">
+          <h1 className="text-2xl md:text-3xl font-black text-white leading-tight">
             Welcome back{profile?.display_name ? `, ${profile.display_name.split(' ')[0]}` : ''} 👋
           </h1>
-          <p className="text-gray-500 mt-1">Here's how your game is looking</p>
+          <p className="text-gray-500 text-sm mt-0.5">Here's how your game is looking</p>
         </div>
-        <div className="text-right">
-          <div className="text-4xl font-black text-[#FFD700]">
+        <div className="text-right ml-4">
+          <div className="text-3xl md:text-4xl font-black text-[#FFD700]">
             {profile?.handicap_index?.toFixed(1) ?? '—'}
           </div>
           <div className="stat-label">HANDICAP</div>
@@ -91,44 +91,42 @@ export default function DashboardPage() {
       </div>
 
       {/* Key stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         {[
-          { label: 'ROUNDS', value: rounds.length || '—', color: 'text-white' },
-          { label: 'AVG SCORE', value: avgScore || '—', color: 'text-white' },
-          { label: 'BEST ROUND', value: bestRound || '—', color: 'text-[#FFD700]' },
-          { label: 'AVG GIR', value: avgGIR ? `${avgGIR}/18` : '—', color: 'text-[#00E578]' },
+          { label: 'ROUNDS',     value: rounds.length || '—', color: 'text-white'      },
+          { label: 'AVG SCORE',  value: avgScore || '—',      color: 'text-white'      },
+          { label: 'BEST ROUND', value: bestRound || '—',     color: 'text-[#FFD700]'  },
+          { label: 'AVG GIR',    value: avgGIR ? `${avgGIR}/18` : '—', color: 'text-[#00E578]' },
         ].map(s => (
-          <div key={s.label} className="card p-6">
-            <div className="stat-label mb-2">{s.label}</div>
-            <div className={`text-4xl font-black ${s.color}`}>{s.value}</div>
+          <div key={s.label} className="card p-4 md:p-6">
+            <div className="stat-label mb-1.5 md:mb-2">{s.label}</div>
+            <div className={`text-3xl md:text-4xl font-black ${s.color}`}>{s.value}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Handicap trend — Fix 1 applied */}
-        <div className="card p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+        {/* Handicap trend */}
+        <div className="card p-4 md:p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
               <div className="stat-label mb-1">HANDICAP TREND</div>
-              <div className="font-black text-white text-lg">
+              <div className="font-black text-white text-base md:text-lg">
                 {handicapImproving === null
                   ? 'Keep playing to see trend'
-                  : handicapImproving
-                    ? '↓ Improving'
-                    : '↑ Working on it'}
+                  : handicapImproving ? '↓ Improving' : '↑ Working on it'}
               </div>
             </div>
-            <div className="text-3xl font-black text-[#FFD700]">
+            <div className="text-2xl md:text-3xl font-black text-[#FFD700]">
               {handicap[handicap.length - 1]?.handicap ?? '—'}
             </div>
           </div>
           {handicap.length >= 3 ? (
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={140}>
               <LineChart data={handicap}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1F1F1F" />
-                <XAxis dataKey="date" tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} reversed />
+                <XAxis dataKey="date" tick={{ fill: '#666', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#666', fontSize: 10 }} axisLine={false} tickLine={false} reversed />
                 <Tooltip
                   contentStyle={{ background: '#111', border: '1px solid #1F1F1F', borderRadius: 8 }}
                   labelStyle={{ color: '#999' }}
@@ -139,53 +137,50 @@ export default function DashboardPage() {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-40 flex items-center justify-center text-gray-600">
+            <div className="h-36 flex items-center justify-center text-gray-600 text-sm">
               Complete more rounds to see your trend
             </div>
           )}
         </div>
 
-        {/* Fix 5: was "THIS SEASON" but showed all-time data */}
-        <div className="card p-6 space-y-4">
-          <div className="stat-label mb-4">ALL TIME</div>
+        {/* All-time stats */}
+        <div className="card p-4 md:p-6">
+          <div className="stat-label mb-3 md:mb-4">ALL TIME</div>
           {[
-            { label: 'Avg Putts/Round', value: avgPutts || '—', icon: '⛳' },
+            { label: 'Avg Putts/Round', value: avgPutts || '—',                  icon: '⛳' },
             { label: 'Home Course',     value: profile?.home_course || 'Not set', icon: '📍' },
-            { label: 'Rounds Tracked',  value: rounds.length || '—', icon: '📋' },
+            { label: 'Rounds Tracked',  value: rounds.length || '—',             icon: '📋' },
           ].map(item => (
-            <div key={item.label} className="flex items-center gap-3 py-3 border-b border-[#1F1F1F] last:border-0">
-              <span className="text-xl">{item.icon}</span>
-              <div className="flex-1">
-                <div className="text-xs text-gray-500">{item.label}</div>
-                <div className="font-bold text-white">{item.value}</div>
+            <div key={item.label} className="flex items-center gap-3 py-2.5 md:py-3 border-b border-[#1F1F1F] last:border-0">
+              <span className="text-lg md:text-xl">{item.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] md:text-xs text-gray-500">{item.label}</div>
+                <div className="font-bold text-white text-sm truncate">{item.value}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Fix 2: Score trend chart */}
+      {/* Score trend */}
       {scoreChartData.length >= 3 && (
-        <div className="card p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="card p-4 md:p-6 mb-6 md:mb-8">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
               <div className="stat-label mb-1">SCORE TREND</div>
-              <div className="font-black text-white text-lg">
+              <div className="font-black text-white text-base md:text-lg">
                 {scoreChartData.length >= 2 &&
                   scoreChartData[scoreChartData.length - 1].score < scoreChartData[0].score
-                  ? '↓ Shooting lower'
-                  : '↑ Keep grinding'}
+                  ? '↓ Shooting lower' : '↑ Keep grinding'}
               </div>
             </div>
-            <div className="text-3xl font-black text-white">
-              avg {avgScore || '—'}
-            </div>
+            <div className="text-2xl md:text-3xl font-black text-white">avg {avgScore || '—'}</div>
           </div>
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={140}>
             <LineChart data={scoreChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1F1F1F" />
-              <XAxis dataKey="date" tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} reversed domain={['auto', 'auto']} />
+              <XAxis dataKey="date" tick={{ fill: '#666', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#666', fontSize: 10 }} axisLine={false} tickLine={false} reversed domain={['auto', 'auto']} />
               <Tooltip
                 contentStyle={{ background: '#111', border: '1px solid #1F1F1F', borderRadius: 8 }}
                 labelStyle={{ color: '#999' }}
@@ -200,42 +195,41 @@ export default function DashboardPage() {
 
       {/* Recent rounds */}
       <div className="card">
-        <div className="flex items-center justify-between p-6 border-b border-[#1F1F1F]">
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 md:py-6 border-b border-[#1F1F1F]">
           <div className="font-black text-white">Recent Rounds</div>
           <Link href="/dashboard/rounds" className="text-[#FFD700] text-sm font-bold hover:text-yellow-400">
             View all →
           </Link>
         </div>
         <div className="divide-y divide-[#1F1F1F]">
-          {/* Fix 4: better empty state */}
           {rounds.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-5xl mb-4">🏌️</div>
-              <div className="text-white font-bold text-lg mb-2">No rounds tracked yet</div>
-              <p className="text-gray-500 text-sm mb-6">Open the Tracerbuddy app and log your first round to see your stats here.</p>
+            <div className="p-10 md:p-12 text-center">
+              <div className="text-4xl md:text-5xl mb-3 md:mb-4">🏌️</div>
+              <div className="text-white font-bold text-base md:text-lg mb-2">No rounds tracked yet</div>
+              <p className="text-gray-500 text-sm mb-5">Open the Tracerbuddy app and log your first round to see your stats here.</p>
               <div className="inline-block bg-[#1F1F1F] rounded-xl px-5 py-3 text-[#FFD700] text-sm font-bold">
                 Download the app to get started
               </div>
             </div>
           ) : rounds.slice(0, 6).map((r: any) => (
             <Link key={r.id} href={`/dashboard/rounds/${r.id}`}
-              className="flex items-center gap-4 p-5 hover:bg-white/[0.02] transition-colors">
+              className="flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 md:py-5 hover:bg-white/[0.02] transition-colors">
               {/* Date */}
-              <div className="w-14 text-center">
-                <div className="text-xs text-gray-500">{format(new Date(r.created_at), 'MMM')}</div>
-                <div className="text-2xl font-black text-white">{format(new Date(r.created_at), 'd')}</div>
+              <div className="w-10 md:w-14 text-center shrink-0">
+                <div className="text-[10px] md:text-xs text-gray-500">{format(new Date(r.created_at), 'MMM')}</div>
+                <div className="text-xl md:text-2xl font-black text-white">{format(new Date(r.created_at), 'd')}</div>
               </div>
               {/* Course */}
-              <div className="flex-1">
-                <div className="font-bold text-white">{r.course_name || 'Unknown Course'}</div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {r.gir_count ?? 0} GIR · {r.putts ?? 0} putts · {r.shot_count ?? 0} shots
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-white text-sm md:text-base truncate">{r.course_name || 'Unknown Course'}</div>
+                <div className="text-[10px] md:text-xs text-gray-500 mt-0.5">
+                  {r.gir_count ?? 0} GIR · {r.putts ?? 0} putts
                 </div>
               </div>
-              {/* Fix 3: score colored vs personal avg */}
-              <div className="text-right">
-                <div className={`text-3xl font-black ${scoreColor(r.total_score)}`}>{r.total_score}</div>
-                <div className="text-xs text-gray-500">
+              {/* Score */}
+              <div className="text-right shrink-0">
+                <div className={`text-2xl md:text-3xl font-black ${scoreColor(r.total_score)}`}>{r.total_score}</div>
+                <div className="text-[10px] md:text-xs text-gray-500">
                   {avgScore && r.total_score
                     ? r.total_score < avgScore
                       ? `${avgScore - r.total_score} below avg`
@@ -245,7 +239,7 @@ export default function DashboardPage() {
                     : ''}
                 </div>
               </div>
-              <span className="text-gray-600">›</span>
+              <span className="text-gray-600 text-sm shrink-0">›</span>
             </Link>
           ))}
         </div>
