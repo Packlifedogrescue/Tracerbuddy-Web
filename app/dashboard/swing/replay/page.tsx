@@ -1,16 +1,54 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Play, Pause, ChevronLeft, MoreHorizontal, RotateCcw } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { format } from 'date-fns'
 
-const MOCK_METRICS = {
-  clubSpeed:        94.0,
-  attackAngle:      -3.2,
-  tempoRatio:       3.1,
-  clubPath:         -1.4,
-  backswingMs:      800,
-  downswingMs:      260,
-  followthruMs:     450,
+interface SwingMetrics {
+  clubSpeed:    number
+  attackAngle:  number
+  tempoRatio:   number
+  clubPath:     number
+  backswingMs:  number
+  downswingMs:  number
+  followthruMs: number
+  club:         string
+  recordedAt:   string | null
+}
+
+const FALLBACK_METRICS: SwingMetrics = {
+  clubSpeed:    90,
+  attackAngle:  -3.5,
+  tempoRatio:   3.0,
+  clubPath:     0,
+  backswingMs:  800,
+  downswingMs:  280,
+  followthruMs: 450,
+  club:         '—',
+  recordedAt:   null,
+}
+
+function swingToMetrics(row: Record<string, unknown>): SwingMetrics {
+  const tempo      = (row.swing_tempo as number | null) ?? FALLBACK_METRICS.tempoRatio
+  // Derive phase timings from tempo ratio if not stored explicitly
+  // total active swing ≈ 1060ms; backswing:downswing = tempo:1
+  const totalMs    = 1060
+  const bsMs       = (row.backswing_ms  as number | null) ?? Math.round(totalMs * tempo / (tempo + 1))
+  const dsMs       = (row.downswing_ms  as number | null) ?? Math.round(totalMs / (tempo + 1))
+
+  return {
+    clubSpeed:    (row.swing_speed    as number | null) ?? FALLBACK_METRICS.clubSpeed,
+    attackAngle:  (row.attack_angle   as number | null) ?? FALLBACK_METRICS.attackAngle,
+    tempoRatio:   tempo,
+    clubPath:     (row.club_path      as number | null) ?? FALLBACK_METRICS.clubPath,
+    backswingMs:  bsMs,
+    downswingMs:  dsMs,
+    followthruMs: Math.round(dsMs * 1.7),
+    club:         (row.club           as string | null) ?? '—',
+    recordedAt:   (row.recorded_at    as string | null) ?? null,
+  }
 }
 
 // ─── Frame configuration ────────────────────────────────────────────────────
@@ -163,7 +201,11 @@ function ImpactBurst() {
   )
 }
 
-export default function SwingReplayPage() {
+function SwingReplayInner() {
+  const searchParams  = useSearchParams()
+  const swingId       = searchParams.get('id')
+
+  const [metrics,     setMetrics]     = useState<SwingMetrics | null>(null)
   const [progress,    setProgress]    = useState(0)
   const [isPlaying,   setIsPlaying]   = useState(false)
   const [speed,       setSpeed]       = useState(1.0)
@@ -171,7 +213,25 @@ export default function SwingReplayPage() {
   const [impactFired, setImpactFired] = useState(false)
   const rafRef   = useRef<number | null>(null)
   const startRef = useRef<number>(0)
-  const m        = MOCK_METRICS
+
+  useEffect(() => {
+    async function load() {
+      try {
+        let q = supabase.from('swing_data').select('*')
+        if (swingId) {
+          q = q.eq('id', swingId)
+        } else {
+          q = q.order('recorded_at', { ascending: false }).limit(1)
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (q as any).single()
+        if (!error && data) setMetrics(swingToMetrics(data as Record<string, unknown>))
+      } catch { /* fall through to FALLBACK_METRICS */ }
+    }
+    load()
+  }, [swingId])
+
+  const m = metrics ?? FALLBACK_METRICS
 
   const stopAnim = useCallback(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
@@ -301,6 +361,14 @@ export default function SwingReplayPage() {
               <span className="font-black text-[15px]" style={{ color: '#C9A84C' }}>TB</span>
               <span className="text-[13px] font-light" style={{ color: 'rgba(255,255,255,0.35)' }}>·</span>
               <span className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>SwingTrace</span>
+              {m.club !== '—' && (
+                <span className="text-[11px] font-semibold" style={{ color: 'rgba(201,168,76,0.7)' }}>· {m.club}</span>
+              )}
+              {m.recordedAt && (
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  {format(new Date(m.recordedAt), 'MMM d')}
+                </span>
+              )}
             </div>
           </div>
 
@@ -526,5 +594,19 @@ export default function SwingReplayPage() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function SwingReplayPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: '#080604' }}>
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: '#C9A84C', borderTopColor: 'transparent' }} />
+      </div>
+    }>
+      <SwingReplayInner />
+    </Suspense>
   )
 }
