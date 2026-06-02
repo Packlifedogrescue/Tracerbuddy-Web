@@ -14,26 +14,17 @@ const MOCK_METRICS = {
 }
 
 // ─── Frame configuration ────────────────────────────────────────────────────
-// Upload files to /public/images/swing/ named swing_01.png … swing_NN.png
-// Change FRAME_COUNT to match however many you have (6 → 24).
-// The animation distributes them evenly across the full swing timeline.
-const FRAME_COUNT = 6   // ← update this as you add more frames
-
-const FRAMES = Array.from({ length: FRAME_COUNT }, (_, i) => ({
-  key:   `swing_${String(i + 1).padStart(2, '0')}`,
-  label: frameLabel(i, FRAME_COUNT),
-  p:     i / Math.max(FRAME_COUNT - 1, 1),
-}))
-
-function frameLabel(i: number, total: number): string {
-  const p = i / Math.max(total - 1, 1)
-  if (p < 0.05)  return 'Address'
-  if (p < 0.30)  return 'Backswing'
-  if (p < 0.38)  return 'Top'
-  if (p < 0.65)  return 'Downswing'
-  if (p < 0.75)  return 'Impact'
-  return 'Finish'
-}
+// Maps to the actual files in /public/images/swing/
+// When you add more frames, add entries here and upload the matching PNGs.
+const FRAMES = [
+  { key: 'swing_address',      label: 'Address',    p: 0.00 },
+  { key: 'swing_halfway_back', label: 'Backswing',  p: 0.20 },
+  { key: 'swing_top',          label: 'Top',        p: 0.35 },
+  { key: 'swing_downswing',    label: 'Downswing',  p: 0.60 },
+  { key: 'swing_impact',       label: 'Impact',     p: 0.72 },
+  { key: 'swing_finish',       label: 'Finish',     p: 1.00 },
+]
+const FRAME_COUNT = FRAMES.length
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BS_END_P = 0.32   // top of backswing
