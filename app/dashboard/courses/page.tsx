@@ -256,18 +256,18 @@ export default function CoursesPage() {
     const rg = (overrideRegion ?? region).trim()
     const ct = city.trim()
     if (!q && !rg && !ct) return
-    setSearching(true); setResults([]); setError('')
+    setSearching(true); setResults([]); setSelected(null); setDetail(null); setError('')
     try {
       const params = new URLSearchParams()
       if (q)  params.set('q', q)
       if (rg) params.set('state', rg)
-      if (city.trim()) params.set('city', city.trim())
+      if (ct) params.set('city', ct)
       const res  = await fetch(`/api/golf/search?${params.toString()}`)
       const data = await res.json()
       const list: GolfCourse[] = data.courses ?? []
       setResults(list)
       track('course_searched', { query: q, region: rg, results: list.length })
-      if (list.length === 1) pickCourse(list[0])
+      if (list.length === 0) setError('No courses found — try a different name or country.')
     } catch { setError('Search failed — please try again.') }
     finally  { setSearching(false) }
   }
