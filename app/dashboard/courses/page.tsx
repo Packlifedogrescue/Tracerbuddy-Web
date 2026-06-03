@@ -219,23 +219,10 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
   )
 }
 
-const US_STATES = [
-  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
-  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
-  ['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
-  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],
-  ['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],
-  ['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],
-  ['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
-  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],
-  ['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
-  ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
-]
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function CoursesPage() {
   const [query,          setQuery]          = useState('')
-  const [stateCode,      setStateCode]      = useState('')
+  const [region,         setRegion]         = useState('')
   const [city,           setCity]           = useState('')
   const [results,        setResults]        = useState<GolfCourse[]>([])
   const [searching,      setSearching]      = useState(false)
@@ -264,21 +251,21 @@ export default function CoursesPage() {
       })
   }, [])
 
-  async function search(overrideQuery?: string, overrideState?: string) {
+  async function search(overrideQuery?: string, overrideRegion?: string) {
     const q  = (overrideQuery  ?? query).trim()
-    const st = (overrideState  ?? stateCode).trim()
-    if (!q && !st) return
+    const rg = (overrideRegion ?? region).trim()
+    if (!q && !rg) return
     setSearching(true); setResults([]); setError('')
     try {
       const params = new URLSearchParams()
       if (q)  params.set('q', q)
-      if (st) params.set('state', st)
+      if (rg) params.set('state', rg)
       if (city.trim()) params.set('city', city.trim())
       const res  = await fetch(`/api/golf/search?${params.toString()}`)
       const data = await res.json()
       const list: GolfCourse[] = data.courses ?? []
       setResults(list)
-      track('course_searched', { query: q, state: st, results: list.length })
+      track('course_searched', { query: q, region: rg, results: list.length })
       if (list.length === 1) pickCourse(list[0])
     } catch { setError('Search failed — please try again.') }
     finally  { setSearching(false) }
@@ -350,12 +337,12 @@ export default function CoursesPage() {
           <div>
             <h1 className="text-[22px] font-black text-[#111] tracking-tight leading-tight">Courses</h1>
             <p className="text-[13px] text-gray-400 mt-0.5">
-              Search any course for a satellite map, scorecard, and playing conditions
+              Search 42,000+ courses worldwide for a satellite map, scorecard, and playing conditions
             </p>
           </div>
           {selected && (
             <button
-              onClick={() => { setSelected(null); setDetail(null); setQuery(''); setStateCode(''); setCity(''); setResults([]) }}
+              onClick={() => { setSelected(null); setDetail(null); setQuery(''); setRegion(''); setCity(''); setResults([]) }}
               className="flex items-center gap-1.5 text-[12.5px] font-semibold text-gray-400 hover:text-[#111] transition-colors"
             >
               <X className="w-3.5 h-3.5" /> Clear
@@ -375,17 +362,13 @@ export default function CoursesPage() {
               className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl pl-10 pr-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition"
             />
           </div>
-          {/* State */}
-          <select
-            value={stateCode}
-            onChange={e => setStateCode(e.target.value)}
-            className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-3 py-2.5 text-[13.5px] text-[#111] focus:outline-none focus:border-[#C9A84C] transition cursor-pointer"
-          >
-            <option value="">Any State</option>
-            {US_STATES.map(([code, name]) => (
-              <option key={code} value={code}>{code} — {name}</option>
-            ))}
-          </select>
+          {/* State / Country */}
+          <input
+            value={region}
+            onChange={e => setRegion(e.target.value)}
+            placeholder="State or Country (optional)"
+            className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition w-52"
+          />
           {/* City (optional) */}
           <input
             value={city}
@@ -395,7 +378,7 @@ export default function CoursesPage() {
           />
           <button
             type="submit"
-            disabled={searching || (!query.trim() && !stateCode)}
+            disabled={searching || (!query.trim() && !region.trim())}
             className="bg-[#C9A84C] hover:bg-[#A07828] disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-[13.5px] font-semibold transition-colors shrink-0 flex items-center gap-2"
           >
             {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4" /> Search</>}

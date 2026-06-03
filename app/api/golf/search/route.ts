@@ -69,8 +69,8 @@ export async function GET(req: NextRequest) {
     const data = await res.json()
     let raw_courses = Array.isArray(data) ? data : (data.courses ?? [])
 
-    // Client-side state filter as fallback if API doesn't honour param
-    if (state && raw_courses.length > 0) {
+    // Client-side filter for 2-letter US state codes only
+    if (state && state.length === 2 && raw_courses.length > 0) {
       const stateUp  = state.toUpperCase()
       const filtered = raw_courses.filter((c: any) =>
         (c.state ?? c.StateCode ?? '').toUpperCase() === stateUp
