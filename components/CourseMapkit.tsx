@@ -118,23 +118,18 @@ export default function CourseMapkit({
         annotationsRef.current.push(ann)
       }
 
-      // Green marker — small circle
+      // Green marker — red flag
       if (gLat && gLng) {
         const grn = new mk.Annotation(
           new mk.Coordinate(gLat, gLng),
           () => {
             const el = document.createElement('div')
-            Object.assign(el.style, {
-              width: '12px', height: '12px', borderRadius: '50%',
-              background: active ? '#C9A84C' : 'rgba(255,255,255,0.85)',
-              border: `2px solid ${active ? '#fff' : '#333'}`,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-              cursor: 'pointer',
-            })
+            el.style.cssText = 'font-size:16px;line-height:1;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.6));'
+            el.textContent = '🚩'
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
-          { anchorOffset: new DOMPoint(0, 6), calloutEnabled: false, data: { n, green: true } }
+          { anchorOffset: new DOMPoint(0, 8), calloutEnabled: false, data: { n, green: true } }
         )
         annotationsRef.current.push(grn)
       }
