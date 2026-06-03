@@ -254,7 +254,8 @@ export default function CoursesPage() {
   async function search(overrideQuery?: string, overrideRegion?: string) {
     const q  = (overrideQuery  ?? query).trim()
     const rg = (overrideRegion ?? region).trim()
-    if (!q && !rg) return
+    const ct = city.trim()
+    if (!q && !rg && !ct) return
     setSearching(true); setResults([]); setError('')
     try {
       const params = new URLSearchParams()
@@ -373,12 +374,12 @@ export default function CoursesPage() {
           <input
             value={city}
             onChange={e => setCity(e.target.value)}
-            placeholder="City (optional)"
+            placeholder="City"
             className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition w-36"
           />
           <button
             type="submit"
-            disabled={searching || (!query.trim() && !region.trim())}
+            disabled={searching || (!query.trim() && !region.trim() && !city.trim())}
             className="bg-[#C9A84C] hover:bg-[#A07828] disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-[13.5px] font-semibold transition-colors shrink-0 flex items-center gap-2"
           >
             {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4" /> Search</>}
