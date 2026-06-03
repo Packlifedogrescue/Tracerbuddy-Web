@@ -114,7 +114,7 @@ export default function CourseMapkit({
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
-          { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false, data: { n } }
+          { anchorOffset: new DOMPoint(0, 11), calloutEnabled: false, data: { n } }
         )
         annotationsRef.current.push(ann)
       }
@@ -130,7 +130,7 @@ export default function CourseMapkit({
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
-          { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false, data: { n, green: true } }
+          { anchorOffset: new DOMPoint(0, 8), calloutEnabled: false, data: { n, green: true } }
         )
         annotationsRef.current.push(grn)
       }
@@ -166,7 +166,7 @@ export default function CourseMapkit({
           // Center between tee and green with padding
           const cLat = (tLat + gLat) / 2
           const cLng = (tLng + gLng) / 2
-          const span = Math.max(Math.abs(gLat - tLat) * 3.5, Math.abs(gLng - tLng) * 3.5, 0.0015)
+          const span = Math.min(Math.max(Math.abs(gLat - tLat) * 2.0, Math.abs(gLng - tLng) * 2.0, 0.002), 0.008)
           map.setRegionAnimated(new mk.CoordinateRegion(
             new mk.Coordinate(cLat, cLng),
             new mk.CoordinateSpan(span, span),
