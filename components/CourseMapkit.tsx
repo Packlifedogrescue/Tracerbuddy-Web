@@ -156,6 +156,18 @@ export default function CourseMapkit({
 
     if (annotationsRef.current.length) map.addAnnotations(annotationsRef.current)
     if (overlaysRef.current.length)    map.addOverlays(overlaysRef.current)
+
+    // Pan to selected hole's tee position
+    if (selectedHole != null) {
+      const h = holes.find(h => holeNum(h) === selectedHole)
+      if (h) {
+        const tLat = parseCoord(h.TeeLatitude)
+        const tLng = parseCoord(h.TeeLongitude)
+        if (tLat && tLng) {
+          map.setCenterAnimated(new mk.Coordinate(tLat, tLng))
+        }
+      }
+    }
   }, [holes, selectedHole, onHoleClick])
 
   // Init map

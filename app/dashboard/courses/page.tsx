@@ -575,6 +575,33 @@ export default function CoursesPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Hole number jump bar */}
+                  {holes.length > 0 && lat && lng && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+                      <div className="flex items-center gap-0.5 bg-black/75 backdrop-blur-md rounded-2xl px-2.5 py-2 shadow-xl">
+                        {[...holes]
+                          .sort((a, b) => holeNum(a) - holeNum(b))
+                          .map(h => {
+                            const n = holeNum(h)
+                            const active = selectedHole === n
+                            return (
+                              <button
+                                key={n}
+                                onClick={() => setSelectedHole(prev => prev === n ? undefined : n)}
+                                className={`w-7 h-7 rounded-lg text-[11px] font-black transition-all ${
+                                  active
+                                    ? 'bg-[#C9A84C] text-white shadow-sm scale-110'
+                                    : 'text-white/60 hover:text-white hover:bg-white/15'
+                                }`}
+                              >
+                                {n}
+                              </button>
+                            )
+                          })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right panel: scorecard or weather */}
