@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, FileText, Map, Activity, Watch, Wrench,
-  BarChart2, Settings2, Star, Gift, ChevronRight,
-  Brain, Target, Dumbbell, Trophy, Users, Flag, X, Check, Globe,
+  BarChart2, Settings2, Star, ChevronRight,
+  Brain, Target, Dumbbell, Trophy, Users, Flag, X, Globe,
 } from 'lucide-react'
 import { fetchUserProfile } from '@/lib/supabase'
 
@@ -56,15 +56,6 @@ function NavLinks({ path, onNav }: { path: string; onNav?: () => void }) {
 }
 
 function SidebarFooter({ isPro }: { isPro: boolean }) {
-  const [copied, setCopied] = useState(false)
-
-  function handleRefer() {
-    navigator.clipboard.writeText('https://tracerbuddy.app').then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }
-
   return (
     <>
       {/* Plan status */}
@@ -85,24 +76,7 @@ function SidebarFooter({ isPro }: { isPro: boolean }) {
         </div>
       </div>
 
-      {/* Refer a friend */}
-      <div className="px-3 pb-4 pt-1">
-        <button
-          onClick={handleRefer}
-          className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
-        >
-          <div className="w-7 h-7 rounded-full bg-[#FEF3E8] flex items-center justify-center shrink-0">
-            {copied ? <Check className="w-3.5 h-3.5 text-[#22A06B]" /> : <Gift className="w-3.5 h-3.5 text-[#E87830]" />}
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <div className="text-[12.5px] font-semibold text-[#111] leading-tight">
-              {copied ? 'Link copied!' : 'Refer a friend'}
-            </div>
-            <div className="text-[11px] text-gray-400 leading-tight">Get 1 month free</div>
-          </div>
-          {!copied && <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
-        </button>
-      </div>
+      <div className="pb-3" />
     </>
   )
 }
