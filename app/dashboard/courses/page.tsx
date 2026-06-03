@@ -276,7 +276,7 @@ export default function CoursesPage() {
     setSelected(course); setResults([]); setDetail(null); setLoadingDetail(true); setError(''); setSelectedHole(undefined)
     track('course_viewed', { course_id: course.CourseID, course_name: course.CourseName || course.ClubName, city: course.City, state: course.StateCode })
     try {
-      const res  = await fetch(`/api/golf/course/${course.CourseID}`)
+      const res  = await fetch(`/api/golf/course?id=${encodeURIComponent(course.CourseID)}`)
       const data: CourseDetail = await res.json()
       setDetail(data)
     } catch { setError('Could not load course details.') }
