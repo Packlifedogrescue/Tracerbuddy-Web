@@ -78,7 +78,14 @@ export async function GET(req: NextRequest) {
       if (filtered.length > 0) raw_courses = filtered
     }
 
-    const courses = raw_courses.map(normaliseCourse)
+    const GENERIC = /^\d+-hole course$/i
+    const courses = raw_courses
+      .map(normaliseCourse)
+      .filter((c: any) =>
+        c.hasGPS === 1 &&
+        c.CourseID &&
+        !GENERIC.test((c.CourseName || c.ClubName || '').trim())
+      )
 
     // ── 3. Write to cache (best-effort) ──────────────────────────────────
     try {
