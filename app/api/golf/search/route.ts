@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE     = 'https://golfapi.io/api/v2.3'
 const CACHE_TTL_DAYS = 7
+const CACHE_VERSION  = 2  // bump to bust old unfiltered caches
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   if (!raw && !state) return NextResponse.json({ courses: [] })
 
-  const cacheKey = normalise([raw, state, city].filter(Boolean).join('|'))
+  const cacheKey = `v${CACHE_VERSION}:${normalise([raw, state, city].filter(Boolean).join('|'))}`
   const GOLF_KEY = process.env.GOLF_API_KEY!
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -78,14 +79,20 @@ export async function GET(req: NextRequest) {
       if (filtered.length > 0) raw_courses = filtered
     }
 
-    const GENERIC = /^\d+-hole course$/i
+    const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
     const courses = raw_courses
       .map(normaliseCourse)
-      .filter((c: any) =>
-        c.hasGPS === 1 &&
-        c.CourseID &&
-        !GENERIC.test((c.CourseName || c.ClubName || '').trim())
-      )
+      .filter((c: any) => {
+        const name = (c.CourseName || c.ClubName || '').trim()
+        const lat  = parseFloat(c.Latitude)
+        const lng  = parseFloat(c.Longitude)
+        return (
+          c.CourseID &&
+          !GENERIC.test(name) &&
+          !isNaN(lat) && lat !== 0 &&
+          !isNaN(lng) && lng !== 0
+        )
+      })
 
     // ── 3. Write to cache (best-effort) ──────────────────────────────────
     try {
