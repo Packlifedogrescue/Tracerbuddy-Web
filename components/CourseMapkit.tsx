@@ -73,6 +73,7 @@ export default function CourseMapkit({
   const mapRef         = useRef<any>(null)
   const annotationsRef = useRef<any[]>([])
   const overlaysRef    = useRef<any[]>([])
+  const centeredRef    = useRef(false)
 
   const buildMarkers = useCallback(() => {
     const map = mapRef.current
@@ -113,7 +114,7 @@ export default function CourseMapkit({
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
-          { anchorOffset: new DOMPoint(0, 11), calloutEnabled: false, data: { n } }
+          { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false, data: { n } }
         )
         annotationsRef.current.push(ann)
       }
@@ -129,7 +130,7 @@ export default function CourseMapkit({
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
-          { anchorOffset: new DOMPoint(0, 8), calloutEnabled: false, data: { n, green: true } }
+          { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false, data: { n, green: true } }
         )
         annotationsRef.current.push(grn)
       }
@@ -202,10 +203,30 @@ export default function CourseMapkit({
         isRotationEnabled:   true,
       })
 
+      // Compute center from hole GPS data (more accurate than course-level lat/lng)
+      const coords: number[][] = []
+      for (const h of holes) {
+        const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
+        const gLat = parseCoord(h.GreenLatitude), gLng = parseCoord(h.GreenLongitude)
+        if (tLat && tLng) coords.push([tLat, tLng])
+        if (gLat && gLng) coords.push([gLat, gLng])
+      }
+
+      let cLat = lat, cLng = lng, span = 0.004
+      if (coords.length > 0) {
+        const lats = coords.map(c => c[0])
+        const lngs = coords.map(c => c[1])
+        const minLat = Math.min(...lats), maxLat = Math.max(...lats)
+        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
+        cLat = (minLat + maxLat) / 2
+        cLng = (minLng + maxLng) / 2
+        span = Math.max((maxLat - minLat) * 1.3, (maxLng - minLng) * 1.3, 0.004)
+      }
+
       map.setRegionAnimated(
         new mk.CoordinateRegion(
-          new mk.Coordinate(lat, lng),
-          new mk.CoordinateSpan(0.004, 0.004),
+          new mk.Coordinate(cLat, cLng),
+          new mk.CoordinateSpan(span, span),
         ),
         false,
       )
@@ -216,6 +237,7 @@ export default function CourseMapkit({
 
     return () => {
       destroyed = true
+      centeredRef.current = false
       if (mapRef.current) {
         try { mapRef.current.destroy() } catch {}
         mapRef.current = null
@@ -223,6 +245,35 @@ export default function CourseMapkit({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng])
+
+  // Re-center map to hole GPS bounding box once hole data arrives
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !window.mapkit || centeredRef.current) return
+
+    const coords: number[][] = []
+    for (const h of holes) {
+      const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
+      const gLat = parseCoord(h.GreenLatitude), gLng = parseCoord(h.GreenLongitude)
+      if (tLat && tLng) coords.push([tLat, tLng])
+      if (gLat && gLng) coords.push([gLat, gLng])
+    }
+    if (coords.length === 0) return
+
+    centeredRef.current = true
+    const lats = coords.map(c => c[0])
+    const lngs = coords.map(c => c[1])
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats)
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
+    const cLat = (minLat + maxLat) / 2
+    const cLng = (minLng + maxLng) / 2
+    const span = Math.max((maxLat - minLat) * 1.3, (maxLng - minLng) * 1.3, 0.004)
+    const mk = window.mapkit
+    map.setRegionAnimated(new mk.CoordinateRegion(
+      new mk.Coordinate(cLat, cLng),
+      new mk.CoordinateSpan(span, span),
+    ))
+  }, [holes])
 
   // Update markers when selected hole changes
   useEffect(() => {
