@@ -1,0 +1,61 @@
+===== APP STORE CONNECT — VERSION 1.0 METADATA =====
+
+
+----- DESCRIPTION (paste into Description field) -----
+
+Track every shot. Understand every round. Play better golf.
+
+TracerBuddy is the complete performance system for golfers who want to actually improve — not just keep score.
+
+SHOT TRACKING & SCORECARDS
+• GPS shot tracking on 42,000+ courses worldwide
+• Digital scorecards: stroke play, Stableford, match play, skins & best ball
+• Hole-by-hole breakdown with fairways, GIR, and putts
+• Shot replay and miss direction tracking
+
+APPLE WATCH — SWINGTRACE
+• Automatic swing detection from your wrist
+• Swing speed, tempo, and backswing duration every shot
+• No manual input needed during your round
+
+AI COACH CARDS
+• After every round: your biggest strokes leak identified
+• Club misfiring detection and miss pattern analysis
+• Custom practice plan from your actual data
+• Handicap tracking and goal progression
+
+PERFORMANCE STATS
+• Strokes Gained breakdown
+• Club Confidence distances from your real swing data
+• 3-putt rate, 1-putt rate, GIR %, fairway %
+
+COURSE MAPS & WEATHER
+• Satellite maps with live GPS distances
+• Wind and weather overlay
+• Hazard and layup yardages
+
+SOCIAL & COMPETITION
+• Buddy Battles — head-to-head match play
+• Group tournaments and leaderboards
+
+Your first round is completely free — no credit card required.
+
+
+----- KEYWORDS (paste into Keywords field — 97 characters) -----
+
+golf tracker,shot tracking,golf stats,handicap,scorecard,strokes gained,golf GPS,apple watch golf
+
+
+----- SUPPORT URL -----
+
+https://tracerbuddy.app/contact
+
+
+----- MARKETING URL -----
+
+https://tracerbuddy.app
+
+
+----- COPYRIGHT -----
+
+© 2026 Brett Miller
