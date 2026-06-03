@@ -114,7 +114,7 @@ export default function CourseMapkit({
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
-          { anchorOffset: new DOMPoint(0, 11), calloutEnabled: false, data: { n } }
+          { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false, data: { n } }
         )
         annotationsRef.current.push(ann)
       }
@@ -130,7 +130,7 @@ export default function CourseMapkit({
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
-          { anchorOffset: new DOMPoint(0, 8), calloutEnabled: false, data: { n, green: true } }
+          { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false, data: { n, green: true } }
         )
         annotationsRef.current.push(grn)
       }
