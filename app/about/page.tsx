@@ -14,7 +14,7 @@ export default function AboutPage() {
       <nav className="sticky top-0 z-50 bg-[#F5EFE0] border-b border-black/[0.04]">
         <div className="flex items-center justify-between px-6 md:px-12 py-4 max-w-[1400px] mx-auto">
           <Link href="/" className="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-16 w-auto" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-16 w-auto mix-blend-multiply" />
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/auth/login" className="text-[14px] text-[#1A1A1A] hidden md:block hover:text-black transition-colors">Sign In</Link>
@@ -150,7 +150,7 @@ export default function AboutPage() {
               <h2 className="font-serif text-white text-[28px] md:text-[40px] font-medium leading-[1.1] tracking-[-0.02em]">
                 Play smarter.<br />Score lower.
               </h2>
-              <p className="text-[14.5px] text-[#888] mt-3 max-w-[400px]">Start free — 2 full rounds with no credit card required.</p>
+              <p className="text-[14.5px] text-[#888] mt-3 max-w-[400px]">Start free — 1 round free, no credit card required.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link href="/auth/signup" className="premium-btn-gold">

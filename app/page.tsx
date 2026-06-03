@@ -36,7 +36,7 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 bg-[#F5EFE0] border-b border-black/[0.04]">
         <div className="flex items-center justify-between px-6 md:px-12 py-4 max-w-[1400px] mx-auto">
           <div className="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-20 w-auto" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-20 w-auto mix-blend-multiply" />
           </div>
           <div className="hidden md:flex items-center gap-9">
             <a href="#features" className="text-[14px] text-[#333] hover:text-black transition-colors">Features</a>
@@ -494,7 +494,7 @@ export default function HomePage() {
         <div className="grid md:grid-cols-4 gap-10 mb-10">
           <div className="md:col-span-1">
             <div className="mb-4">
-              <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-14 w-auto" />
+              <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-14 w-auto mix-blend-multiply" />
             </div>
             <p className="text-[13px] text-[#666] leading-[1.6] max-w-[240px]">Premium shot tracking and round insights for serious golfers.</p>
           </div>

@@ -62,7 +62,7 @@ export default function TermsPage() {
           <section>
             <h2>4. Subscriptions and Billing</h2>
             <h3>4.1 Free Trial</h3>
-            <p>New accounts receive access to full features for their first 2 rounds at no charge, without a credit card. After 2 rounds, a paid subscription is required to continue logging rounds.</p>
+            <p>New accounts receive access to full features for their first round at no charge, without a credit card. After the first round, a paid subscription is required to continue logging rounds.</p>
 
             <h3>4.2 Paid Subscriptions</h3>
             <p>Subscriptions are offered on a monthly ($24.99/month) or annual ($199.99/year) basis and are processed through Apple's in-app purchase system. By subscribing, you agree to Apple's payment terms.</p>

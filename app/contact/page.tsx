@@ -37,7 +37,7 @@ export default function ContactPage() {
       <nav className="sticky top-0 z-50 bg-[#F5EFE0] border-b border-black/[0.04]">
         <div className="flex items-center justify-between px-6 md:px-12 py-4 max-w-[1400px] mx-auto">
           <Link href="/" className="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-16 w-auto" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-16 w-auto mix-blend-multiply" />
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/auth/login" className="text-[14px] text-[#1A1A1A] hidden md:block hover:text-black transition-colors">Sign In</Link>
@@ -98,7 +98,7 @@ export default function ContactPage() {
               <div className="text-[10px] font-bold uppercase tracking-widest text-[#DF9905] mb-3">Quick links</div>
               <div className="space-y-2.5">
                 {[
-                  { href: '/auth/signup', label: 'Start free — 2 rounds' },
+                  { href: '/auth/signup', label: 'Start free — 1 round' },
                   { href: '/privacy',    label: 'Privacy policy'         },
                   { href: '/terms',      label: 'Terms of service'       },
                   { href: '/about',      label: 'About TracerBuddy'      },
