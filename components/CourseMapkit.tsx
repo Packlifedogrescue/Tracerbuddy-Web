@@ -139,16 +139,16 @@ export default function CourseMapkit({
         annotationsRef.current.push(grn)
       }
 
-      // Tee → green dashed line
-      if (tLat && tLng && gLat && gLng) {
+      // Tee → green dashed line — only for selected hole
+      if (active && tLat && tLng && gLat && gLng) {
         const line = new mk.PolylineOverlay(
           [new mk.Coordinate(tLat, tLng), new mk.Coordinate(gLat, gLng)],
         )
         line.style = new mk.Style({
-          lineWidth:   active ? 2.5 : 1.5,
-          strokeColor: active ? '#C9A84C' : '#ffffff',
-          lineOpacity: active ? 0.95 : 0.45,
-          lineDash:    [6, 4],
+          lineWidth:   2.5,
+          strokeColor: '#C9A84C',
+          lineOpacity: 0.95,
+          lineDash:    [8, 5],
         })
         overlaysRef.current.push(line)
       }
