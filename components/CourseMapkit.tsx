@@ -304,7 +304,7 @@ export default function CourseMapkit({
 
   return (
     <div className="w-full h-full relative" style={{ minHeight: 400 }}>
-      <div ref={containerRef} className="w-full h-full" />
+      <div ref={containerRef} className="absolute inset-0" />
       {/* Compass reset button */}
       <button
         onClick={() => { if (mapRef.current) mapRef.current.setRotationAnimated(0) }}
