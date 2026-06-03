@@ -76,7 +76,7 @@ export default function SignupPage() {
             <label className="text-[11px] font-bold text-[#666] tracking-wider block mb-2">YOUR NAME</label>
             <input
               type="text" value={name} onChange={e => setName(e.target.value)}
-              placeholder="Brett Miller" required
+              placeholder="Your full name" required
               className="w-full bg-white border border-black/10 rounded-xl px-4 py-3 text-[#0A0A0A] placeholder-gray-400 focus:outline-none focus:border-[#0A0A0A] transition"
             />
           </div>
