@@ -152,7 +152,7 @@ export default function CourseMapkit({
     if (annotationsRef.current.length) map.addAnnotations(annotationsRef.current)
     if (overlaysRef.current.length)    map.addOverlays(overlaysRef.current)
 
-    // Pan + rotate to selected hole
+    // Pan + zoom + rotate to selected hole
     if (selectedHole != null) {
       const h = holes.find(h => holeNum(h) === selectedHole)
       if (h) {
@@ -160,18 +160,26 @@ export default function CourseMapkit({
         const tLng = parseCoord(h.TeeLongitude)
         const gLat = parseCoord(h.GreenLatitude)
         const gLng = parseCoord(h.GreenLongitude)
-        if (tLat && tLng) {
-          map.setCenterAnimated(new mk.Coordinate(tLat, tLng))
-        }
-        // Auto-rotate so tee is at bottom, green at top
+
         if (tLat && tLng && gLat && gLng) {
+          // Center between tee and green with padding
+          const cLat = (tLat + gLat) / 2
+          const cLng = (tLng + gLng) / 2
+          const span = Math.max(Math.abs(gLat - tLat) * 3.5, Math.abs(gLng - tLng) * 3.5, 0.0015)
+          map.setRegionAnimated(new mk.CoordinateRegion(
+            new mk.Coordinate(cLat, cLng),
+            new mk.CoordinateSpan(span, span),
+          ))
+          // Rotate so tee is at bottom, green at top (bearing = CCW degrees from north)
           const lat1r = tLat * Math.PI / 180
           const lat2r = gLat * Math.PI / 180
           const dLngR = (gLng - tLng) * Math.PI / 180
           const y = Math.sin(dLngR) * Math.cos(lat2r)
           const x = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLngR)
           const bearing = Math.atan2(y, x) * 180 / Math.PI
-          map.setRotationAnimated(-bearing)
+          map.setRotationAnimated(bearing)
+        } else if (tLat && tLng) {
+          map.setCenterAnimated(new mk.Coordinate(tLat, tLng))
         }
       }
     }
@@ -197,7 +205,7 @@ export default function CourseMapkit({
       map.setRegionAnimated(
         new mk.CoordinateRegion(
           new mk.Coordinate(lat, lng),
-          new mk.CoordinateSpan(0.012, 0.012),
+          new mk.CoordinateSpan(0.004, 0.004),
         ),
         false,
       )
