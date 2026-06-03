@@ -9,9 +9,9 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import WeatherWidget from '@/components/WeatherWidget'
-import type { TeeData } from '@/components/CourseMapbox'
+import type { TeeData } from '@/components/CourseMapkit'
 
-const CourseMapbox = dynamic(() => import('@/components/CourseMapbox'), { ssr: false })
+const CourseMapbox = dynamic(() => import('@/components/CourseMapkit'), { ssr: false })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface GolfCourse {
