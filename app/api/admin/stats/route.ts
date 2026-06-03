@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
   // Week-4 retention: users who signed up 28-35 days ago who also made a round in last 7 days
   const cohortIds = new Set((week4Cohort ?? []).map((r: any) => r.user_id).filter(Boolean))
   const retainedIds = new Set((retentionRounds ?? []).map((r: any) => r.user_id).filter(Boolean))
-  const retainedCount = [...cohortIds].filter(id => retainedIds.has(id)).length
+  const retainedCount = Array.from(cohortIds).filter(id => retainedIds.has(id)).length
   const retentionRate = cohortIds.size > 0 ? Math.round((retainedCount / cohortIds.size) * 100) : null
 
   // Conversion rate & MRR
