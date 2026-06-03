@@ -319,14 +319,8 @@ export default function CoursesPage() {
       .filter(t => t.yds != null && t.yds > 0)
       .sort((a, b) => (b.yds ?? 0) - (a.yds ?? 0))
     if (relevant.length === 0) return []
-    if (relevant.length === 1) return [{ label: 'Yardage', ...relevant[0] }]
-    if (relevant.length === 2) return [{ label: 'Back', ...relevant[0] }, { label: 'Front', ...relevant[1] }]
-    if (relevant.length === 3) return relevant.map((r, i) => ({ label: ['Back', 'Center', 'Front'][i], ...r }))
-    return [
-      { label: 'Back',   ...relevant[0] },
-      { label: 'Center', ...relevant[Math.floor(relevant.length / 2)] },
-      { label: 'Front',  ...relevant[relevant.length - 1] },
-    ]
+    // Use actual tee names as labels so distances are unambiguous
+    return relevant.map(r => ({ label: r.name, ...r }))
   })()
 
   return (
