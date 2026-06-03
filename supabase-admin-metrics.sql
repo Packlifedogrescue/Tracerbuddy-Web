@@ -16,15 +16,21 @@ create index if not exists analytics_events_created_at_idx on analytics_events(c
 
 alter table analytics_events enable row level security;
 
-create policy if not exists "Users insert own events"
-  on analytics_events for insert
-  to authenticated
-  with check (auth.uid() = user_id);
+do $$ begin
+  create policy "Users insert own events"
+    on analytics_events for insert
+    to authenticated
+    with check (auth.uid() = user_id);
+exception when duplicate_object then null;
+end $$;
 
-create policy if not exists "Users read own events"
-  on analytics_events for select
-  to authenticated
-  using (auth.uid() = user_id);
+do $$ begin
+  create policy "Users read own events"
+    on analytics_events for select
+    to authenticated
+    using (auth.uid() = user_id);
+exception when duplicate_object then null;
+end $$;
 
 
 -- ─────────────────────────────────────────────
