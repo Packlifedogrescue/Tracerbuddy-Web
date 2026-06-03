@@ -59,3 +59,8 @@ https://tracerbuddy.app
 ----- COPYRIGHT -----
 
 © 2026 Brett Miller
+
+
+----- APP REVIEW NOTES (paste into Notes field under App Review Information) -----
+
+This app requires an iPhone with TracerBuddy installed to track rounds. Swing speed and motion data is automatically captured via Apple Watch — the watch is the sensor for swing detection, not the iPhone. A web dashboard is also available at tracerbuddy.app. The test account provided above has Pro access enabled for full feature review.
