@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
     { data: week4Cohort },
     { data: retentionRounds },
     { data: dailyActive },
+    { count: errorsDay },
   ] = await Promise.all([
     safe(db.from('user_profiles').select('*', { count: 'exact', head: true })),
     safe(db.from('user_profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekStart)),
@@ -79,6 +80,7 @@ export async function GET(req: NextRequest) {
     safe(db.from('user_profiles').select('user_id').gte('created_at', week4Start).lte('created_at', week4End)),
     safe(db.from('rounds').select('user_id').gte('created_at', weekStart)),
     safe(db.from('analytics_events').select('created_at, user_id').gte('created_at', monthStart)),
+    safe(db.from('error_logs').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 86400000).toISOString())),
   ])
 
   // Avg score
@@ -191,6 +193,8 @@ export async function GET(req: NextRequest) {
     aiCoachUses:      aiCoachUses      ?? 0,
     mapViews:         mapViews         ?? 0,
     weatherViews:     weatherViews     ?? 0,
+    // Errors
+    errorsDay:        errorsDay        ?? 0,
     // Charts
     recentSignups,
     topCourses:       topCoursesList,

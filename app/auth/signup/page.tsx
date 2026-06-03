@@ -21,7 +21,14 @@ export default function SignupPage() {
       options: { data: { display_name: name } }
     })
     if (error) { setError(error.message); setLoading(false) }
-    else router.push('/dashboard')
+    else {
+      fetch('/api/auth/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      }).catch(() => {})
+      router.push('/dashboard')
+    }
   }
 
   async function handleAppleSignIn() {

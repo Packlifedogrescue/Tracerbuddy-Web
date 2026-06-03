@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import {
   Users, Flag, Map, TrendingUp, Activity, UserPlus,
   Target, Dumbbell, Trophy, MessageSquare, GitCommit, Disc,
-  Star, Zap, BarChart2, Wind, Brain, RefreshCw, DollarSign,
+  Star, Zap, BarChart2, Wind, Brain, RefreshCw, DollarSign, AlertTriangle,
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -143,8 +143,8 @@ export default function AdminOverview() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard icon={Brain}      label="AI Coach Queries" value={data.aiCoachUses}   color="#F472B6" sub="30-day total" />
           <StatCard icon={Map}        label="Map Views"        value={data.mapViews}       color="#60A5FA" sub="course map opens" />
-          <StatCard icon={Wind}       label="Weather Views"    value={data.weatherViews}   color="#06B6D4" sub="weather page opens" />
-          <StatCard icon={GitCommit}  label="Holes Tracked"    value={data.totalHoleStats} color="#F59E0B" sub="all-time" />
+          <StatCard icon={Wind}           label="Weather Views"    value={data.weatherViews}   color="#06B6D4" sub="weather page opens" />
+          <StatCard icon={AlertTriangle}  label="Errors (24h)"     value={data.errorsDay}      color={data.errorsDay > 0 ? '#EF4444' : '#4ADE80'} sub="API failures last 24 hours" />
         </div>
       </div>
 

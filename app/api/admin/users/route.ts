@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
     handicap: null as number | null,
     roundCount: 0,
     lastActive: null as string | null,
+    subscription: 'free' as string,
   }))
 
   if (search) {
@@ -55,11 +56,13 @@ export async function GET(req: NextRequest) {
   if (userIds.length > 0) {
     const { data: profiles } = await db
       .from('user_profiles')
-      .select('id, handicap')
+      .select('id, handicap, subscription')
       .in('id', userIds)
     const handicapMap: Record<string, number> = {}
+    const subscriptionMap: Record<string, string> = {}
     for (const p of profiles ?? []) {
       if (p.handicap != null) handicapMap[p.id] = p.handicap
+      subscriptionMap[p.id] = p.subscription ?? 'free'
     }
 
     const { data: roundRows } = await db
@@ -82,13 +85,35 @@ export async function GET(req: NextRequest) {
     }
 
     for (const u of pageUsers) {
-      u.handicap   = handicapMap[u.id]   ?? null
-      u.roundCount = countMap[u.id]      ?? 0
-      u.lastActive = lastActiveMap[u.id] ?? null
+      u.handicap     = handicapMap[u.id]     ?? null
+      u.roundCount   = countMap[u.id]        ?? 0
+      u.lastActive   = lastActiveMap[u.id]   ?? null
+      u.subscription = subscriptionMap[u.id] ?? 'free'
     }
   }
 
   return NextResponse.json({ users: pageUsers, total, page, limit })
+}
+
+export async function PATCH(req: NextRequest) {
+  const authHeader = req.headers.get('x-admin-email')
+  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  }
+
+  const { userId, subscription } = await req.json()
+  if (!userId || !['pro', 'free'].includes(subscription)) {
+    return NextResponse.json({ error: 'userId and subscription (pro|free) required' }, { status: 400 })
+  }
+
+  const db = sb()
+  const { error } = await db
+    .from('user_profiles')
+    .update({ subscription })
+    .eq('id', userId)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ updated: true, subscription })
 }
 
 export async function DELETE(req: NextRequest) {
