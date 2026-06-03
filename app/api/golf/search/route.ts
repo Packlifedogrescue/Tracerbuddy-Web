@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE     = 'https://golfapi.io/api/v2.3'
 const CACHE_TTL_DAYS = 7
-const CACHE_VERSION  = 2  // bump to bust old unfiltered caches
+const CACHE_VERSION  = 3
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -84,14 +84,7 @@ export async function GET(req: NextRequest) {
       .map(normaliseCourse)
       .filter((c: any) => {
         const name = (c.CourseName || c.ClubName || '').trim()
-        const lat  = parseFloat(c.Latitude)
-        const lng  = parseFloat(c.Longitude)
-        return (
-          c.CourseID &&
-          !GENERIC.test(name) &&
-          !isNaN(lat) && lat !== 0 &&
-          !isNaN(lng) && lng !== 0
-        )
+        return c.CourseID && name.length > 0 && !GENERIC.test(name)
       })
 
     // ── 3. Write to cache (best-effort) ──────────────────────────────────
