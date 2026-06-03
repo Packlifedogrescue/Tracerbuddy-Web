@@ -183,6 +183,28 @@ export default function CourseMapkit({
           map.setCenterAnimated(new mk.Coordinate(tLat, tLng))
         }
       }
+    } else if (centeredRef.current) {
+      // Deselected — zoom back to full course bounding box and reset north
+      const coords: number[][] = []
+      for (const h of holes) {
+        const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
+        const gLat = parseCoord(h.GreenLatitude), gLng = parseCoord(h.GreenLongitude)
+        if (tLat && tLng) coords.push([tLat, tLng])
+        if (gLat && gLng) coords.push([gLat, gLng])
+      }
+      if (coords.length > 0) {
+        const lats = coords.map(c => c[0])
+        const lngs = coords.map(c => c[1])
+        const minLat = Math.min(...lats), maxLat = Math.max(...lats)
+        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
+        const cLat = (minLat + maxLat) / 2, cLng = (minLng + maxLng) / 2
+        const span = Math.max((maxLat - minLat) * 1.3, (maxLng - minLng) * 1.3, 0.004)
+        map.setRegionAnimated(new mk.CoordinateRegion(
+          new mk.Coordinate(cLat, cLng),
+          new mk.CoordinateSpan(span, span),
+        ))
+        map.setRotationAnimated(0)
+      }
     }
   }, [holes, selectedHole, onHoleClick])
 

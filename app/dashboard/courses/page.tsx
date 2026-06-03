@@ -578,9 +578,8 @@ export default function CoursesPage() {
 
                   {/* Hole number jump bar */}
                   {holes.length > 0 && lat && lng && (
-                    <div className="absolute bottom-0 left-0 right-0 z-10">
-                      <div className="flex items-center justify-around bg-black/80 backdrop-blur-md px-2 py-1.5 shadow-xl"
-                           style={{ borderRadius: '0 0 8px 8px' }}>
+                    <div className="absolute bottom-7 left-0 right-0 z-10">
+                      <div className="flex items-center justify-around bg-black/80 backdrop-blur-md px-2 py-1.5 shadow-xl rounded-b-lg">
                         {[...holes]
                           .sort((a, b) => holeNum(a) - holeNum(b))
                           .map(h => {
