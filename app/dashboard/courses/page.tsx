@@ -578,8 +578,9 @@ export default function CoursesPage() {
 
                   {/* Hole number jump bar */}
                   {holes.length > 0 && lat && lng && (
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-                      <div className="flex items-center gap-px bg-black/80 backdrop-blur-md rounded-xl px-1.5 py-1.5 shadow-xl">
+                    <div className="absolute bottom-0 left-0 right-0 z-10">
+                      <div className="flex items-center justify-around bg-black/80 backdrop-blur-md px-2 py-1.5 shadow-xl"
+                           style={{ borderRadius: '0 0 8px 8px' }}>
                         {[...holes]
                           .sort((a, b) => holeNum(a) - holeNum(b))
                           .map(h => {
@@ -589,7 +590,7 @@ export default function CoursesPage() {
                               <button
                                 key={n}
                                 onClick={() => setSelectedHole(prev => prev === n ? undefined : n)}
-                                className={`w-5 h-5 rounded-md text-[9px] font-black transition-all ${
+                                className={`flex-1 h-6 rounded-md text-[9px] font-black transition-all ${
                                   active
                                     ? 'bg-[#C9A84C] text-white scale-110'
                                     : 'text-white/55 hover:text-white hover:bg-white/15'
