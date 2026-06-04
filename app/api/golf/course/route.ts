@@ -119,6 +119,19 @@ export async function GET(req: NextRequest) {
 
     const payload = buildCoursePayload(course, coordinates)
 
+    // Debug: expose raw POI types so we can verify green coordinate mapping
+    const debug = req.nextUrl.searchParams.get('debug') === '1'
+    if (debug) {
+      const poiSummary = coordinates.reduce((acc: Record<number, number>, c: any) => {
+        acc[c.poi] = (acc[c.poi] ?? 0) + 1
+        return acc
+      }, {})
+      const sample = coordinates.filter((c: any) => c.hole === 1).map((c: any) => ({
+        hole: c.hole, poi: c.poi, lat: c.latitude, lng: c.longitude
+      }))
+      return NextResponse.json({ poiSummary, hole1Sample: sample, ...payload })
+    }
+
     // ── 4. Write to cache (best-effort) ──────────────────────────────────
     try {
       await sb.from('golf_course_details_cache').upsert({
