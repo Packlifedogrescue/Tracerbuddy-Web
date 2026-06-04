@@ -282,6 +282,7 @@ export default function CourseMapbox({
     const tLat = parseNum(activeHole.TeeLatitude)
     const tLng = parseNum(activeHole.TeeLongitude)
     if (!gLat || !gLng || !tLat || !tLng) return []
+    const holeYards = activeHole.Yardage ?? activeHole.Yards ?? 9999
     // Normalize in meter-space so the direction is correct regardless of latitude
     const cosLat  = Math.cos(gLat * Math.PI / 180)
     const dLat_m  = (tLat - gLat) * 111111
@@ -289,7 +290,7 @@ export default function CourseMapbox({
     const len_m   = Math.sqrt(dLat_m * dLat_m + dLng_m * dLng_m) || 1
     const nLat_m  = dLat_m / len_m
     const nLng_m  = dLng_m / len_m
-    return RING_YARDS.map(yards => {
+    return RING_YARDS.filter(y => y < holeYards).map(yards => {
       const m = yards * 0.9144
       return {
         yards,
