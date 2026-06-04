@@ -19,7 +19,7 @@ const fraunces = Fraunces({
   axes: ['opsz'],
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracerbuddy.com'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracerbuddy.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

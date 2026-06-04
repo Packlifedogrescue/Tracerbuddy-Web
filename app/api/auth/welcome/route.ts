@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         </div>`).join('')}
       </div>
 
-      <a href="https://tracerbuddy.com/dashboard" style="display:block;background:#C9A84C;color:white;font-size:15px;font-weight:800;text-align:center;padding:14px 24px;border-radius:12px;text-decoration:none;letter-spacing:0.3px">
+      <a href="https://tracerbuddy.app/dashboard" style="display:block;background:#C9A84C;color:white;font-size:15px;font-weight:800;text-align:center;padding:14px 24px;border-radius:12px;text-decoration:none;letter-spacing:0.3px">
         Go to Your Dashboard →
       </a>
     </div>
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     <!-- Footer -->
     <div style="text-align:center;padding:12px;color:#aaa;font-size:11px">
       <div style="margin-bottom:4px">TracerBuddy · Golf. Evolved.</div>
-      <div>tracerbuddy.com · Questions? <a href="mailto:support@tracerbuddy.com" style="color:#C9A84C;text-decoration:none">support@tracerbuddy.com</a></div>
+      <div>tracerbuddy.app · Questions? <a href="mailto:support@tracerbuddy.app" style="color:#C9A84C;text-decoration:none">support@tracerbuddy.app</a></div>
     </div>
 
   </div>
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from:    'TracerBuddy <noreply@tracerbuddy.com>',
+        from:    'TracerBuddy <noreply@tracerbuddy.app>',
         to:      [email],
         subject: `Welcome to TracerBuddy, ${firstName} — your first round is free`,
         html,

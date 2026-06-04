@@ -448,7 +448,7 @@ export default function FittingReportPage() {
               <span>TracerBuddy — Real Game Club Fitting Report</span>
             </div>
             <div>{format(new Date(), 'MMMM d, yyyy')} · {profile?.display_name}</div>
-            <div>tracerbuddy.com</div>
+            <div>tracerbuddy.app</div>
           </div>
         </div>
 

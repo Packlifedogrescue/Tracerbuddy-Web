@@ -20,7 +20,7 @@ export async function GET() {
 
   const header  = base64url(JSON.stringify({ alg: 'ES256', kid: keyId, typ: 'JWT' }))
   const now     = Math.floor(Date.now() / 1000)
-  const payload = base64url(JSON.stringify({ iss: teamId, iat: now, exp: now + 1800, origin: 'https://tracerbuddy.com' }))
+  const payload = base64url(JSON.stringify({ iss: teamId, iat: now, exp: now + 1800, origin: 'https://tracerbuddy.app' }))
   const data    = `${header}.${payload}`
 
   const signer = createSign('SHA256')
