@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import Map, { Marker, Source, Layer, NavigationControl, type MapRef } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -68,6 +68,27 @@ function bearingTo(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return (Math.atan2(lng2 - lng1, lat2 - lat1) * 180 / Math.PI + 360) % 360
 }
 
+function circleFeature(lat: number, lng: number, yards: number): GeoJSON.Feature {
+  const m = yards * 0.9144
+  const n = 72
+  const coords = Array.from({ length: n + 1 }, (_, i) => {
+    const a = (i / n) * 2 * Math.PI
+    return [
+      lng + (m / (111111 * Math.cos(lat * Math.PI / 180))) * Math.sin(a),
+      lat + (m / 111111) * Math.cos(a),
+    ]
+  })
+  return { type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: { yards } }
+}
+
+const RING_YARDS = [50, 100, 150, 200]
+const RING_COLOR: Record<number, string> = {
+  50:  'rgba(255,255,255,0.55)',
+  100: 'rgba(34,197,94,0.75)',
+  150: 'rgba(251,191,36,0.75)',
+  200: 'rgba(239,68,68,0.75)',
+}
+
 const PAR_COLOR: Record<number, string> = {
   3: 'rgba(96,165,250,0.85)',
   4: 'rgba(255,255,255,0.65)',
@@ -114,7 +135,28 @@ export default function CourseMapbox({
         tileSize: 512,
         maxzoom: 14,
       })
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 })
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 2.5 })
+
+      map.setFog({
+        range:           [0.5, 12],
+        color:           'rgb(220, 235, 245)',
+        'high-color':    'rgb(40, 90, 200)',
+        'horizon-blend': 0.06,
+        'space-color':   'rgb(5, 5, 20)',
+        'star-intensity': 0.35,
+      })
+
+      map.addLayer({
+        id: 'sky',
+        type: 'sky',
+        paint: {
+          'sky-type':                       'atmosphere',
+          'sky-atmosphere-sun':             [0.0, 90.0],
+          'sky-atmosphere-sun-intensity':   15,
+          'sky-atmosphere-color':           'rgba(135, 206, 235, 1.0)',
+          'sky-atmosphere-halo-color':      'rgba(255, 255, 255, 0.4)',
+        },
+      })
     } catch (_) {}
   }, [])
 
@@ -222,11 +264,41 @@ export default function CourseMapbox({
 
   const activeHole = selectedHole != null ? holes.find(h => holeNum(h) === selectedHole) : null
 
+  const distanceRings = useMemo((): GeoJSON.FeatureCollection => {
+    if (!activeHole) return { type: 'FeatureCollection', features: [] }
+    const gLat = parseNum(activeHole.GreenLatitude)
+    const gLng = parseNum(activeHole.GreenLongitude)
+    if (!gLat || !gLng) return { type: 'FeatureCollection', features: [] }
+    return { type: 'FeatureCollection', features: RING_YARDS.map(y => circleFeature(gLat, gLng, y)) }
+  }, [activeHole])
+
+  const ringLabels = useMemo(() => {
+    if (!activeHole) return []
+    const gLat = parseNum(activeHole.GreenLatitude)
+    const gLng = parseNum(activeHole.GreenLongitude)
+    if (!gLat || !gLng) return []
+    return RING_YARDS.map(yards => {
+      const m = yards * 0.9144
+      return {
+        yards,
+        lat: gLat + (m / 111111),
+        lng: gLng,
+        color: RING_COLOR[yards],
+      }
+    })
+  }, [activeHole])
 
   const SF = { fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }
 
   return (
     <div className="relative w-full h-full overflow-hidden">
+      <style>{`
+        @keyframes tee-pulse {
+          0%   { transform: scale(1);   opacity: 0.9; }
+          70%  { transform: scale(1.9); opacity: 0; }
+          100% { transform: scale(1.9); opacity: 0; }
+        }
+      `}</style>
       <Map
         ref={mapRef}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
@@ -249,6 +321,35 @@ export default function CourseMapbox({
             <Layer id="osm-green"    type="fill" filter={['==', ['get', 'golf'], 'green']}        paint={{ 'fill-color': 'rgba(74,222,128,0.55)',  'fill-outline-color': 'rgba(74,222,128,0.85)'  }} />
           </Source>
         )}
+
+        {/* Distance rings from green */}
+        <Source id="dist-rings" type="geojson" data={distanceRings}>
+          <Layer
+            id="dist-rings-line"
+            type="line"
+            paint={{
+              'line-color': [
+                'case',
+                ['==', ['get', 'yards'], 200], 'rgba(239,68,68,0.80)',
+                ['==', ['get', 'yards'], 150], 'rgba(251,191,36,0.80)',
+                ['==', ['get', 'yards'], 100], 'rgba(34,197,94,0.80)',
+                'rgba(255,255,255,0.55)',
+              ],
+              'line-width': 1.5,
+              'line-dasharray': [5, 4],
+              'line-blur': 0.5,
+            }}
+          />
+        </Source>
+
+        {/* Ring yardage labels */}
+        {ringLabels.map(r => (
+          <Marker key={`ring-${r.yards}`} latitude={r.lat} longitude={r.lng} anchor="bottom">
+            <div style={{ ...SF, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)', border: `1px solid ${r.color}`, borderRadius: 5, padding: '2px 6px', fontSize: 9, fontWeight: 800, color: r.color, letterSpacing: 0.5, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+              {r.yards}y
+            </div>
+          </Marker>
+        ))}
 
         {/* Fairway glow */}
         <Source id="fairways-glow" type="geojson" data={fairways}>
@@ -282,27 +383,33 @@ export default function CourseMapbox({
           if (!tLat || !tLng) return null
           return (
             <Marker key={`tee-${n}`} latitude={tLat} longitude={tLng} anchor="center">
-              <div
-                onClick={() => { stopTour(); onHoleClick?.(n) }}
-                style={{
-                  width: active ? 36 : 28,
-                  height: active ? 36 : 28,
-                  background: active
-                    ? 'linear-gradient(145deg, #D4AF45 0%, #8B6420 100%)'
-                    : 'linear-gradient(145deg, rgba(20,14,4,0.95) 0%, rgba(0,0,0,0.9) 100%)',
-                  border: `${active ? 2 : 1.5}px solid ${active ? '#FFD700' : '#C9A84C'}`,
-                  borderRadius: 9,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: active
-                    ? '0 0 0 5px rgba(201,168,76,0.35), 0 8px 24px rgba(0,0,0,0.9)'
-                    : '0 0 0 3px rgba(201,168,76,0.15), 0 4px 12px rgba(0,0,0,0.7)',
-                  cursor: 'pointer',
-                  transform: active ? 'scale(1.1)' : 'scale(1)',
-                  transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-                  zIndex: active ? 10 : 1,
-                }}
-              >
-                <span style={{ ...SF, color: active ? '#fff' : '#E8C96A', fontSize: n > 9 ? 10 : 12, fontWeight: 900, lineHeight: 1, letterSpacing: -0.5 }}>{n}</span>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {active && (
+                  <div style={{ position: 'absolute', inset: -10, borderRadius: 16, border: '2px solid rgba(201,168,76,0.6)', animation: 'tee-pulse 1.8s ease-out infinite' }} />
+                )}
+                <div
+                  onClick={() => { stopTour(); onHoleClick?.(n) }}
+                  style={{
+                    width: active ? 36 : 28,
+                    height: active ? 36 : 28,
+                    background: active
+                      ? 'linear-gradient(145deg, #D4AF45 0%, #8B6420 100%)'
+                      : 'linear-gradient(145deg, rgba(20,14,4,0.95) 0%, rgba(0,0,0,0.9) 100%)',
+                    border: `${active ? 2 : 1.5}px solid ${active ? '#FFD700' : '#C9A84C'}`,
+                    borderRadius: 9,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: active
+                      ? '0 0 0 5px rgba(201,168,76,0.35), 0 8px 24px rgba(0,0,0,0.9)'
+                      : '0 0 0 3px rgba(201,168,76,0.15), 0 4px 12px rgba(0,0,0,0.7)',
+                    cursor: 'pointer',
+                    transform: active ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                    zIndex: active ? 10 : 1,
+                    position: 'relative',
+                  }}
+                >
+                  <span style={{ ...SF, color: active ? '#fff' : '#E8C96A', fontSize: n > 9 ? 10 : 12, fontWeight: 900, lineHeight: 1, letterSpacing: -0.5 }}>{n}</span>
+                </div>
               </div>
             </Marker>
           )
