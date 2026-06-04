@@ -251,6 +251,30 @@ export default function CourseMapbox({
 
   const activeHole = selectedHole != null ? holes.find(h => holeNum(h) === selectedHole) : null
 
+  // Active hole line for animation
+  const activeFairway = useMemo((): GeoJSON.FeatureCollection => {
+    if (!activeHole) return { type: 'FeatureCollection', features: [] }
+    const tLat = parseNum(activeHole.TeeLatitude),  tLng = parseNum(activeHole.TeeLongitude)
+    const gLat = parseNum(activeHole.GreenLatitude), gLng = parseNum(activeHole.GreenLongitude)
+    if (!tLat || !tLng || !gLat || !gLng) return { type: 'FeatureCollection', features: [] }
+    return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: [[tLng, tLat], [gLng, gLat]] }, properties: {} }] }
+  }, [activeHole])
+
+  // Animate flowing dashes on active line
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return
+    const map = mapRef.current.getMap() as any
+    let offset = 0
+    let animId: number
+    const step = () => {
+      offset = (offset - 0.25 + 10) % 10
+      try { map.setPaintProperty('active-flow', 'line-dash-offset', offset) } catch {}
+      animId = requestAnimationFrame(step)
+    }
+    animId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(animId)
+  }, [mapLoaded])
+
   const ringLabels = useMemo(() => {
     if (!activeHole) return []
     const gLat = parseNum(activeHole.GreenLatitude)
@@ -310,27 +334,30 @@ export default function CourseMapbox({
           </Marker>
         ))}
 
-        {/* Fairway glow */}
-        <Source id="fairways-glow" type="geojson" data={fairways}>
-          <Layer id="fairway-glow" type="line" paint={{ 'line-color': 'rgba(255,255,255,0.12)', 'line-width': 12, 'line-blur': 8 }} />
-        </Source>
-
-        {/* Par-colored fairway lines */}
+        {/* Par-colored fairway lines — dimmed when a hole is active */}
         <Source id="fairways" type="geojson" data={fairways}>
+          <Layer id="fairway-glow" type="line" paint={{ 'line-color': 'rgba(255,255,255,0.08)', 'line-width': 10, 'line-blur': 8, 'line-opacity': activeHole ? 0.4 : 1 }} />
           <Layer
             id="fairway-lines"
             type="line"
             paint={{
               'line-color': [
                 'case',
-                ['==', ['get', 'holeNo'], selectedHole ?? -1], '#FFFFFF',
-                ['==', ['get', 'par'], 3], 'rgba(96,165,250,0.8)',
-                ['==', ['get', 'par'], 5], 'rgba(52,211,153,0.8)',
-                'rgba(255,255,255,0.45)',
+                ['==', ['get', 'par'], 3], 'rgba(96,165,250,0.7)',
+                ['==', ['get', 'par'], 5], 'rgba(52,211,153,0.7)',
+                'rgba(255,255,255,0.38)',
               ],
-              'line-width': ['case', ['==', ['get', 'holeNo'], selectedHole ?? -1], 3, 1.8],
+              'line-width': 1.5,
+              'line-opacity': activeHole ? 0.35 : 1,
             }}
           />
+        </Source>
+
+        {/* Active hole — wide glow + animated flowing dashes */}
+        <Source id="active-fairway" type="geojson" data={activeFairway}>
+          <Layer id="active-glow-wide" type="line" paint={{ 'line-color': '#C9A84C', 'line-width': 22, 'line-blur': 18, 'line-opacity': 0.3 }} />
+          <Layer id="active-glow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 8, 'line-blur': 6, 'line-opacity': 0.2 }} />
+          <Layer id="active-flow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 2.5, 'line-dasharray': [4, 3], 'line-opacity': 1 } as any} />
         </Source>
 
         {/* Tee markers */}
@@ -417,74 +444,61 @@ export default function CourseMapbox({
       {/* ── Top bar: hole info + nav ── */}
       {activeHole ? (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-auto flex items-center gap-2">
-          {/* Prev */}
-          <button
-            onClick={() => prevHole != null && onHoleClick?.(prevHole)}
-            disabled={prevHole == null}
-            style={{ ...SF, width: 32, height: 32, borderRadius: 8, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.12)', color: prevHole != null ? '#fff' : 'rgba(255,255,255,0.2)', fontSize: 16, fontWeight: 700, cursor: prevHole != null ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          <button onClick={() => prevHole != null && onHoleClick?.(prevHole)} disabled={prevHole == null}
+            style={{ ...SF, width: 34, height: 34, borderRadius: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', color: prevHole != null ? '#fff' : 'rgba(255,255,255,0.15)', fontSize: 18, fontWeight: 700, cursor: prevHole != null ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
           >‹</button>
 
-          {/* Hole pill */}
-          <div style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(201,168,76,0.45)', borderRadius: 12, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ ...SF, color: 'rgba(201,168,76,0.8)', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>
-                {touring ? `${selectedHole} of ${sorted.length}` : 'Hole'}
+          <div style={{ background: 'linear-gradient(160deg, rgba(10,8,4,0.88) 0%, rgba(20,15,5,0.82) 100%)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 18, boxShadow: '0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+            <div style={{ textAlign: 'center', minWidth: 32 }}>
+              <div style={{ ...SF, color: '#C9A84C', fontSize: 8, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 }}>
+                {touring ? `${selectedHole}/${sorted.length}` : 'HOLE'}
               </div>
-              <div style={{ ...SF, color: '#fff', fontSize: 26, fontWeight: 900, lineHeight: 1 }}>{selectedHole}</div>
+              <div style={{ ...SF, color: '#fff', fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{selectedHole}</div>
             </div>
 
-            <div style={{ width: 1, height: 34, background: 'rgba(255,255,255,0.1)' }} />
+            <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.08)' }} />
 
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ ...SF, color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 }}>Par</div>
-              <div style={{ ...SF, color: activeHole.Par === 3 ? '#93C5FD' : activeHole.Par === 5 ? '#6EE7B7' : '#fff', fontSize: 26, fontWeight: 900, lineHeight: 1 }}>{activeHole.Par ?? '—'}</div>
+            <div style={{ textAlign: 'center', minWidth: 28 }}>
+              <div style={{ ...SF, color: 'rgba(255,255,255,0.35)', fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 3 }}>PAR</div>
+              <div style={{ ...SF, color: activeHole.Par === 3 ? '#60A5FA' : activeHole.Par === 5 ? '#34D399' : '#fff', fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{activeHole.Par ?? '—'}</div>
             </div>
 
-            {(activeHole.Yardage ?? activeHole.Yards) && (
-              <>
-                <div style={{ width: 1, height: 34, background: 'rgba(255,255,255,0.1)' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ ...SF, color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 }}>Yds</div>
-                  <div style={{ ...SF, color: '#C9A84C', fontSize: 26, fontWeight: 900, lineHeight: 1 }}>{activeHole.Yardage ?? activeHole.Yards}</div>
-                </div>
-              </>
-            )}
+            {(activeHole.Yardage ?? activeHole.Yards) && <>
+              <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.08)' }} />
+              <div style={{ textAlign: 'center', minWidth: 44 }}>
+                <div style={{ ...SF, color: 'rgba(255,255,255,0.35)', fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 3 }}>YDS</div>
+                <div style={{ ...SF, color: '#C9A84C', fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{activeHole.Yardage ?? activeHole.Yards}</div>
+              </div>
+            </>}
 
-            {activeHole.Handicap != null && (
-              <>
-                <div style={{ width: 1, height: 34, background: 'rgba(255,255,255,0.1)' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ ...SF, color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 }}>HCP</div>
-                  <div style={{ ...SF, color: 'rgba(255,255,255,0.75)', fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{activeHole.Handicap}</div>
-                </div>
-              </>
-            )}
+            {activeHole.Handicap != null && <>
+              <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.08)' }} />
+              <div style={{ textAlign: 'center', minWidth: 24 }}>
+                <div style={{ ...SF, color: 'rgba(255,255,255,0.35)', fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 3 }}>HCP</div>
+                <div style={{ ...SF, color: 'rgba(255,255,255,0.7)', fontSize: 24, fontWeight: 900, lineHeight: 1 }}>{activeHole.Handicap}</div>
+              </div>
+            </>}
           </div>
 
-          {/* Next */}
-          <button
-            onClick={() => nextHole != null && onHoleClick?.(nextHole)}
-            disabled={nextHole == null}
-            style={{ ...SF, width: 32, height: 32, borderRadius: 8, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.12)', color: nextHole != null ? '#fff' : 'rgba(255,255,255,0.2)', fontSize: 16, fontWeight: 700, cursor: nextHole != null ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          <button onClick={() => nextHole != null && onHoleClick?.(nextHole)} disabled={nextHole == null}
+            style={{ ...SF, width: 34, height: 34, borderRadius: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', color: nextHole != null ? '#fff' : 'rgba(255,255,255,0.15)', fontSize: 18, fontWeight: 700, cursor: nextHole != null ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
           >›</button>
         </div>
       ) : (
-        /* Course name + tour button when no hole selected */
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
+        <div className="absolute top-3 left-3">
           {courseName && (
-            <div style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 10, padding: '5px 10px' }}>
-              <span style={{ ...SF, color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: 700 }}>{courseName}</span>
+            <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '6px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+              <span style={{ ...SF, color: 'rgba(255,255,255,0.88)', fontSize: 12, fontWeight: 700, letterSpacing: 0.2 }}>{courseName}</span>
             </div>
           )}
         </div>
       )}
 
-      {/* ── Tour button (bottom-left, above chip strip) ── */}
+      {/* ── Tour button ── */}
       {sorted.length > 0 && (
-        <div className="absolute bottom-[68px] left-3">
-          <button
-            onClick={touring ? stopTour : startTour}
-            style={{ ...SF, background: touring ? 'rgba(239,68,68,0.88)' : 'rgba(201,168,76,0.92)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: `1px solid ${touring ? 'rgba(239,68,68,0.5)' : 'rgba(255,215,0,0.4)'}`, borderRadius: 10, padding: '6px 12px', cursor: 'pointer', transition: 'all 0.2s ease', fontSize: 11, fontWeight: 800, color: touring ? '#fff' : '#1a0f00', letterSpacing: 0.5 }}
+        <div className="absolute bottom-[76px] left-3">
+          <button onClick={touring ? stopTour : startTour}
+            style={{ ...SF, background: touring ? 'rgba(220,38,38,0.85)' : 'linear-gradient(135deg, rgba(201,168,76,0.92), rgba(120,80,20,0.88))', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: `1px solid ${touring ? 'rgba(239,68,68,0.4)' : 'rgba(255,210,60,0.3)'}`, borderRadius: 10, padding: '7px 14px', cursor: 'pointer', transition: 'all 0.2s ease', fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: 0.6, boxShadow: '0 4px 14px rgba(0,0,0,0.5)' }}
           >
             {touring ? '⏹ Stop' : '▶ Fly Tour'}
           </button>
@@ -503,13 +517,13 @@ export default function CourseMapbox({
       {/* ── Bottom: hole chip strip ── */}
       {sorted.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)', paddingBottom: 12, paddingTop: 28 }}>
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)', paddingBottom: 10, paddingTop: 32 }}>
           <div className="pointer-events-auto overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <div style={{ display: 'flex', gap: 6, paddingLeft: 12, paddingRight: 12, width: 'max-content' }}>
+            <div style={{ display: 'flex', gap: 5, paddingLeft: 10, paddingRight: 10, width: 'max-content', alignItems: 'flex-end' }}>
               {sorted.map(h => {
-                const n      = holeNum(h)
-                const par    = h.Par ?? 4
-                const active = selectedHole === n
+                const n        = holeNum(h)
+                const par      = h.Par ?? 4
+                const active   = selectedHole === n
                 const parColor = PAR_COLOR[par] ?? PAR_COLOR[4]
                 return (
                   <button
@@ -517,23 +531,27 @@ export default function CourseMapbox({
                     ref={el => { chipRefs.current[n] = el }}
                     onClick={() => { stopTour(); onHoleClick?.(active ? undefined : n) }}
                     style={{
-                      width: active ? 50 : 40,
-                      height: active ? 54 : 44,
-                      borderRadius: 10,
-                      background: active ? 'rgba(201,168,76,0.95)' : 'rgba(0,0,0,0.55)',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                      border: `1.5px solid ${active ? 'rgba(255,215,0,0.7)' : 'rgba(255,255,255,0.1)'}`,
-                      boxShadow: active ? '0 4px 16px rgba(201,168,76,0.4)' : '0 2px 6px rgba(0,0,0,0.4)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+                      width:        active ? 48 : 36,
+                      height:       active ? 56 : 44,
+                      borderRadius: active ? 12 : 10,
+                      background:   active
+                        ? 'linear-gradient(160deg, #D4AF45 0%, #7A5215 100%)'
+                        : 'rgba(12,10,6,0.72)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      border: `1px solid ${active ? 'rgba(255,210,60,0.65)' : 'rgba(255,255,255,0.07)'}`,
+                      boxShadow: active
+                        ? '0 6px 24px rgba(201,168,76,0.55), inset 0 1px 0 rgba(255,255,255,0.2)'
+                        : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
                       cursor: 'pointer',
-                      transform: active ? 'translateY(-4px) scale(1.05)' : 'translateY(0)',
-                      transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+                      transform: active ? 'translateY(-6px)' : 'translateY(0)',
+                      transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
                       flexShrink: 0,
                     }}
                   >
-                    <span style={{ ...SF, color: active ? '#1a0f00' : '#fff', fontSize: n > 9 ? 10 : 12, fontWeight: 900, lineHeight: 1 }}>{n}</span>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: active ? 'rgba(0,0,0,0.3)' : parColor, boxShadow: active ? 'none' : `0 0 5px ${parColor}` }} />
+                    <span style={{ ...SF, color: active ? '#fff' : 'rgba(255,255,255,0.6)', fontSize: n > 9 ? 10 : 12, fontWeight: 900, lineHeight: 1, letterSpacing: -0.3 }}>{n}</span>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: active ? 'rgba(255,255,255,0.5)' : parColor, boxShadow: active ? 'none' : `0 0 6px ${parColor}` }} />
                   </button>
                 )
               })}
