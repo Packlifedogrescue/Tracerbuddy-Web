@@ -282,17 +282,19 @@ export default function CourseMapbox({
     const tLat = parseNum(activeHole.TeeLatitude)
     const tLng = parseNum(activeHole.TeeLongitude)
     if (!gLat || !gLng || !tLat || !tLng) return []
-    // Unit vector from green toward tee (labels sit between tee and green)
-    const dLat = tLat - gLat
-    const dLng = tLng - gLng
-    const len  = Math.sqrt(dLat * dLat + dLng * dLng) || 1
-    const nLat = dLat / len, nLng = dLng / len
+    // Normalize in meter-space so the direction is correct regardless of latitude
+    const cosLat  = Math.cos(gLat * Math.PI / 180)
+    const dLat_m  = (tLat - gLat) * 111111
+    const dLng_m  = (tLng - gLng) * 111111 * cosLat
+    const len_m   = Math.sqrt(dLat_m * dLat_m + dLng_m * dLng_m) || 1
+    const nLat_m  = dLat_m / len_m
+    const nLng_m  = dLng_m / len_m
     return RING_YARDS.map(yards => {
       const m = yards * 0.9144
       return {
         yards,
-        lat: gLat + nLat * (m / 111111),
-        lng: gLng + nLng * (m / (111111 * Math.cos(gLat * Math.PI / 180))),
+        lat: gLat + nLat_m * m / 111111,
+        lng: gLng + nLng_m * m / (111111 * cosLat),
         color: RING_COLOR[yards],
       }
     })
