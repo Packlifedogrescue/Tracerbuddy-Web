@@ -7,6 +7,13 @@ export interface TeeData {
   yardages: (number | null)[]
 }
 
+export interface CoursePolygon {
+  hole:   number
+  poi:    number  // 2=fairway, 4=bunker, 5=water
+  group:  number
+  points: { lat: number; lng: number }[]
+}
+
 interface GolfHole {
   HoleNo?: number
   Number?: number
@@ -15,6 +22,7 @@ interface GolfHole {
   TeeLongitude?: string | number | null
   GreenLatitude?: string | number | null
   GreenLongitude?: string | number | null
+  Waypoints?: { lat: number; lng: number }[]
 }
 
 interface Props {
@@ -25,11 +33,16 @@ interface Props {
   selectedHole?: number
   onHoleClick?: (n: number) => void
   tees?: TeeData[]
+  polygons?: CoursePolygon[]
 }
 
 declare global {
   interface Window { mapkit: any }
 }
+
+const POI_FAIRWAY = 2
+const POI_BUNKER  = 4
+// POI 5 = water (anything not fairway/bunker gets blue)
 
 // Load MapKit JS once globally
 let mkState: 'idle' | 'loading' | 'ready' = 'idle'
@@ -67,7 +80,7 @@ function parseCoord(v: string | number | null | undefined): number | null {
 }
 
 export default function CourseMapkit({
-  lat, lng, holes, selectedHole, onHoleClick,
+  lat, lng, holes, selectedHole, onHoleClick, polygons,
 }: Props) {
   const containerRef   = useRef<HTMLDivElement>(null)
   const mapRef         = useRef<any>(null)
@@ -85,6 +98,25 @@ export default function CourseMapkit({
     annotationsRef.current = []
     overlaysRef.current    = []
 
+    // ── Polygon overlays: fairway (green), bunker (sand), water (blue) ───
+    for (const poly of polygons ?? []) {
+      if (selectedHole !== undefined && poly.hole !== selectedHole) continue
+      if (poly.points.length < 3) continue
+      const coords  = poly.points.map(p => new mk.Coordinate(p.lat, p.lng))
+      const overlay = new mk.PolygonOverlay(coords)
+      const isFairway = poly.poi === POI_FAIRWAY
+      const isBunker  = poly.poi === POI_BUNKER
+      overlay.style = new mk.Style({
+        fillColor:    isFairway ? '#22A06B' : isBunker ? '#D4B483' : '#3B82F6',
+        fillOpacity:  0.28,
+        strokeColor:  isFairway ? '#1A8A55' : isBunker ? '#B8924E' : '#2563EB',
+        lineWidth:    1,
+        strokeOpacity: 0.50,
+      })
+      overlaysRef.current.push(overlay)
+    }
+
+    // ── Hole markers ─────────────────────────────────────────────────────
     for (const h of holes) {
       const n    = holeNum(h)
       const tLat = parseCoord(h.TeeLatitude)
@@ -119,7 +151,7 @@ export default function CourseMapkit({
         annotationsRef.current.push(ann)
       }
 
-      // Green marker — red flag
+      // Green marker — flag
       if (gLat && gLng) {
         const grn = new mk.Annotation(
           new mk.Coordinate(gLat, gLng),
@@ -135,11 +167,15 @@ export default function CourseMapkit({
         annotationsRef.current.push(grn)
       }
 
-      // Tee → green dashed line — only for selected hole
+      // Tee → green dashed line, routing through dogleg waypoints when available
       if (active && tLat && tLng && gLat && gLng) {
-        const line = new mk.PolylineOverlay(
-          [new mk.Coordinate(tLat, tLng), new mk.Coordinate(gLat, gLng)],
-        )
+        const waypoints = (h.Waypoints ?? []).map(w => new mk.Coordinate(w.lat, w.lng))
+        const linePoints = [
+          new mk.Coordinate(tLat, tLng),
+          ...waypoints,
+          new mk.Coordinate(gLat, gLng),
+        ]
+        const line = new mk.PolylineOverlay(linePoints)
         line.style = new mk.Style({
           lineWidth:   2.5,
           strokeColor: '#C9A84C',
@@ -153,7 +189,7 @@ export default function CourseMapkit({
     if (annotationsRef.current.length) map.addAnnotations(annotationsRef.current)
     if (overlaysRef.current.length)    map.addOverlays(overlaysRef.current)
 
-    // Pan + zoom + rotate to selected hole
+    // ── Pan/zoom to selected hole ─────────────────────────────────────────
     if (selectedHole != null) {
       const h = holes.find(h => holeNum(h) === selectedHole)
       if (h) {
@@ -163,7 +199,6 @@ export default function CourseMapkit({
         const gLng = parseCoord(h.GreenLongitude)
 
         if (tLat && tLng && gLat && gLng) {
-          // Center between tee and green with padding
           const cLat = (tLat + gLat) / 2
           const cLng = (tLng + gLng) / 2
           const span = Math.min(Math.max(Math.abs(gLat - tLat) * 2.0, Math.abs(gLng - tLng) * 2.0, 0.002), 0.008)
@@ -171,7 +206,6 @@ export default function CourseMapkit({
             new mk.Coordinate(cLat, cLng),
             new mk.CoordinateSpan(span, span),
           ))
-          // Rotate so tee is at bottom, green at top (bearing = CCW degrees from north)
           const lat1r = tLat * Math.PI / 180
           const lat2r = gLat * Math.PI / 180
           const dLngR = (gLng - tLng) * Math.PI / 180
@@ -184,7 +218,7 @@ export default function CourseMapkit({
         }
       }
     } else if (centeredRef.current) {
-      // Deselected — zoom back to full course bounding box and reset north
+      // Deselected — zoom back to full course bounding box, reset north
       const coords: number[][] = []
       for (const h of holes) {
         const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
@@ -206,7 +240,7 @@ export default function CourseMapkit({
         map.setRotationAnimated(0)
       }
     }
-  }, [holes, selectedHole, onHoleClick])
+  }, [holes, selectedHole, onHoleClick, polygons])
 
   // Init map
   useEffect(() => {
@@ -225,7 +259,6 @@ export default function CourseMapkit({
         isRotationEnabled:   true,
       })
 
-      // Compute center from hole GPS data (more accurate than course-level lat/lng)
       const coords: number[][] = []
       for (const h of holes) {
         const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
@@ -268,7 +301,7 @@ export default function CourseMapkit({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng])
 
-  // Re-center map to hole GPS bounding box once hole data arrives
+  // Re-center to hole GPS bounding box once data arrives
   useEffect(() => {
     const map = mapRef.current
     if (!map || !window.mapkit || centeredRef.current) return
@@ -297,7 +330,7 @@ export default function CourseMapkit({
     ))
   }, [holes])
 
-  // Update markers when selected hole changes
+  // Update markers whenever selection or polygon data changes
   useEffect(() => {
     if (mapRef.current) buildMarkers()
   }, [buildMarkers])
@@ -305,7 +338,6 @@ export default function CourseMapkit({
   return (
     <div className="w-full h-full relative" style={{ minHeight: 400 }}>
       <div ref={containerRef} className="absolute inset-0" />
-      {/* Compass reset button */}
       <button
         onClick={() => { if (mapRef.current) mapRef.current.setRotationAnimated(0) }}
         title="Reset to north"

@@ -3,33 +3,46 @@ import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE      = 'https://golfapi.io/api/v2.3'
 const CACHE_TTL_DAYS = 30
-const CACHE_VERSION  = 2
+const CACHE_VERSION  = 3
 
 // POI types from the coordinates endpoint
-const POI_BACK_TEE  = 12
-const POI_FRONT_TEE = 11
 const POI_GREEN     = 1
+const POI_FAIRWAY   = 2
+const POI_BUNKER    = 4
+const POI_WATER     = 5
+const POI_DOGLEG    = 7  // ordered waypoints along the fairway path
+const POI_FRONT_TEE = 11
+const POI_BACK_TEE  = 12
 
 function golfHeaders(key: string) {
   return { Authorization: `Bearer ${key}` }
 }
 
-// Transform the raw GolfAPI course response into the shape our frontend expects
-function buildCoursePayload(course: any, coordinates: any[]) {
-  const parsMen    = course.parsMen    ?? []
-  const indexesMen = course.indexesMen ?? []
-  const firstTee   = course.tees?.[0]  ?? {}
-  const mainTee    = course.tees?.find((t: any) => /blue|champ|black|gold/i.test(t.teeName ?? '')) ?? firstTee
+export interface CoursePolygon {
+  hole:   number
+  poi:    number  // 2=fairway, 4=bunker, 5=water
+  group:  number
+  points: { lat: number; lng: number }[]
+}
 
-  // Build per-hole GPS lookup from coordinates array
-  // GolfAPI returns 3 POI_GREEN entries per hole (front/center/back of green)
-  // so we average them to get the true center of the putting surface
+function buildCoursePayload(course: any, coordinates: any[]) {
+  const parsMen       = course.parsMen       ?? []
+  const indexesMen    = course.indexesMen    ?? []
+  const parsFemale    = course.parsFemale    ?? []
+  const indexesFemale = course.indexesFemale ?? []
+  const firstTee      = course.tees?.[0]     ?? {}
+  const mainTee       = course.tees?.find((t: any) => /blue|champ|black|gold/i.test(t.teeName ?? '')) ?? firstTee
+
+  // Per-hole GPS lookup, green averaging, polygon collection, dogleg waypoints
   const holeCoords: Record<number, { tLat?: string; tLng?: string; gLat?: string; gLng?: string }> = {}
   const holeGreenPoints: Record<number, { lat: number; lng: number }[]> = {}
+  const polygonMap: Record<string, CoursePolygon> = {}
+  const doglegMap: Record<number, { lat: number; lng: number; order: number }[]> = {}
 
   for (const c of coordinates) {
     const h = Number(c.hole)
     if (!holeCoords[h]) holeCoords[h] = {}
+
     if ((c.poi === POI_BACK_TEE || c.poi === POI_FRONT_TEE) && !holeCoords[h].tLat) {
       holeCoords[h].tLat = String(c.latitude)
       holeCoords[h].tLng = String(c.longitude)
@@ -38,9 +51,18 @@ function buildCoursePayload(course: any, coordinates: any[]) {
       if (!holeGreenPoints[h]) holeGreenPoints[h] = []
       holeGreenPoints[h].push({ lat: Number(c.latitude), lng: Number(c.longitude) })
     }
+    if (c.poi === POI_FAIRWAY || c.poi === POI_BUNKER || c.poi === POI_WATER) {
+      const key = `${h}-${c.poi}-${c.group ?? 0}`
+      if (!polygonMap[key]) polygonMap[key] = { hole: h, poi: c.poi, group: c.group ?? 0, points: [] }
+      polygonMap[key].points.push({ lat: Number(c.latitude), lng: Number(c.longitude) })
+    }
+    if (c.poi === POI_DOGLEG) {
+      if (!doglegMap[h]) doglegMap[h] = []
+      doglegMap[h].push({ lat: Number(c.latitude), lng: Number(c.longitude), order: c.group ?? 0 })
+    }
   }
 
-  // Average all green points per hole to get green center
+  // Average all green POI points per hole → true green center
   for (const [h, pts] of Object.entries(holeGreenPoints)) {
     if (pts.length === 0) continue
     const avgLat = pts.reduce((s, p) => s + p.lat, 0) / pts.length
@@ -49,41 +71,52 @@ function buildCoursePayload(course: any, coordinates: any[]) {
     holeCoords[Number(h)].gLng = String(avgLng)
   }
 
-  // Build Holes array matching frontend GolfHole interface
+  // Sort dogleg waypoints in path order (by group number)
+  for (const h of Object.keys(doglegMap)) {
+    doglegMap[Number(h)].sort((a, b) => a.order - b.order)
+  }
+
+  const polygons: CoursePolygon[] = Object.values(polygonMap).filter(p => p.points.length >= 3)
+
   const Holes = parsMen.map((par: number, i: number) => {
-    const holeNo  = i + 1
-    const yardKey = `length${holeNo}` as keyof typeof mainTee
-    const coords  = holeCoords[holeNo] ?? {}
+    const holeNo   = i + 1
+    const yardKey  = `length${holeNo}` as keyof typeof mainTee
+    const coords   = holeCoords[holeNo] ?? {}
+    const waypoints = (doglegMap[holeNo] ?? []).map(({ lat, lng }) => ({ lat, lng }))
     return {
-      HoleNo:         holeNo,
-      Par:            par,
-      Yardage:        mainTee[yardKey] ?? null,
-      Handicap:       indexesMen[i]    ?? null,
-      TeeLatitude:    coords.tLat      ?? null,
-      TeeLongitude:   coords.tLng      ?? null,
-      GreenLatitude:  coords.gLat      ?? null,
-      GreenLongitude: coords.gLng      ?? null,
+      HoleNo:          holeNo,
+      Par:             par,
+      ParFemale:       parsFemale[i]    ?? null,
+      Yardage:         mainTee[yardKey] ?? null,
+      Handicap:        indexesMen[i]    ?? null,
+      HandicapFemale:  indexesFemale[i] ?? null,
+      TeeLatitude:     coords.tLat      ?? null,
+      TeeLongitude:    coords.tLng      ?? null,
+      GreenLatitude:   coords.gLat      ?? null,
+      GreenLongitude:  coords.gLng      ?? null,
+      Waypoints:       waypoints,
     }
   })
 
   const totalPar = parsMen.reduce((a: number, b: number) => a + b, 0)
 
   return {
-    CourseID:   course.courseID  ?? '',
-    ClubName:   course.clubName  ?? '',
+    CourseID:   course.courseID   ?? '',
+    ClubName:   course.clubName   ?? '',
     CourseName: course.courseName ?? '',
-    City:       course.city      ?? '',
-    StateCode:  course.state     ?? '',
-    Country:    course.country   ?? '',
-    Latitude:   course.latitude  ?? null,
-    Longitude:  course.longitude ?? null,
+    City:       course.city       ?? '',
+    StateCode:  course.state      ?? '',
+    Country:    course.country    ?? '',
+    Latitude:   course.latitude   ?? null,
+    Longitude:  course.longitude  ?? null,
     Par:        totalPar || null,
-    Rating:     firstTee.courseRatingMen   ?? null,
-    Slope:      firstTee.slopeMen          ?? null,
+    Rating:     firstTee.courseRatingMen ?? null,
+    Slope:      firstTee.slopeMen        ?? null,
     hasGPS:     course.hasGPS,
     Holes,
-    holes: Holes,
-    Tees:  course.tees ?? [],
+    holes:    Holes,
+    Tees:     course.tees ?? [],
+    polygons,
     website:   course.website   ?? null,
     telephone: course.telephone ?? null,
   }
@@ -99,7 +132,7 @@ export async function GET(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
 
-  // ── 1. Check Supabase cache (skipped in debug mode) ─────────────────────
+  // ── 1. Check Supabase cache ──────────────────────────────────────────────
   const cacheKey = `v${CACHE_VERSION}:${courseId}`
   if (!debug) try {
     const { data: cached } = await sb
@@ -130,27 +163,27 @@ export async function GET(req: NextRequest) {
         const coordRes  = await fetch(`${GOLF_BASE}/coordinates/${courseId}`, { headers })
         const coordData = await coordRes.json()
         coordinates = coordData.coordinates ?? []
-      } catch { /* GPS is optional — proceed without */ }
+      } catch { /* GPS optional */ }
     }
 
     const payload = buildCoursePayload(course, coordinates)
 
-    // Debug: expose raw POI types so we can verify green coordinate mapping
+    // Debug: inspect raw POI distribution and polygon count
     if (debug) {
       const poiSummary = coordinates.reduce((acc: Record<number, number>, c: any) => {
         acc[c.poi] = (acc[c.poi] ?? 0) + 1
         return acc
       }, {})
       const sample = coordinates.filter((c: any) => c.hole === 1).map((c: any) => ({
-        hole: c.hole, poi: c.poi, lat: c.latitude, lng: c.longitude
+        hole: c.hole, poi: c.poi, group: c.group, lat: c.latitude, lng: c.longitude
       }))
-      return NextResponse.json({ poiSummary, hole1Sample: sample, ...payload })
+      return NextResponse.json({ poiSummary, hole1Sample: sample, polygonCount: payload.polygons.length, ...payload })
     }
 
     // ── 4. Write to cache (best-effort) ──────────────────────────────────
     try {
       await sb.from('golf_course_details_cache').upsert({
-        course_id: courseId,
+        course_id: cacheKey,
         data:      payload,
         cached_at: new Date().toISOString(),
       })

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import WeatherWidget from '@/components/WeatherWidget'
-import type { TeeData } from '@/components/CourseMapkit'
+import type { TeeData, CoursePolygon } from '@/components/CourseMapkit'
 
 const CourseMapbox = dynamic(() => import('@/components/CourseMapkit'), { ssr: false })
 
@@ -28,13 +28,16 @@ interface GolfHole {
   HoleNo?: number
   Number?: number
   Par?: number
+  ParFemale?: number
   Yardage?: number
   Yards?: number
   Handicap?: number
+  HandicapFemale?: number
   TeeLatitude?: string | number
   TeeLongitude?: string | number
   GreenLatitude?: string | number
   GreenLongitude?: string | number
+  Waypoints?: { lat: number; lng: number }[]
 }
 
 interface GolfTee {
@@ -62,6 +65,7 @@ interface CourseDetail {
   Tees?: GolfTee[]
   Latitude?: string | number
   Longitude?: string | number
+  polygons?: CoursePolygon[]
   website?: string
   telephone?: string
 }
@@ -97,7 +101,9 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
   onHoleClick?: (n: number) => void
 }) {
   const [teeIdx, setTeeIdx] = useState(0)
-  const activeTee = tees[teeIdx]
+  const [gender, setGender] = useState<'men' | 'women'>('men')
+  const activeTee    = tees[teeIdx]
+  const hasFemaleData = holes.some(h => h.ParFemale != null)
 
   function getYards(holeNo: number, fallback: GolfHole): number | null {
     if (activeTee) {
@@ -112,15 +118,20 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
   const back       = sorted.filter(h => holeNum(h) > 9)
   const frontYards = front.reduce((s, h) => s + (getYards(holeNum(h), h) ?? 0), 0)
   const backYards  = back.reduce((s,  h) => s + (getYards(holeNum(h), h) ?? 0), 0)
-  const totalPar   = holes.reduce((s, h) => s + (h.Par ?? 0), 0)
+  const totalPar   = holes.reduce((s, h) => s + ((gender === 'women' ? h.ParFemale : h.Par) ?? 0), 0)
 
-  const rating = activeTee?.courseRatingMen
-  const slope  = activeTee?.slopeMen
+  const rating = gender === 'women'
+    ? (activeTee?.courseRatingWomen ?? activeTee?.courseRatingMen)
+    : activeTee?.courseRatingMen
+  const slope = gender === 'women'
+    ? (activeTee?.slopeWomen ?? activeTee?.slopeMen)
+    : activeTee?.slopeMen
 
   function HoleRow({ h }: { h: GolfHole }) {
     const n      = holeNum(h)
     const yds    = getYards(n, h)
-    const par    = h.Par ?? 0
+    const par    = (gender === 'women' ? h.ParFemale : h.Par) ?? 0
+    const hcp    = gender === 'women' ? h.HandicapFemale : h.Handicap
     const active = selectedHole === n
     return (
       <tr
@@ -142,11 +153,11 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
           <span className={`text-[12px] font-bold ${
             active ? 'text-[#C9A84C]' : par === 3 ? 'text-blue-500' : par === 5 ? 'text-[#22A06B]' : 'text-[#111]'
           }`}>
-            {h.Par ?? '—'}
+            {par || '—'}
           </span>
         </td>
         <td className="py-1.5 text-center text-[12px] font-medium text-gray-600">{yds ?? '—'}</td>
-        <td className="py-1.5 pr-3 text-center text-[11px] text-gray-400">{h.Handicap ?? '—'}</td>
+        <td className="py-1.5 pr-3 text-center text-[11px] text-gray-400">{hcp ?? '—'}</td>
       </tr>
     )
   }
@@ -164,7 +175,7 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
 
   return (
     <div>
-      {/* Tee selector */}
+      {/* Tee selector + gender toggle */}
       {tees.length > 0 && (
         <div className="px-3 pt-3 pb-2 border-b border-[#F0EAE0]">
           <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2">Select Tee</div>
@@ -187,7 +198,28 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
               </button>
             ))}
           </div>
-          {/* Rating / slope for selected tee */}
+
+          {/* Gender toggle — only shown when women's data exists */}
+          {hasFemaleData && (
+            <div className="flex items-center gap-2 mt-2.5">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Playing as</span>
+              <div className="flex bg-[#F0EAE0] rounded-lg p-0.5">
+                {(['men', 'women'] as const).map(g => (
+                  <button
+                    key={g}
+                    onClick={() => setGender(g)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                      gender === g ? 'bg-white text-[#111] shadow-sm' : 'text-gray-400 hover:text-[#111]'
+                    }`}
+                  >
+                    {g === 'men' ? '♂ Men' : '♀ Women'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rating / slope for selected tee + gender */}
           {(rating || slope) && (
             <div className="flex gap-4 mt-2 text-[11px] text-gray-400">
               {rating ? <span>Rating <span className="font-bold text-[#111]">{rating}</span></span> : null}
@@ -209,9 +241,9 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
         </thead>
         <tbody>
           {front.map(h => <HoleRow key={holeNum(h)} h={h} />)}
-          {front.length > 0 && <TotalsRow label="Out" par={front.reduce((s,h) => s+(h.Par??0),0)} yards={frontYards} />}
+          {front.length > 0 && <TotalsRow label="Out" par={front.reduce((s,h) => s+((gender==='women'?h.ParFemale:h.Par)??0),0)} yards={frontYards} />}
           {back.map(h => <HoleRow key={holeNum(h)} h={h} />)}
-          {back.length > 0 && <TotalsRow label="In" par={back.reduce((s,h) => s+(h.Par??0),0)} yards={backYards} />}
+          {back.length > 0 && <TotalsRow label="In" par={back.reduce((s,h) => s+((gender==='women'?h.ParFemale:h.Par)??0),0)} yards={backYards} />}
           {holes.length > 0 && <TotalsRow label="Total" par={totalPar} yards={frontYards + backYards} />}
         </tbody>
       </table>
@@ -319,9 +351,14 @@ export default function CoursesPage() {
       .filter(t => t.yds != null && t.yds > 0)
       .sort((a, b) => (b.yds ?? 0) - (a.yds ?? 0))
     if (relevant.length === 0) return []
-    // Use actual tee names as labels so distances are unambiguous
     return relevant.map(r => ({ label: r.name, ...r }))
   })()
+
+  // Personal record at the currently displayed course
+  const personalRecord = visitedCourses.find(c => c.name === name)
+  const personalBest   = personalRecord && personalRecord.scores.length > 0
+    ? Math.min(...personalRecord.scores)
+    : null
 
   return (
     <div className="flex flex-col h-full">
@@ -519,6 +556,15 @@ export default function CoursesPage() {
                         {detail?.Slope  && <span>Slope {detail.Slope}</span>}
                         {holes.length > 0 && <span>{holes.length} holes</span>}
                         {(detail?.Tees?.length ?? 0) > 0 && <span>{detail!.Tees!.length} tees</span>}
+                        {personalBest != null && (
+                          <span className="flex items-center gap-1 text-[#C9A84C] font-semibold">
+                            <Trophy className="w-3 h-3" />
+                            Best {personalBest}
+                            {personalRecord && personalRecord.count > 1 && (
+                              <span className="font-normal text-gray-400">({personalRecord.count} rounds)</span>
+                            )}
+                          </span>
+                        )}
                         {detail?.website && (
                           <a
                             href={detail.website.startsWith('http') ? detail.website : `https://${detail.website}`}
@@ -560,6 +606,7 @@ export default function CoursesPage() {
                       selectedHole={selectedHole}
                       onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
                       tees={processedTees.length > 0 ? processedTees : undefined}
+                      polygons={detail?.polygons}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE] rounded-2xl">
