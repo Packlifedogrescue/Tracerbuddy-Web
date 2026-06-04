@@ -526,15 +526,6 @@ export default function CoursesPage() {
                             className="text-[#C9A84C] hover:underline"
                           >Website ↗</a>
                         )}
-                        {selected?.CourseID && (
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(`https://tracerbuddy.app/api/golf/course?id=${selected.CourseID}&debug=1`)
-                              alert('Debug URL copied!')
-                            }}
-                            className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
-                          >⚙ Copy debug URL</button>
-                        )}
                       </div>
                     </div>
                   </div>
