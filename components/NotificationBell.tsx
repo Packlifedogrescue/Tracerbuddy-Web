@@ -39,7 +39,7 @@ export default function NotificationBell({ variant = 'dark' }: { variant?: 'dark
         .from('rounds')
         .select('id')
         .eq('user_id', user.id)
-        .order('played_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(5)
       for (const r of rounds ?? []) {
         if (!readSet.has(`round-${r.id}`) && !readSet.has(`best-${r.id}`)) total++
