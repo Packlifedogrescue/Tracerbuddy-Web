@@ -40,7 +40,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2>1. Who We Are</h2>
-            <p>TracerBuddy ("we", "our", or "us") is a golf performance platform. We operate the website at tracerbuddy.app (also accessible at tracerbuddy.com) and the TracerBuddy iOS and Apple Watch applications (collectively, the "Service").</p>
+            <p>TracerBuddy ("we", "our", or "us") is a golf performance platform. We operate the website at tracerbuddy.com and the TracerBuddy iOS and Apple Watch applications (collectively, the "Service").</p>
             <p>If you have questions about this policy, contact us at <a href="mailto:privacy@tracerbuddy.com">privacy@tracerbuddy.com</a>.</p>
           </section>
 

@@ -116,7 +116,7 @@ Be specific about one strength and one area to work on. Keep it motivating and p
     <!-- Footer -->
     <div style="text-align:center;padding:16px;color:#aaa;font-size:11px">
       <div style="margin-bottom:4px">TracerBuddy · Golf. Evolved.</div>
-      <div>tracerbuddy.app</div>
+      <div>tracerbuddy.com</div>
     </div>
   </div>
 </body>
@@ -130,7 +130,7 @@ Be specific about one strength and one area to work on. Keep it motivating and p
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from:    'TracerBuddy <noreply@tracerbuddy.app>',
+        from:    'TracerBuddy <noreply@tracerbuddy.com>',
         to:      [userEmail],
         subject: `Round Summary: ${score} (${toParStr}) at ${round.course_name ?? 'the course'}`,
         html,
