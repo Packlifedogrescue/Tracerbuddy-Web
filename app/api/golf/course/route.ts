@@ -78,14 +78,15 @@ function buildCoursePayload(course: any, coordinates: any[]) {
 export async function GET(req: NextRequest) {
   const courseId = req.nextUrl.searchParams.get('id') ?? req.nextUrl.searchParams.get('courseId') ?? ''
   if (!courseId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const debug = req.nextUrl.searchParams.get('debug') === '1'
   const GOLF_KEY = process.env.GOLF_API_KEY!
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
 
-  // ── 1. Check Supabase cache ──────────────────────────────────────────────
-  try {
+  // ── 1. Check Supabase cache (skipped in debug mode) ─────────────────────
+  if (!debug) try {
     const { data: cached } = await sb
       .from('golf_course_details_cache')
       .select('data, cached_at')
@@ -120,7 +121,6 @@ export async function GET(req: NextRequest) {
     const payload = buildCoursePayload(course, coordinates)
 
     // Debug: expose raw POI types so we can verify green coordinate mapping
-    const debug = req.nextUrl.searchParams.get('debug') === '1'
     if (debug) {
       const poiSummary = coordinates.reduce((acc: Record<number, number>, c: any) => {
         acc[c.poi] = (acc[c.poi] ?? 0) + 1
