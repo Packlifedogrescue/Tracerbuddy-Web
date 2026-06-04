@@ -48,6 +48,7 @@ interface GolfHole {
   TeeLongitude?: string | number
   GreenLatitude?: string | number
   GreenLongitude?: string | number
+  Waypoints?: { lat: number; lng: number }[]
 }
 
 export interface TeeData {
@@ -242,8 +243,9 @@ export default function CourseMapbox({
       const tLat = parseNum(h.TeeLatitude);  const tLng = parseNum(h.TeeLongitude)
       const gLat = parseNum(h.GreenLatitude); const gLng = parseNum(h.GreenLongitude)
       if (!tLat || !tLng || !gLat || !gLng) return []
+      const mid: [number, number][] = (h.Waypoints ?? []).map(w => [w.lng, w.lat])
       return [{ type: 'Feature' as const,
-        geometry: { type: 'LineString' as const, coordinates: [[tLng, tLat], [gLng, gLat]] },
+        geometry: { type: 'LineString' as const, coordinates: [[tLng, tLat], ...mid, [gLng, gLat]] },
         properties: { holeNo: holeNum(h), par: h.Par ?? 4 },
       }]
     }),
@@ -257,7 +259,8 @@ export default function CourseMapbox({
     const tLat = parseNum(activeHole.TeeLatitude),  tLng = parseNum(activeHole.TeeLongitude)
     const gLat = parseNum(activeHole.GreenLatitude), gLng = parseNum(activeHole.GreenLongitude)
     if (!tLat || !tLng || !gLat || !gLng) return { type: 'FeatureCollection', features: [] }
-    return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: [[tLng, tLat], [gLng, gLat]] }, properties: {} }] }
+    const mid: [number, number][] = (activeHole.Waypoints ?? []).map(w => [w.lng, w.lat])
+    return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: [[tLng, tLat], ...mid, [gLng, gLat]] }, properties: {} }] }
   }, [activeHole])
 
   // Animate flowing dashes on active line
