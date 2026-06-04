@@ -422,19 +422,30 @@ export default function CourseMapbox({
           const n    = holeNum(h)
           const active = selectedHole === n
           if (!gLat || !gLng) return null
+          const scale = active ? 1.4 : 1
           return (
             <Marker key={`green-${n}`} latitude={gLat} longitude={gLng} anchor="bottom">
               <div
                 onClick={() => { stopTour(); onHoleClick?.(n) }}
-                style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', transform: active ? 'scale(1.25)' : 'scale(1)', transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)', filter: active ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
+                style={{
+                  cursor: 'pointer',
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'bottom center',
+                  transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                  filter: active
+                    ? 'drop-shadow(0 0 6px rgba(239,68,68,0.9)) drop-shadow(0 2px 6px rgba(0,0,0,0.8))'
+                    : 'drop-shadow(0 1px 3px rgba(0,0,0,0.9))',
+                }}
               >
-                {/* Flag */}
-                <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: -1 }}>
-                  <div style={{ width: 2, height: active ? 22 : 18, background: 'rgba(255,255,255,0.9)', borderRadius: 1, flexShrink: 0 }} />
-                  <div style={{ width: active ? 14 : 11, height: active ? 9 : 7, background: '#EF4444', clipPath: 'polygon(0 0, 100% 50%, 0 100%)', marginLeft: 0, flexShrink: 0 }} />
-                </div>
-                {/* Base dot */}
-                <div style={{ width: active ? 8 : 6, height: active ? 8 : 6, background: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 4px rgba(0,0,0,0.6)' }} />
+                <svg width="20" height="34" viewBox="0 0 20 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Pole */}
+                  <line x1="5" y1="1" x2="5" y2="33" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  {/* Flag */}
+                  <polygon points="5,2 19,8 5,14" fill="#EF4444"/>
+                  <polygon points="5,2 19,8 5,14" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="0.5"/>
+                  {/* Base */}
+                  <circle cx="5" cy="32" r="3.5" fill="white" stroke="rgba(0,0,0,0.4)" strokeWidth="0.5"/>
+                </svg>
               </div>
             </Marker>
           )
