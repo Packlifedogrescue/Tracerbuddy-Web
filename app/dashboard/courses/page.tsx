@@ -10,9 +10,9 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import WeatherWidget from '@/components/WeatherWidget'
-import type { TeeData, CoursePolygon } from '@/components/CourseMapkit'
+import type { TeeData } from '@/components/CourseMapbox'
 
-const CourseMapbox = dynamic(() => import('@/components/CourseMapkit'), { ssr: false })
+const CourseMapbox = dynamic(() => import('@/components/CourseMapbox'), { ssr: false })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface GolfCourse {
@@ -70,7 +70,6 @@ interface CourseDetail {
   Tees?: GolfTee[]
   Latitude?: string | number
   Longitude?: string | number
-  polygons?: CoursePolygon[]
   CourseType?: string
   NumHoles?: number
   Architect?: string
@@ -673,7 +672,6 @@ export default function CoursesPage() {
                       selectedHole={selectedHole}
                       onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
                       tees={processedTees.length > 0 ? processedTees : undefined}
-                      polygons={detail?.polygons}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE] rounded-2xl">
