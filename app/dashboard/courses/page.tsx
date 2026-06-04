@@ -774,6 +774,5 @@ export default function CoursesPage() {
           )}
         </div>
       </div>
-    </div>
   )
 }
