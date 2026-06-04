@@ -134,7 +134,7 @@ export default function CourseMapbox({
     const lats  = pts.map(p => p[1])
     mapRef.current.fitBounds(
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-      { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 20 },
+      { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 50 },
     )
   }, [mapLoaded, holes, selectedHole])
 
@@ -165,7 +165,7 @@ export default function CourseMapbox({
       center: [centerLng, centerLat],
       zoom: 18.5,
       bearing,
-      pitch: 50,
+      pitch: 70,
       duration: 1500,
       essential: true,
     })
@@ -230,7 +230,7 @@ export default function CourseMapbox({
       <Map
         ref={mapRef}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        initialViewState={{ latitude: lat, longitude: lng, zoom: 15, pitch: 20 }}
+        initialViewState={{ latitude: lat, longitude: lng, zoom: 15, pitch: 50 }}
         mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
@@ -308,7 +308,7 @@ export default function CourseMapbox({
           )
         })}
 
-        {/* Green markers */}
+        {/* Green markers — flag pins */}
         {holes.map(h => {
           const gLat = parseNum(h.GreenLatitude)
           const gLng = parseNum(h.GreenLongitude)
@@ -316,23 +316,19 @@ export default function CourseMapbox({
           const active = selectedHole === n
           if (!gLat || !gLng) return null
           return (
-            <Marker key={`green-${n}`} latitude={gLat} longitude={gLng} anchor="center">
+            <Marker key={`green-${n}`} latitude={gLat} longitude={gLng} anchor="bottom">
               <div
                 onClick={() => { stopTour(); onHoleClick?.(n) }}
-                style={{
-                  width: active ? 20 : 13,
-                  height: active ? 20 : 13,
-                  background: 'radial-gradient(circle at 35% 35%, #4ade80, #15803d)',
-                  border: `${active ? 3 : 2}px solid rgba(255,255,255,${active ? 1 : 0.8})`,
-                  borderRadius: '50%',
-                  boxShadow: active
-                    ? '0 0 0 5px rgba(34,197,94,0.3), 0 0 20px rgba(34,197,94,0.7)'
-                    : '0 0 0 2px rgba(34,197,94,0.2), 0 0 8px rgba(34,197,94,0.4)',
-                  cursor: 'pointer',
-                  transform: active ? 'scale(1.15)' : 'scale(1)',
-                  transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-                }}
-              />
+                style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', transform: active ? 'scale(1.25)' : 'scale(1)', transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)', filter: active ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
+              >
+                {/* Flag */}
+                <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: -1 }}>
+                  <div style={{ width: 2, height: active ? 22 : 18, background: 'rgba(255,255,255,0.9)', borderRadius: 1, flexShrink: 0 }} />
+                  <div style={{ width: active ? 14 : 11, height: active ? 9 : 7, background: '#EF4444', clipPath: 'polygon(0 0, 100% 50%, 0 100%)', marginLeft: 0, flexShrink: 0 }} />
+                </div>
+                {/* Base dot */}
+                <div style={{ width: active ? 8 : 6, height: active ? 8 : 6, background: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 4px rgba(0,0,0,0.6)' }} />
+              </div>
             </Marker>
           )
         })}
