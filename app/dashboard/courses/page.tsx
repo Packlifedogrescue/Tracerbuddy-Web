@@ -6,6 +6,7 @@ import { track } from '@/lib/analytics'
 import {
   Search, MapPin, Flag, Loader2, AlertCircle,
   ChevronRight, Clock, Trophy, X, CloudSun,
+  Phone, Mail, Globe, Info,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import WeatherWidget from '@/components/WeatherWidget'
@@ -38,6 +39,7 @@ interface GolfHole {
   GreenLatitude?: string | number
   GreenLongitude?: string | number
   Waypoints?: { lat: number; lng: number }[]
+  LayupSpots?: { lat: number; lng: number; yards: number | null }[]
 }
 
 interface GolfTee {
@@ -48,15 +50,18 @@ interface GolfTee {
   slopeMen?: number | string
   courseRatingWomen?: number | string
   slopeWomen?: number | string
-  [key: string]: any // length1–length18
+  [key: string]: any
 }
 
 interface CourseDetail {
   CourseID?: string
   ClubName?: string
   CourseName?: string
+  Address?: string
   City?: string
   StateCode?: string
+  Zip?: string
+  Country?: string
   Rating?: number | string
   Slope?: number | string
   Par?: number
@@ -66,6 +71,13 @@ interface CourseDetail {
   Latitude?: string | number
   Longitude?: string | number
   polygons?: CoursePolygon[]
+  CourseType?: string
+  NumHoles?: number
+  Architect?: string
+  YearBuilt?: number | string
+  PriceRange?: string
+  Telephone?: string
+  Email?: string
   website?: string
   telephone?: string
 }
@@ -86,6 +98,15 @@ function parseNum(v: string | number | undefined): number | null {
 function holeNum(h: GolfHole)   { return h.HoleNo ?? h.Number ?? 0 }
 function holeYards(h: GolfHole) { return h.Yardage ?? h.Yards ?? null }
 
+function formatCourseType(t: string): string {
+  const map: Record<string, string> = {
+    public: 'Public', private: 'Private', 'semi-private': 'Semi-Private',
+    semi_private: 'Semi-Private', resort: 'Resort', military: 'Military',
+    municipal: 'Municipal', daily_fee: 'Daily Fee',
+  }
+  return map[t?.toLowerCase()] ?? t
+}
+
 const PALETTE = ['#2D6A4F','#6B9E5E','#4A7C59','#C9A84C','#8B7355','#5B8A65','#A07340','#607D4A','#3D7A6E','#7A6030']
 function courseColor(name: string) {
   let h = 0
@@ -102,7 +123,7 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
 }) {
   const [teeIdx, setTeeIdx] = useState(0)
   const [gender, setGender] = useState<'men' | 'women'>('men')
-  const activeTee    = tees[teeIdx]
+  const activeTee     = tees[teeIdx]
   const hasFemaleData = holes.some(h => h.ParFemale != null)
 
   function getYards(holeNo: number, fallback: GolfHole): number | null {
@@ -141,20 +162,14 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
         }`}
       >
         <td className="py-1.5 pl-3">
-          <div className="flex items-center gap-1.5">
-            <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black transition-all ${
-              active
-                ? 'bg-[#C9A84C] text-white shadow-sm'
-                : 'bg-[#F8F4EE] text-[#666]'
-            }`}>{n}</div>
-          </div>
+          <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black transition-all ${
+            active ? 'bg-[#C9A84C] text-white shadow-sm' : 'bg-[#F8F4EE] text-[#666]'
+          }`}>{n}</div>
         </td>
         <td className="py-1.5 text-center">
           <span className={`text-[12px] font-bold ${
             active ? 'text-[#C9A84C]' : par === 3 ? 'text-blue-500' : par === 5 ? 'text-[#22A06B]' : 'text-[#111]'
-          }`}>
-            {par || '—'}
-          </span>
+          }`}>{par || '—'}</span>
         </td>
         <td className="py-1.5 text-center text-[12px] font-medium text-gray-600">{yds ?? '—'}</td>
         <td className="py-1.5 pr-3 text-center text-[11px] text-gray-400">{hcp ?? '—'}</td>
@@ -175,7 +190,6 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
 
   return (
     <div>
-      {/* Tee selector + gender toggle */}
       {tees.length > 0 && (
         <div className="px-3 pt-3 pb-2 border-b border-[#F0EAE0]">
           <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2">Select Tee</div>
@@ -190,24 +204,18 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
                     : 'border-transparent text-gray-400 hover:text-[#111] hover:bg-[#F8F4EE]'
                 }`}
               >
-                <div
-                  className="w-3 h-3 rounded-full border border-black/15 shrink-0"
-                  style={{ background: tee.teeColor || '#999' }}
-                />
+                <div className="w-3 h-3 rounded-full border border-black/15 shrink-0" style={{ background: tee.teeColor || '#999' }} />
                 {tee.teeName}
               </button>
             ))}
           </div>
 
-          {/* Gender toggle — only shown when women's data exists */}
           {hasFemaleData && (
             <div className="flex items-center gap-2 mt-2.5">
               <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Playing as</span>
               <div className="flex bg-[#F0EAE0] rounded-lg p-0.5">
                 {(['men', 'women'] as const).map(g => (
-                  <button
-                    key={g}
-                    onClick={() => setGender(g)}
+                  <button key={g} onClick={() => setGender(g)}
                     className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
                       gender === g ? 'bg-white text-[#111] shadow-sm' : 'text-gray-400 hover:text-[#111]'
                     }`}
@@ -219,7 +227,6 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
             </div>
           )}
 
-          {/* Rating / slope for selected tee + gender */}
           {(rating || slope) && (
             <div className="flex gap-4 mt-2 text-[11px] text-gray-400">
               {rating ? <span>Rating <span className="font-bold text-[#111]">{rating}</span></span> : null}
@@ -229,7 +236,6 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
         </div>
       )}
 
-      {/* Table */}
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-b border-[#F0EAE0]">
@@ -241,12 +247,102 @@ function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
         </thead>
         <tbody>
           {front.map(h => <HoleRow key={holeNum(h)} h={h} />)}
-          {front.length > 0 && <TotalsRow label="Out" par={front.reduce((s,h) => s+((gender==='women'?h.ParFemale:h.Par)??0),0)} yards={frontYards} />}
+          {front.length > 0 && <TotalsRow label="Out" par={front.reduce((s,h)=>s+((gender==='women'?h.ParFemale:h.Par)??0),0)} yards={frontYards} />}
           {back.map(h => <HoleRow key={holeNum(h)} h={h} />)}
-          {back.length > 0 && <TotalsRow label="In" par={back.reduce((s,h) => s+((gender==='women'?h.ParFemale:h.Par)??0),0)} yards={backYards} />}
+          {back.length > 0 && <TotalsRow label="In" par={back.reduce((s,h)=>s+((gender==='women'?h.ParFemale:h.Par)??0),0)} yards={backYards} />}
           {holes.length > 0 && <TotalsRow label="Total" par={totalPar} yards={frontYards + backYards} />}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+// ── Course Info Panel ─────────────────────────────────────────────────────────
+function CourseInfoPanel({ detail, lat, lng }: { detail: CourseDetail; lat: number | null; lng: number | null }) {
+  const rows: { label: string; value: string; href?: string }[] = []
+
+  if (detail.CourseType)
+    rows.push({ label: 'Type', value: formatCourseType(detail.CourseType) })
+  if (detail.NumHoles)
+    rows.push({ label: 'Holes', value: String(detail.NumHoles) })
+  if (detail.Architect)
+    rows.push({ label: 'Architect', value: detail.Architect })
+  if (detail.YearBuilt)
+    rows.push({ label: 'Est.', value: String(detail.YearBuilt) })
+  if (detail.PriceRange)
+    rows.push({ label: 'Green Fees', value: detail.PriceRange })
+
+  const phone   = detail.Telephone ?? detail.telephone
+  const email   = detail.Email
+  const website = detail.website
+  const address = detail.Address
+    ? [detail.Address, detail.City, detail.StateCode, detail.Zip].filter(Boolean).join(', ')
+    : null
+  const mapsUrl = address
+    ? `https://maps.apple.com/?q=${encodeURIComponent(address)}`
+    : lat && lng
+    ? `https://maps.apple.com/?ll=${lat},${lng}`
+    : null
+
+  return (
+    <div className="p-4 space-y-5">
+      {/* Course details grid */}
+      {rows.length > 0 && (
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-3">Course Details</div>
+          <div className="space-y-2">
+            {rows.map(r => (
+              <div key={r.label} className="flex items-center justify-between">
+                <span className="text-[11.5px] text-gray-400">{r.label}</span>
+                <span className="text-[11.5px] font-semibold text-[#111]">{r.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Contact */}
+      {(phone || email || website || mapsUrl) && (
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-3">Contact</div>
+          <div className="space-y-2">
+            {mapsUrl && address && (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-start gap-2.5 text-[11.5px] text-[#C9A84C] hover:underline">
+                <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <span className="leading-tight">{address}</span>
+              </a>
+            )}
+            {phone && (
+              <a href={`tel:${phone}`} className="flex items-center gap-2.5 text-[11.5px] text-gray-600 hover:text-[#111]">
+                <Phone className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                {phone}
+              </a>
+            )}
+            {email && (
+              <a href={`mailto:${email}`} className="flex items-center gap-2.5 text-[11.5px] text-gray-600 hover:text-[#111]">
+                <Mail className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                {email}
+              </a>
+            )}
+            {website && (
+              <a href={website.startsWith('http') ? website : `https://${website}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2.5 text-[11.5px] text-[#C9A84C] hover:underline">
+                <Globe className="w-3.5 h-3.5 shrink-0" />
+                {website.replace(/^https?:\/\//, '')}
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {rows.length === 0 && !phone && !email && !website && !mapsUrl && (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <Info className="w-8 h-8 text-[#C9A84C] mx-auto mb-2 opacity-40" />
+          <p className="text-[12.5px] text-gray-400">No additional info available for this course.</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -263,10 +359,9 @@ export default function CoursesPage() {
   const [loadingDetail,  setLoadingDetail]  = useState(false)
   const [error,          setError]          = useState('')
   const [visitedCourses, setVisitedCourses] = useState<VisitedCourse[]>([])
-  const [activeTab,      setActiveTab]      = useState<'scorecard' | 'weather'>('scorecard')
+  const [activeTab,      setActiveTab]      = useState<'scorecard' | 'weather' | 'info'>('scorecard')
   const [selectedHole,   setSelectedHole]   = useState<number | undefined>(undefined)
 
-  // Load courses from user's rounds
   useEffect(() => {
     supabase.from('rounds').select('course_name, total_score, created_at').order('created_at', { ascending: false }).limit(100)
       .then(({ data }) => {
@@ -354,11 +449,16 @@ export default function CoursesPage() {
     return relevant.map(r => ({ label: r.name, ...r }))
   })()
 
-  // Personal record at the currently displayed course
   const personalRecord = visitedCourses.find(c => c.name === name)
   const personalBest   = personalRecord && personalRecord.scores.length > 0
     ? Math.min(...personalRecord.scores)
     : null
+
+  const TABS = [
+    { id: 'scorecard', label: '📋 Scorecard' },
+    { id: 'weather',   label: '⛅ Conditions' },
+    { id: 'info',      label: 'ℹ️ Info' },
+  ] as const
 
   return (
     <div className="flex flex-col h-full">
@@ -382,9 +482,7 @@ export default function CoursesPage() {
           )}
         </div>
 
-        {/* Search */}
         <form onSubmit={e => { e.preventDefault(); search() }} className="flex flex-wrap gap-2 max-w-3xl">
-          {/* Name */}
           <div className="relative flex-1 min-w-[160px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -394,14 +492,12 @@ export default function CoursesPage() {
               className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl pl-10 pr-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition"
             />
           </div>
-          {/* State / Country */}
           <input
             value={region}
             onChange={e => setRegion(e.target.value)}
             placeholder="State or Country (optional)"
             className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition w-52"
           />
-          {/* City (optional) */}
           <input
             value={city}
             onChange={e => setCity(e.target.value)}
@@ -423,26 +519,20 @@ export default function CoursesPage() {
 
         {/* ── Left panel ── */}
         <div className="w-[280px] shrink-0 bg-white border-r border-[#F0EAE0] flex flex-col overflow-hidden">
-
-          {/* Error */}
           {error && (
             <div className="mx-3 mt-3 flex items-center gap-2 text-[12px] text-red-500 bg-red-50 rounded-xl px-3 py-2.5 shrink-0">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />{error}
             </div>
           )}
 
-          {/* Search results */}
           {results.length > 0 && (
             <div className="overflow-auto flex-1">
               <div className="px-4 py-2.5 text-[10.5px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#F8F4EE]">
                 {results.length} result{results.length !== 1 ? 's' : ''}
               </div>
               {results.map(c => (
-                <button
-                  key={c.CourseID}
-                  onClick={() => pickCourse(c)}
-                  className="w-full text-left px-4 py-3 hover:bg-[#FAF7F2] transition-colors border-b border-[#F8F4EE] last:border-0"
-                >
+                <button key={c.CourseID} onClick={() => pickCourse(c)}
+                  className="w-full text-left px-4 py-3 hover:bg-[#FAF7F2] transition-colors border-b border-[#F8F4EE] last:border-0">
                   <div className="text-[13px] font-semibold text-[#111] leading-tight">{c.CourseName || c.ClubName}</div>
                   {(c.City || c.StateCode) && (
                     <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
@@ -455,7 +545,6 @@ export default function CoursesPage() {
             </div>
           )}
 
-          {/* Visited courses */}
           {results.length === 0 && (
             <div className="flex-1 overflow-auto">
               {visitedCourses.length > 0 && (
@@ -467,17 +556,12 @@ export default function CoursesPage() {
                     const best = c.scores.length ? Math.min(...c.scores) : null
                     const isActive = name === c.name
                     return (
-                      <button
-                        key={c.name}
-                        onClick={() => searchVisited(c.name)}
-                        className={`w-full text-left px-4 py-3 transition-colors border-b border-[#F8F4EE] last:border-0 ${isActive ? 'bg-[#FEF3E8]' : 'hover:bg-[#FAF7F2]'}`}
-                      >
+                      <button key={c.name} onClick={() => searchVisited(c.name)}
+                        className={`w-full text-left px-4 py-3 transition-colors border-b border-[#F8F4EE] last:border-0 ${isActive ? 'bg-[#FEF3E8]' : 'hover:bg-[#FAF7F2]'}`}>
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg shrink-0" style={{ background: courseColor(c.name) }} />
                           <div className="flex-1 min-w-0">
-                            <div className={`text-[12.5px] font-semibold leading-tight truncate ${isActive ? 'text-[#C9A84C]' : 'text-[#111]'}`}>
-                              {c.name}
-                            </div>
+                            <div className={`text-[12.5px] font-semibold leading-tight truncate ${isActive ? 'text-[#C9A84C]' : 'text-[#111]'}`}>{c.name}</div>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10.5px] text-gray-400">{c.count} round{c.count !== 1 ? 's' : ''}</span>
                               {best && <span className="text-[10.5px] text-[#C9A84C] font-semibold">Best {best}</span>}
@@ -494,16 +578,13 @@ export default function CoursesPage() {
                   })}
                 </>
               )}
-
               {visitedCourses.length === 0 && !searching && (
                 <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-[#F5EFE0] flex items-center justify-center mx-auto mb-3">
                     <Flag className="w-5 h-5 text-[#C9A84C]" />
                   </div>
                   <div className="text-[13px] font-semibold text-[#333] mb-1">No courses yet</div>
-                  <p className="text-[11.5px] text-gray-400 leading-relaxed">
-                    Track rounds in the app and your courses will appear here.
-                  </p>
+                  <p className="text-[11.5px] text-gray-400 leading-relaxed">Track rounds in the app and your courses will appear here.</p>
                 </div>
               )}
             </div>
@@ -513,7 +594,6 @@ export default function CoursesPage() {
         {/* ── Main content ── */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
 
-          {/* No course selected */}
           {!selected && !loadingDetail && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
@@ -528,7 +608,6 @@ export default function CoursesPage() {
             </div>
           )}
 
-          {/* Loading */}
           {loadingDetail && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
@@ -538,7 +617,6 @@ export default function CoursesPage() {
             </div>
           )}
 
-          {/* Course loaded */}
           {selected && !loadingDetail && (
             <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -549,13 +627,22 @@ export default function CoursesPage() {
                     <div className="w-9 h-9 rounded-xl shrink-0" style={{ background: courseColor(name) }} />
                     <div>
                       <div className="text-[17px] font-black text-[#111] leading-tight">{name}</div>
-                      <div className="flex items-center gap-3 text-[11.5px] text-gray-400 mt-0.5">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11.5px] text-gray-400 mt-0.5">
                         {loc && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{loc}</span>}
                         {detail?.Par    && <span>Par {detail.Par}</span>}
                         {detail?.Rating && <span>Rating {detail.Rating}</span>}
                         {detail?.Slope  && <span>Slope {detail.Slope}</span>}
-                        {holes.length > 0 && <span>{holes.length} holes</span>}
+                        {(detail?.NumHoles ?? holes.length) > 0 && (
+                          <span>{detail?.NumHoles ?? holes.length} holes</span>
+                        )}
                         {(detail?.Tees?.length ?? 0) > 0 && <span>{detail!.Tees!.length} tees</span>}
+                        {detail?.CourseType && (
+                          <span className="px-1.5 py-0.5 bg-[#F0EAE0] rounded-md text-[10px] font-bold text-[#666]">
+                            {formatCourseType(detail.CourseType)}
+                          </span>
+                        )}
+                        {detail?.Architect && <span>🏌️ {detail.Architect}</span>}
+                        {detail?.YearBuilt && <span>Est. {detail.YearBuilt}</span>}
                         {personalBest != null && (
                           <span className="flex items-center gap-1 text-[#C9A84C] font-semibold">
                             <Trophy className="w-3 h-3" />
@@ -565,30 +652,19 @@ export default function CoursesPage() {
                             )}
                           </span>
                         )}
-                        {detail?.website && (
-                          <a
-                            href={detail.website.startsWith('http') ? detail.website : `https://${detail.website}`}
-                            target="_blank" rel="noopener noreferrer"
-                            className="text-[#C9A84C] hover:underline"
-                          >Website ↗</a>
-                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Tabs */}
                   <div className="flex items-center bg-[#F8F4EE] rounded-xl p-1 gap-1">
-                    {(['scorecard', 'weather'] as const).map(t => (
-                      <button
-                        key={t}
-                        onClick={() => setActiveTab(t)}
-                        className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold capitalize transition-all ${
-                          activeTab === t
-                            ? 'bg-white text-[#111] shadow-sm'
-                            : 'text-gray-400 hover:text-[#111]'
+                    {TABS.map(t => (
+                      <button key={t.id} onClick={() => setActiveTab(t.id)}
+                        className={`px-3 py-1.5 rounded-lg text-[11.5px] font-semibold transition-all ${
+                          activeTab === t.id ? 'bg-white text-[#111] shadow-sm' : 'text-gray-400 hover:text-[#111]'
                         }`}
                       >
-                        {t === 'weather' ? '⛅ Conditions' : '📋 Scorecard'}
+                        {t.label}
                       </button>
                     ))}
                   </div>
@@ -621,34 +697,29 @@ export default function CoursesPage() {
                   {holes.length > 0 && lat && lng && (
                     <div className="absolute bottom-7 left-0 right-0 z-10">
                       <div className="flex items-center justify-around bg-black/80 backdrop-blur-md px-2 py-1.5 shadow-xl rounded-b-lg">
-                        {[...holes]
-                          .sort((a, b) => holeNum(a) - holeNum(b))
-                          .map(h => {
-                            const n = holeNum(h)
-                            const active = selectedHole === n
-                            return (
-                              <button
-                                key={n}
-                                onClick={() => setSelectedHole(prev => prev === n ? undefined : n)}
-                                className={`flex-1 h-6 rounded-md text-[9px] font-black transition-all ${
-                                  active
-                                    ? 'bg-[#C9A84C] text-white scale-110'
-                                    : 'text-white/55 hover:text-white hover:bg-white/15'
-                                }`}
-                              >
-                                {n}
-                              </button>
-                            )
-                          })}
+                        {[...holes].sort((a, b) => holeNum(a) - holeNum(b)).map(h => {
+                          const n = holeNum(h)
+                          const active = selectedHole === n
+                          return (
+                            <button key={n}
+                              onClick={() => setSelectedHole(prev => prev === n ? undefined : n)}
+                              className={`flex-1 h-6 rounded-md text-[9px] font-black transition-all ${
+                                active ? 'bg-[#C9A84C] text-white scale-110' : 'text-white/55 hover:text-white hover:bg-white/15'
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Right panel: scorecard or weather */}
+                {/* Right panel */}
                 <div className="w-[280px] shrink-0 bg-white border-l border-[#F0EAE0] overflow-auto">
 
-                  {/* Hole yardage summary — shown when a hole is selected */}
+                  {/* Hole yardage summary */}
                   {selectedHoleData && holeYardageRows.length > 0 && (
                     <div className="bg-[#FEF9EE] border-b border-[#EDD98A] px-3 py-3">
                       <div className="flex items-center justify-between mb-2.5">
@@ -677,21 +748,19 @@ export default function CoursesPage() {
                     </div>
                   )}
 
-                  {activeTab === 'scorecard' ? (
+                  {activeTab === 'scorecard' && (
                     holes.length > 0 ? (
-                      <Scorecard
-                        holes={holes}
-                        tees={detail?.Tees ?? []}
-                        selectedHole={selectedHole}
-                        onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
-                      />
+                      <Scorecard holes={holes} tees={detail?.Tees ?? []} selectedHole={selectedHole}
+                        onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)} />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full py-10 px-5 text-center">
                         <Trophy className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
                         <p className="text-[12.5px] text-gray-400">Hole data not available for this course.</p>
                       </div>
                     )
-                  ) : (
+                  )}
+
+                  {activeTab === 'weather' && (
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-4">
                         <CloudSun className="w-4 h-4 text-[#C9A84C]" />
@@ -703,6 +772,10 @@ export default function CoursesPage() {
                         <p className="text-[12.5px] text-gray-400">No location data to fetch weather.</p>
                       )}
                     </div>
+                  )}
+
+                  {activeTab === 'info' && detail && (
+                    <CourseInfoPanel detail={detail} lat={lat} lng={lng} />
                   )}
                 </div>
               </div>

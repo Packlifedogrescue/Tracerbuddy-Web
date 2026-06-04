@@ -9,7 +9,7 @@ export interface TeeData {
 
 export interface CoursePolygon {
   hole:   number
-  poi:    number  // 2=fairway, 4=bunker, 5=water
+  poi:    number
   group:  number
   points: { lat: number; lng: number }[]
 }
@@ -23,6 +23,7 @@ interface GolfHole {
   GreenLatitude?: string | number | null
   GreenLongitude?: string | number | null
   Waypoints?: { lat: number; lng: number }[]
+  LayupSpots?: { lat: number; lng: number; yards: number | null }[]
 }
 
 interface Props {
@@ -40,9 +41,11 @@ declare global {
   interface Window { mapkit: any }
 }
 
+// POI type constants (must match API route)
 const POI_FAIRWAY = 2
+const POI_ROUGH   = 3
 const POI_BUNKER  = 4
-// POI 5 = water (anything not fairway/bunker gets blue)
+// 5 = water, 6 = OB — handled by default branch below
 
 // Load MapKit JS once globally
 let mkState: 'idle' | 'loading' | 'ready' = 'idle'
@@ -79,6 +82,29 @@ function parseCoord(v: string | number | null | undefined): number | null {
   return isNaN(n) || n === 0 ? null : n
 }
 
+function polyStyle(mk: any, poi: number) {
+  const isFairway = poi === POI_FAIRWAY
+  const isRough   = poi === POI_ROUGH
+  const isBunker  = poi === POI_BUNKER
+  const isWater   = poi === 5
+  const isOB      = poi === 6
+
+  if (isOB) {
+    return new mk.Style({
+      fillColor: '#EF4444', fillOpacity: 0.08,
+      strokeColor: '#DC2626', lineWidth: 2, strokeOpacity: 0.80,
+      lineDash: [6, 4],
+    })
+  }
+  return new mk.Style({
+    fillColor:    isFairway ? '#22A06B' : isRough ? '#2D8C50' : isBunker ? '#D4B483' : isWater ? '#3B82F6' : '#999',
+    fillOpacity:  isFairway ? 0.28 : isRough ? 0.12 : isBunker ? 0.28 : isWater ? 0.28 : 0.20,
+    strokeColor:  isFairway ? '#1A8A55' : isRough ? '#1A6E35' : isBunker ? '#B8924E' : isWater ? '#2563EB' : '#666',
+    lineWidth:    1,
+    strokeOpacity: isFairway ? 0.50 : isRough ? 0.35 : 0.50,
+  })
+}
+
 export default function CourseMapkit({
   lat, lng, holes, selectedHole, onHoleClick, polygons,
 }: Props) {
@@ -98,21 +124,15 @@ export default function CourseMapkit({
     annotationsRef.current = []
     overlaysRef.current    = []
 
-    // ── Polygon overlays: fairway (green), bunker (sand), water (blue) ───
+    // ── Polygon overlays ─────────────────────────────────────────────────
+    // Show rough/OB for all holes always; fairway/bunker/water only for selected hole
     for (const poly of polygons ?? []) {
-      if (selectedHole !== undefined && poly.hole !== selectedHole) continue
+      const isDetailPoly = poly.poi === POI_FAIRWAY || poly.poi === POI_BUNKER || poly.poi === 5
+      if (isDetailPoly && selectedHole !== undefined && poly.hole !== selectedHole) continue
       if (poly.points.length < 3) continue
       const coords  = poly.points.map(p => new mk.Coordinate(p.lat, p.lng))
       const overlay = new mk.PolygonOverlay(coords)
-      const isFairway = poly.poi === POI_FAIRWAY
-      const isBunker  = poly.poi === POI_BUNKER
-      overlay.style = new mk.Style({
-        fillColor:    isFairway ? '#22A06B' : isBunker ? '#D4B483' : '#3B82F6',
-        fillOpacity:  0.28,
-        strokeColor:  isFairway ? '#1A8A55' : isBunker ? '#B8924E' : '#2563EB',
-        lineWidth:    1,
-        strokeOpacity: 0.50,
-      })
+      overlay.style = polyStyle(mk, poly.poi)
       overlaysRef.current.push(overlay)
     }
 
@@ -167,6 +187,34 @@ export default function CourseMapkit({
         annotationsRef.current.push(grn)
       }
 
+      // Layup spot markers (selected hole only)
+      if (active) {
+        for (const spot of h.LayupSpots ?? []) {
+          const layupAnn = new mk.Annotation(
+            new mk.Coordinate(spot.lat, spot.lng),
+            () => {
+              const el = document.createElement('div')
+              Object.assign(el.style, {
+                background: '#1C1C1E',
+                color: '#FFD60A',
+                fontSize: '9px',
+                fontWeight: '800',
+                padding: '2px 5px',
+                borderRadius: '5px',
+                border: '1.5px solid rgba(255,214,10,0.5)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.6)',
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.02em',
+              })
+              el.textContent = spot.yards ? `${spot.yards}y` : '◆'
+              return el
+            },
+            { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false }
+          )
+          annotationsRef.current.push(layupAnn)
+        }
+      }
+
       // Tee → green dashed line, routing through dogleg waypoints when available
       if (active && tLat && tLng && gLat && gLng) {
         const waypoints = (h.Waypoints ?? []).map(w => new mk.Coordinate(w.lat, w.lng))
@@ -211,8 +259,7 @@ export default function CourseMapkit({
           const dLngR = (gLng - tLng) * Math.PI / 180
           const y = Math.sin(dLngR) * Math.cos(lat2r)
           const x = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLngR)
-          const bearing = Math.atan2(y, x) * 180 / Math.PI
-          map.setRotationAnimated(bearing)
+          map.setRotationAnimated(Math.atan2(y, x) * 180 / Math.PI)
         } else if (tLat && tLng) {
           map.setCenterAnimated(new mk.Coordinate(tLat, tLng))
         }

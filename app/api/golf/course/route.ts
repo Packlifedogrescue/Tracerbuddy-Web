@@ -3,16 +3,21 @@ import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE      = 'https://golfapi.io/api/v2.3'
 const CACHE_TTL_DAYS = 30
-const CACHE_VERSION  = 3
+const CACHE_VERSION  = 4
 
 // POI types from the coordinates endpoint
 const POI_GREEN     = 1
 const POI_FAIRWAY   = 2
+const POI_ROUGH     = 3
 const POI_BUNKER    = 4
 const POI_WATER     = 5
+const POI_OB        = 6  // out of bounds
 const POI_DOGLEG    = 7  // ordered waypoints along the fairway path
+const POI_LAYUP     = 8  // recommended layup spots
 const POI_FRONT_TEE = 11
 const POI_BACK_TEE  = 12
+
+const POLYGON_POIS = new Set([POI_FAIRWAY, POI_ROUGH, POI_BUNKER, POI_WATER, POI_OB])
 
 function golfHeaders(key: string) {
   return { Authorization: `Bearer ${key}` }
@@ -20,9 +25,19 @@ function golfHeaders(key: string) {
 
 export interface CoursePolygon {
   hole:   number
-  poi:    number  // 2=fairway, 4=bunker, 5=water
+  poi:    number
   group:  number
   points: { lat: number; lng: number }[]
+}
+
+// Haversine distance in yards between two GPS points
+function yardsFromCoords(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000
+  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180
+  const Δφ = (lat2 - lat1) * Math.PI / 180
+  const Δλ = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.09361)
 }
 
 function buildCoursePayload(course: any, coordinates: any[]) {
@@ -33,11 +48,11 @@ function buildCoursePayload(course: any, coordinates: any[]) {
   const firstTee      = course.tees?.[0]     ?? {}
   const mainTee       = course.tees?.find((t: any) => /blue|champ|black|gold/i.test(t.teeName ?? '')) ?? firstTee
 
-  // Per-hole GPS lookup, green averaging, polygon collection, dogleg waypoints
   const holeCoords: Record<number, { tLat?: string; tLng?: string; gLat?: string; gLng?: string }> = {}
   const holeGreenPoints: Record<number, { lat: number; lng: number }[]> = {}
   const polygonMap: Record<string, CoursePolygon> = {}
   const doglegMap: Record<number, { lat: number; lng: number; order: number }[]> = {}
+  const layupMap:  Record<number, { lat: number; lng: number; order: number }[]> = {}
 
   for (const c of coordinates) {
     const h = Number(c.hole)
@@ -51,7 +66,7 @@ function buildCoursePayload(course: any, coordinates: any[]) {
       if (!holeGreenPoints[h]) holeGreenPoints[h] = []
       holeGreenPoints[h].push({ lat: Number(c.latitude), lng: Number(c.longitude) })
     }
-    if (c.poi === POI_FAIRWAY || c.poi === POI_BUNKER || c.poi === POI_WATER) {
+    if (POLYGON_POIS.has(c.poi)) {
       const key = `${h}-${c.poi}-${c.group ?? 0}`
       if (!polygonMap[key]) polygonMap[key] = { hole: h, poi: c.poi, group: c.group ?? 0, points: [] }
       polygonMap[key].points.push({ lat: Number(c.latitude), lng: Number(c.longitude) })
@@ -60,9 +75,13 @@ function buildCoursePayload(course: any, coordinates: any[]) {
       if (!doglegMap[h]) doglegMap[h] = []
       doglegMap[h].push({ lat: Number(c.latitude), lng: Number(c.longitude), order: c.group ?? 0 })
     }
+    if (c.poi === POI_LAYUP) {
+      if (!layupMap[h]) layupMap[h] = []
+      layupMap[h].push({ lat: Number(c.latitude), lng: Number(c.longitude), order: c.group ?? 0 })
+    }
   }
 
-  // Average all green POI points per hole → true green center
+  // Average green POI points per hole → true green center
   for (const [h, pts] of Object.entries(holeGreenPoints)) {
     if (pts.length === 0) continue
     const avgLat = pts.reduce((s, p) => s + p.lat, 0) / pts.length
@@ -71,10 +90,9 @@ function buildCoursePayload(course: any, coordinates: any[]) {
     holeCoords[Number(h)].gLng = String(avgLng)
   }
 
-  // Sort dogleg waypoints in path order (by group number)
-  for (const h of Object.keys(doglegMap)) {
-    doglegMap[Number(h)].sort((a, b) => a.order - b.order)
-  }
+  // Sort ordered point sets by group number
+  for (const h of Object.keys(doglegMap)) doglegMap[Number(h)].sort((a, b) => a.order - b.order)
+  for (const h of Object.keys(layupMap))  layupMap[Number(h)].sort((a, b) => a.order - b.order)
 
   const polygons: CoursePolygon[] = Object.values(polygonMap).filter(p => p.points.length >= 3)
 
@@ -82,7 +100,13 @@ function buildCoursePayload(course: any, coordinates: any[]) {
     const holeNo   = i + 1
     const yardKey  = `length${holeNo}` as keyof typeof mainTee
     const coords   = holeCoords[holeNo] ?? {}
+    const tLat     = coords.tLat ? Number(coords.tLat) : null
+    const tLng     = coords.tLng ? Number(coords.tLng) : null
     const waypoints = (doglegMap[holeNo] ?? []).map(({ lat, lng }) => ({ lat, lng }))
+    const layupSpots = (layupMap[holeNo] ?? []).map(({ lat, lng }) => ({
+      lat, lng,
+      yards: tLat && tLng ? yardsFromCoords(tLat, tLng, lat, lng) : null,
+    }))
     return {
       HoleNo:          holeNo,
       Par:             par,
@@ -95,24 +119,40 @@ function buildCoursePayload(course: any, coordinates: any[]) {
       GreenLatitude:   coords.gLat      ?? null,
       GreenLongitude:  coords.gLng      ?? null,
       Waypoints:       waypoints,
+      LayupSpots:      layupSpots,
     }
   })
 
   const totalPar = parsMen.reduce((a: number, b: number) => a + b, 0)
 
+  // Price range: GolfAPI returns 1–4; map to $–$$$$
+  const priceRaw = course.priceRange ?? course.pricingRange ?? null
+  const priceDisplay = priceRaw != null
+    ? (Number.isInteger(Number(priceRaw)) ? '$'.repeat(Math.min(Math.max(Number(priceRaw), 1), 4)) : String(priceRaw))
+    : null
+
   return {
     CourseID:   course.courseID   ?? '',
     ClubName:   course.clubName   ?? '',
     CourseName: course.courseName ?? '',
+    Address:    course.address    ?? null,
     City:       course.city       ?? '',
     StateCode:  course.state      ?? '',
+    Zip:        course.zip        ?? null,
     Country:    course.country    ?? '',
+    Telephone:  course.telephone  ?? null,
+    Email:      course.email      ?? null,
     Latitude:   course.latitude   ?? null,
     Longitude:  course.longitude  ?? null,
     Par:        totalPar || null,
     Rating:     firstTee.courseRatingMen ?? null,
     Slope:      firstTee.slopeMen        ?? null,
     hasGPS:     course.hasGPS,
+    CourseType: course.courseType ?? null,
+    NumHoles:   course.numHoles   ?? null,
+    Architect:  course.architect  ?? null,
+    YearBuilt:  course.yearBuilt  ?? course.yearFounded ?? null,
+    PriceRange: priceDisplay,
     Holes,
     holes:    Holes,
     Tees:     course.tees ?? [],
@@ -168,7 +208,7 @@ export async function GET(req: NextRequest) {
 
     const payload = buildCoursePayload(course, coordinates)
 
-    // Debug: inspect raw POI distribution and polygon count
+    // Debug: inspect raw POI distribution
     if (debug) {
       const poiSummary = coordinates.reduce((acc: Record<number, number>, c: any) => {
         acc[c.poi] = (acc[c.poi] ?? 0) + 1
