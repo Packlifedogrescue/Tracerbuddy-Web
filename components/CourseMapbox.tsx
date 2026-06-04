@@ -321,7 +321,7 @@ export default function CourseMapbox({
         attributionControl={false}
         onLoad={onLoad}
       >
-        <NavigationControl position="bottom-right" showCompass visualizePitch />
+        <NavigationControl position="top-right" showCompass visualizePitch />
 
         {/* OSM polygon fills — rendered beneath everything else */}
         {osmData && (
