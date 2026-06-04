@@ -282,7 +282,7 @@ export default function CourseMapbox({
         ref={mapRef}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         initialViewState={{ latitude: lat, longitude: lng, zoom: 15, pitch: 50 }}
-        mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+        mapStyle="mapbox://styles/mapbox/satellite-v9"
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
         onLoad={onLoad}
