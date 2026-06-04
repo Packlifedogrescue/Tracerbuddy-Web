@@ -68,19 +68,6 @@ function bearingTo(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return (Math.atan2(lng2 - lng1, lat2 - lat1) * 180 / Math.PI + 360) % 360
 }
 
-function circleFeature(lat: number, lng: number, yards: number): GeoJSON.Feature {
-  const m = yards * 0.9144
-  const n = 72
-  const coords = Array.from({ length: n + 1 }, (_, i) => {
-    const a = (i / n) * 2 * Math.PI
-    return [
-      lng + (m / (111111 * Math.cos(lat * Math.PI / 180))) * Math.sin(a),
-      lat + (m / 111111) * Math.cos(a),
-    ]
-  })
-  return { type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: { yards } }
-}
-
 const RING_YARDS = [50, 100, 150, 200]
 const RING_COLOR: Record<number, string> = {
   50:  'rgba(255,255,255,0.55)',
@@ -264,14 +251,6 @@ export default function CourseMapbox({
 
   const activeHole = selectedHole != null ? holes.find(h => holeNum(h) === selectedHole) : null
 
-  const distanceRings = useMemo((): GeoJSON.FeatureCollection => {
-    if (!activeHole) return { type: 'FeatureCollection', features: [] }
-    const gLat = parseNum(activeHole.GreenLatitude)
-    const gLng = parseNum(activeHole.GreenLongitude)
-    if (!gLat || !gLng) return { type: 'FeatureCollection', features: [] }
-    return { type: 'FeatureCollection', features: RING_YARDS.map(y => circleFeature(gLat, gLng, y)) }
-  }, [activeHole])
-
   const ringLabels = useMemo(() => {
     if (!activeHole) return []
     const gLat = parseNum(activeHole.GreenLatitude)
@@ -322,27 +301,7 @@ export default function CourseMapbox({
           </Source>
         )}
 
-        {/* Distance rings from green */}
-        <Source id="dist-rings" type="geojson" data={distanceRings}>
-          <Layer
-            id="dist-rings-line"
-            type="line"
-            paint={{
-              'line-color': [
-                'case',
-                ['==', ['get', 'yards'], 200], 'rgba(239,68,68,0.80)',
-                ['==', ['get', 'yards'], 150], 'rgba(251,191,36,0.80)',
-                ['==', ['get', 'yards'], 100], 'rgba(34,197,94,0.80)',
-                'rgba(255,255,255,0.55)',
-              ],
-              'line-width': 1.5,
-              'line-dasharray': [5, 4],
-              'line-blur': 0.5,
-            }}
-          />
-        </Source>
-
-        {/* Ring yardage labels */}
+        {/* Yardage labels around green */}
         {ringLabels.map(r => (
           <Marker key={`ring-${r.yards}`} latitude={r.lat} longitude={r.lng} anchor="bottom">
             <div style={{ ...SF, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)', border: `1px solid ${r.color}`, borderRadius: 5, padding: '2px 6px', fontSize: 9, fontWeight: 800, color: r.color, letterSpacing: 0.5, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
