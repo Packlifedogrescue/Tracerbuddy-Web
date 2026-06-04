@@ -361,6 +361,7 @@ export default function CoursesPage() {
   const [visitedCourses, setVisitedCourses] = useState<VisitedCourse[]>([])
   const [activeTab,      setActiveTab]      = useState<'scorecard' | 'weather' | 'info'>('scorecard')
   const [selectedHole,   setSelectedHole]   = useState<number | undefined>(undefined)
+  const [showDropdown,   setShowDropdown]   = useState(false)
 
   useEffect(() => {
     supabase.from('rounds').select('course_name, total_score, created_at').order('created_at', { ascending: false }).limit(100)
@@ -383,7 +384,7 @@ export default function CoursesPage() {
     const rg = (overrideRegion ?? region).trim()
     const ct = city.trim()
     if (!q && !rg && !ct) return
-    setSearching(true); setResults([]); setSelected(null); setDetail(null); setError('')
+    setSearching(true); setResults([]); setSelected(null); setDetail(null); setError(''); setShowDropdown(true)
     try {
       const params = new URLSearchParams()
       if (q)  params.set('q', q)
@@ -400,7 +401,7 @@ export default function CoursesPage() {
   }
 
   async function pickCourse(course: GolfCourse) {
-    setSelected(course); setResults([]); setDetail(null); setLoadingDetail(true); setError(''); setSelectedHole(undefined)
+    setSelected(course); setResults([]); setShowDropdown(false); setDetail(null); setLoadingDetail(true); setError(''); setSelectedHole(undefined)
     track('course_viewed', { course_id: course.CourseID, course_name: course.CourseName || course.ClubName, city: course.City, state: course.StateCode })
     try {
       const res  = await fetch(`/api/golf/course?id=${encodeURIComponent(course.CourseID)}`)
@@ -411,10 +412,11 @@ export default function CoursesPage() {
   }
 
   async function searchVisited(name: string) {
-    setQuery(name)
-    setSearching(true); setResults([]); setSelected(null); setDetail(null); setError('')
+    const q = name.split(' — ')[0].trim()
+    setQuery(q)
+    setSearching(true); setResults([]); setShowDropdown(false); setSelected(null); setDetail(null); setError('')
     try {
-      const res  = await fetch(`/api/golf/search?q=${encodeURIComponent(name)}`)
+      const res  = await fetch(`/api/golf/search?q=${encodeURIComponent(q)}`)
       const data = await res.json()
       const list: GolfCourse[] = data.courses ?? []
       if (list.length > 0) pickCourse(list[0])
@@ -464,7 +466,7 @@ export default function CoursesPage() {
     <div className="flex flex-col h-full">
 
       {/* ── Top bar ── */}
-      <div className="bg-white border-b border-[#F0EAE0] px-6 py-4 shrink-0">
+      <div className="bg-white border-b border-[#F0EAE0] px-6 py-4 shrink-0 relative z-20">
         <div className="flex items-center justify-between gap-4 mb-3">
           <div>
             <h1 className="text-[22px] font-black text-[#111] tracking-tight leading-tight">Courses</h1>
@@ -474,7 +476,7 @@ export default function CoursesPage() {
           </div>
           {selected && (
             <button
-              onClick={() => { setSelected(null); setDetail(null); setQuery(''); setRegion(''); setCity(''); setResults([]) }}
+              onClick={() => { setSelected(null); setDetail(null); setQuery(''); setRegion(''); setCity(''); setResults([]); setShowDropdown(false) }}
               className="flex items-center gap-1.5 text-[12.5px] font-semibold text-gray-400 hover:text-[#111] transition-colors"
             >
               <X className="w-3.5 h-3.5" /> Clear
@@ -482,53 +484,50 @@ export default function CoursesPage() {
           )}
         </div>
 
-        <form onSubmit={e => { e.preventDefault(); search() }} className="flex flex-wrap gap-2 max-w-3xl">
-          <div className="relative flex-1 min-w-[160px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Course name…"
-              className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl pl-10 pr-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition"
-            />
-          </div>
-          <input
-            value={region}
-            onChange={e => setRegion(e.target.value)}
-            placeholder="State or Country (optional)"
-            className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition w-52"
-          />
-          <input
-            value={city}
-            onChange={e => setCity(e.target.value)}
-            placeholder="City"
-            className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition w-36"
-          />
-          <button
-            type="submit"
-            disabled={searching || (!query.trim() && !region.trim() && !city.trim())}
-            className="bg-[#C9A84C] hover:bg-[#A07828] disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-[13.5px] font-semibold transition-colors shrink-0 flex items-center gap-2"
-          >
-            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4" /> Search</>}
-          </button>
-        </form>
-      </div>
-
-      {/* ── Body ── */}
-      <div className="flex-1 overflow-hidden flex">
-
-        {/* ── Left panel ── */}
-        <div className="w-[280px] shrink-0 bg-white border-r border-[#F0EAE0] flex flex-col overflow-hidden">
-          {error && (
-            <div className="mx-3 mt-3 flex items-center gap-2 text-[12px] text-red-500 bg-red-50 rounded-xl px-3 py-2.5 shrink-0">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />{error}
+        {/* Search form + results dropdown */}
+        <div className="relative">
+          <form onSubmit={e => { e.preventDefault(); search() }} className="flex flex-wrap gap-2 max-w-3xl">
+            <div className="relative flex-1 min-w-[160px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Course name…"
+                className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl pl-10 pr-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition"
+              />
             </div>
-          )}
+            <input
+              value={region}
+              onChange={e => setRegion(e.target.value)}
+              placeholder="State or Country (optional)"
+              className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition w-52"
+            />
+            <input
+              value={city}
+              onChange={e => setCity(e.target.value)}
+              placeholder="City"
+              className="bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-2.5 text-[13.5px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition w-36"
+            />
+            <button
+              type="submit"
+              disabled={searching || (!query.trim() && !region.trim() && !city.trim())}
+              className="bg-[#C9A84C] hover:bg-[#A07828] disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-[13.5px] font-semibold transition-colors shrink-0 flex items-center gap-2"
+            >
+              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4" /> Search</>}
+            </button>
+          </form>
 
-          {results.length > 0 && (
-            <div className="overflow-auto flex-1">
-              <div className="px-4 py-2.5 text-[10.5px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#F8F4EE]">
-                {results.length} result{results.length !== 1 ? 's' : ''}
+          {/* Search results dropdown */}
+          {showDropdown && results.length > 0 && (
+            <div className="absolute top-full left-0 mt-2 w-full max-w-3xl bg-white rounded-2xl border border-[#F0EAE0] shadow-2xl max-h-[320px] overflow-auto z-50">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#F8F4EE]">
+                <span className="text-[10.5px] font-bold text-gray-400 uppercase tracking-wider">
+                  {results.length} result{results.length !== 1 ? 's' : ''}
+                </span>
+                <button onClick={() => { setShowDropdown(false); setResults([]) }}
+                  className="text-gray-400 hover:text-[#111] transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
               {results.map(c => (
                 <button key={c.CourseID} onClick={() => pickCourse(c)}
@@ -545,68 +544,60 @@ export default function CoursesPage() {
             </div>
           )}
 
-          {results.length === 0 && (
-            <div className="flex-1 overflow-auto">
-              {visitedCourses.length > 0 && (
-                <>
-                  <div className="px-4 py-2.5 text-[10.5px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#F8F4EE] sticky top-0 bg-white">
-                    Your Courses
-                  </div>
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 mt-2 text-[12px] text-red-500">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />{error}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Body — full width ── */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+
+        {/* Empty state with Your Courses grid */}
+        {!selected && !loadingDetail && (
+          <div className="flex-1 overflow-auto px-6 py-8">
+            {visitedCourses.length > 0 ? (
+              <>
+                <div className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">Your Courses</div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {visitedCourses.map(c => {
                     const best = c.scores.length ? Math.min(...c.scores) : null
-                    const isActive = name === c.name
                     return (
                       <button key={c.name} onClick={() => searchVisited(c.name)}
-                        className={`w-full text-left px-4 py-3 transition-colors border-b border-[#F8F4EE] last:border-0 ${isActive ? 'bg-[#FEF3E8]' : 'hover:bg-[#FAF7F2]'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg shrink-0" style={{ background: courseColor(c.name) }} />
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-[12.5px] font-semibold leading-tight truncate ${isActive ? 'text-[#C9A84C]' : 'text-[#111]'}`}>{c.name}</div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10.5px] text-gray-400">{c.count} round{c.count !== 1 ? 's' : ''}</span>
-                              {best && <span className="text-[10.5px] text-[#C9A84C] font-semibold">Best {best}</span>}
-                            </div>
-                          </div>
-                          <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#C9A84C]' : 'text-gray-300'}`} />
+                        className="text-left bg-white rounded-2xl border border-[#F0EAE0] p-4 hover:border-[#C9A84C] hover:shadow-md transition-all group">
+                        <div className="w-10 h-10 rounded-xl mb-3" style={{ background: courseColor(c.name) }} />
+                        <div className="text-[12.5px] font-bold text-[#111] leading-tight line-clamp-2 mb-2 group-hover:text-[#C9A84C] transition-colors">
+                          {c.name}
                         </div>
-                        <div className="flex items-center gap-1 mt-1.5 pl-11 text-[10px] text-gray-400">
+                        <div className="flex items-center justify-between text-[10.5px] text-gray-400">
+                          <span>{c.count} round{c.count !== 1 ? 's' : ''}</span>
+                          {best && <span className="text-[#C9A84C] font-bold">Best {best}</span>}
+                        </div>
+                        <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-300">
                           <Clock className="w-2.5 h-2.5" />
-                          {format(new Date(c.lastPlayed), 'MMM d, yyyy')}
+                          {format(new Date(c.lastPlayed), 'MMM d')}
                         </div>
                       </button>
                     )
                   })}
-                </>
-              )}
-              {visitedCourses.length === 0 && !searching && (
-                <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F5EFE0] flex items-center justify-center mx-auto mb-3">
-                    <Flag className="w-5 h-5 text-[#C9A84C]" />
-                  </div>
-                  <div className="text-[13px] font-semibold text-[#333] mb-1">No courses yet</div>
-                  <p className="text-[11.5px] text-gray-400 leading-relaxed">Track rounds in the app and your courses will appear here.</p>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* ── Main content ── */}
-        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-
-          {!selected && !loadingDetail && (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="w-16 h-16 rounded-2xl bg-[#F5EFE0] flex items-center justify-center mx-auto mb-4">
                   <MapPin className="w-7 h-7 text-[#C9A84C]" />
                 </div>
-                <div className="text-[16px] font-black text-[#111] mb-1.5">Select a course to preview</div>
-                <p className="text-[13px] text-gray-400 max-w-[300px] mx-auto leading-relaxed">
-                  Search any golf course or pick one from your history on the left to see the satellite map, scorecard, and playing conditions.
+                <div className="text-[16px] font-black text-[#111] mb-1.5">Search any golf course</div>
+                <p className="text-[13px] text-gray-400 max-w-[320px] mx-auto leading-relaxed">
+                  42,000+ courses worldwide — satellite map, full scorecard, playing conditions, and more.
                 </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
           {loadingDetail && (
             <div className="flex-1 flex items-center justify-center">

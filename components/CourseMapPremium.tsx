@@ -263,7 +263,8 @@ export default function CourseMapPremium({
   initialName?: string
   onClose: () => void
 }) {
-  const [query,     setQuery]     = useState(initialName ?? '')
+  const cleanName = (initialName ?? '').split(' — ')[0].trim()
+  const [query,     setQuery]     = useState(cleanName)
   const [results,   setResults]   = useState<GolfCourse[]>([])
   const [searching, setSearching] = useState(false)
   const [selected,  setSelected]  = useState<GolfCourse | null>(null)
@@ -275,7 +276,7 @@ export default function CourseMapPremium({
 
   // Auto-search when opened with a course name
   useEffect(() => {
-    if (initialName) search(initialName)
+    if (initialName) search(cleanName)
   }, [])
 
   async function search(q = query) {
