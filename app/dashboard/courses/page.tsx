@@ -682,27 +682,6 @@ export default function CoursesPage() {
                     </div>
                   )}
 
-                  {/* Hole number jump bar */}
-                  {holes.length > 0 && lat && lng && (
-                    <div className="absolute bottom-7 left-0 right-0 z-10">
-                      <div className="flex items-center justify-around bg-black/80 backdrop-blur-md px-2 py-1.5 shadow-xl rounded-b-lg">
-                        {[...holes].sort((a, b) => holeNum(a) - holeNum(b)).map(h => {
-                          const n = holeNum(h)
-                          const active = selectedHole === n
-                          return (
-                            <button key={n}
-                              onClick={() => setSelectedHole(prev => prev === n ? undefined : n)}
-                              className={`flex-1 h-6 rounded-md text-[9px] font-black transition-all ${
-                                active ? 'bg-[#C9A84C] text-white scale-110' : 'text-white/55 hover:text-white hover:bg-white/15'
-                              }`}
-                            >
-                              {n}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Right panel */}
