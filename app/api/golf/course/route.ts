@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE      = 'https://golfapi.io/api/v2.3'
 const CACHE_TTL_DAYS = 30
+const CACHE_VERSION  = 2
 
 // POI types from the coordinates endpoint
 const POI_BACK_TEE  = 12
@@ -21,7 +22,11 @@ function buildCoursePayload(course: any, coordinates: any[]) {
   const mainTee    = course.tees?.find((t: any) => /blue|champ|black|gold/i.test(t.teeName ?? '')) ?? firstTee
 
   // Build per-hole GPS lookup from coordinates array
+  // GolfAPI returns 3 POI_GREEN entries per hole (front/center/back of green)
+  // so we average them to get the true center of the putting surface
   const holeCoords: Record<number, { tLat?: string; tLng?: string; gLat?: string; gLng?: string }> = {}
+  const holeGreenPoints: Record<number, { lat: number; lng: number }[]> = {}
+
   for (const c of coordinates) {
     const h = Number(c.hole)
     if (!holeCoords[h]) holeCoords[h] = {}
@@ -30,9 +35,18 @@ function buildCoursePayload(course: any, coordinates: any[]) {
       holeCoords[h].tLng = String(c.longitude)
     }
     if (c.poi === POI_GREEN) {
-      holeCoords[h].gLat = String(c.latitude)
-      holeCoords[h].gLng = String(c.longitude)
+      if (!holeGreenPoints[h]) holeGreenPoints[h] = []
+      holeGreenPoints[h].push({ lat: Number(c.latitude), lng: Number(c.longitude) })
     }
+  }
+
+  // Average all green points per hole to get green center
+  for (const [h, pts] of Object.entries(holeGreenPoints)) {
+    if (pts.length === 0) continue
+    const avgLat = pts.reduce((s, p) => s + p.lat, 0) / pts.length
+    const avgLng = pts.reduce((s, p) => s + p.lng, 0) / pts.length
+    holeCoords[Number(h)].gLat = String(avgLat)
+    holeCoords[Number(h)].gLng = String(avgLng)
   }
 
   // Build Holes array matching frontend GolfHole interface
@@ -86,11 +100,12 @@ export async function GET(req: NextRequest) {
   )
 
   // ── 1. Check Supabase cache (skipped in debug mode) ─────────────────────
+  const cacheKey = `v${CACHE_VERSION}:${courseId}`
   if (!debug) try {
     const { data: cached } = await sb
       .from('golf_course_details_cache')
       .select('data, cached_at')
-      .eq('course_id', courseId)
+      .eq('course_id', cacheKey)
       .maybeSingle()
 
     if (cached) {
