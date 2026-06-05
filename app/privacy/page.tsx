@@ -80,6 +80,7 @@ export default function PrivacyPage() {
             <p>We do not sell your personal data. We share data only in the following circumstances:</p>
             <ul>
               <li><strong>Service providers:</strong> trusted third parties that help us operate the Service (e.g., Supabase for database hosting, Apple Maps for course maps, Apple for in-app purchases). These providers are contractually bound to protect your data.</li>
+              <li><strong>AI provider:</strong> AI-generated coaching insights, round analysis, and caddie suggestions are powered by Anthropic (Claude). Relevant round statistics and performance data are sent to Anthropic's API to generate these insights. Anthropic's privacy policy is available at <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer">anthropic.com/privacy</a>. We do not share your name, email, or account credentials with Anthropic.</li>
               <li><strong>Buddy Battles:</strong> when you connect with another TracerBuddy user, your display name and selected stats are visible to that user. You control what you share.</li>
               <li><strong>Legal requirements:</strong> if required by law, court order, or to protect the rights and safety of our users or the public.</li>
             </ul>
