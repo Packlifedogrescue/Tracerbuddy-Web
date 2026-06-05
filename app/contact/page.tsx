@@ -213,7 +213,7 @@ export default function ContactPage() {
       {/* Footer */}
       <footer className="px-6 md:px-12 py-10 max-w-[1400px] mx-auto border-t border-black/[0.06]">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-[12px] text-[#888]">© 2026 TracerBuddy. All rights reserved.</div>
+          <div className="text-[12px] text-[#888]">© 2026 TracerBuddy LLC. All rights reserved.</div>
           <div className="flex items-center gap-6 text-[12px] text-[#888]">
             <Link href="/privacy" className="hover:text-black transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-black transition-colors">Terms</Link>

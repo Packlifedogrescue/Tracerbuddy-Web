@@ -523,7 +523,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-black/[0.06]">
-          <div className="text-[12px] text-[#888]">© 2026 TracerBuddy. All rights reserved.</div>
+          <div className="text-[12px] text-[#888]">© 2026 TracerBuddy LLC. All rights reserved.</div>
           <div className="text-[12px] text-[#888]">Made for golfers who play to improve.</div>
         </div>
       </footer>
