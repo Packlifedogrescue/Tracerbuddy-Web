@@ -172,6 +172,7 @@ export default function AboutPage() {
           <div className="flex items-center gap-6 text-[12px] text-[#888]">
             <Link href="/privacy" className="hover:text-black transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-black transition-colors">Terms</Link>
+            <Link href="/disclaimer" className="hover:text-black transition-colors">Disclaimer</Link>
             <Link href="/about" className="hover:text-black transition-colors">About</Link>
             <Link href="/contact" className="hover:text-black transition-colors">Contact</Link>
           </div>

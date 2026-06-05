@@ -519,6 +519,7 @@ export default function HomePage() {
             <div className="space-y-2.5 text-[13px] text-[#666]">
               <Link href="/privacy" className="block hover:text-black transition-colors">Privacy</Link>
               <Link href="/terms" className="block hover:text-black transition-colors">Terms</Link>
+              <Link href="/disclaimer" className="block hover:text-black transition-colors">Disclaimer</Link>
             </div>
           </div>
         </div>
