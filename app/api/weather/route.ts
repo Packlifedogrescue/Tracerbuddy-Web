@@ -1,30 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_KEY = process.env.OPEN_METEO_API_KEY!
+const API_KEY = process.env.WEATHERAPI_KEY!
 
-// WMO weather interpretation codes → label + emoji
-const WMO: Record<number, { label: string; icon: string }> = {
-  0:  { label: 'Clear sky',        icon: '☀️' },
-  1:  { label: 'Mainly clear',     icon: '🌤️' },
-  2:  { label: 'Partly cloudy',    icon: '⛅' },
-  3:  { label: 'Overcast',         icon: '☁️' },
-  45: { label: 'Foggy',            icon: '🌫️' },
-  48: { label: 'Icy fog',          icon: '🌫️' },
-  51: { label: 'Light drizzle',    icon: '🌦️' },
-  53: { label: 'Drizzle',          icon: '🌦️' },
-  55: { label: 'Heavy drizzle',    icon: '🌧️' },
-  61: { label: 'Light rain',       icon: '🌧️' },
-  63: { label: 'Rain',             icon: '🌧️' },
-  65: { label: 'Heavy rain',       icon: '🌧️' },
-  71: { label: 'Light snow',       icon: '🌨️' },
-  73: { label: 'Snow',             icon: '❄️' },
-  75: { label: 'Heavy snow',       icon: '❄️' },
-  80: { label: 'Rain showers',     icon: '🌦️' },
-  81: { label: 'Showers',          icon: '🌧️' },
-  82: { label: 'Violent showers',  icon: '⛈️' },
-  95: { label: 'Thunderstorm',     icon: '⛈️' },
-  96: { label: 'Thunderstorm',     icon: '⛈️' },
-  99: { label: 'Thunderstorm',     icon: '⛈️' },
+const CONDITION_ICON: Record<number, string> = {
+  1000: '☀️', 1003: '⛅', 1006: '☁️', 1009: '☁️',
+  1030: '🌫️', 1135: '🌫️', 1147: '🌫️',
+  1063: '🌦️', 1150: '🌦️', 1153: '🌦️', 1180: '🌦️', 1240: '🌦️',
+  1183: '🌧️', 1186: '🌧️', 1189: '🌧️', 1192: '🌧️', 1195: '🌧️',
+  1243: '🌧️', 1246: '🌧️', 1168: '🌧️', 1171: '🌧️', 1198: '🌧️', 1201: '🌧️',
+  1087: '⛈️', 1273: '⛈️', 1276: '⛈️', 1279: '⛈️', 1282: '⛈️',
+  1066: '🌨️', 1210: '🌨️', 1213: '🌨️', 1216: '🌨️', 1219: '🌨️',
+  1114: '❄️', 1117: '❄️', 1222: '❄️', 1225: '❄️', 1255: '❄️', 1258: '❄️',
+  1069: '🌨️', 1072: '🌨️', 1204: '🌨️', 1207: '🌨️', 1237: '🌨️',
 }
 
 export async function GET(req: NextRequest) {
@@ -36,49 +23,31 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Open-Meteo commercial endpoint (uses API key)
-    const url = new URL('https://customer-api.open-meteo.com/v1/forecast')
-    url.searchParams.set('latitude',  lat)
-    url.searchParams.set('longitude', lng)
-    url.searchParams.set('current',   [
-      'temperature_2m',
-      'apparent_temperature',
-      'weather_code',
-      'wind_speed_10m',
-      'wind_direction_10m',
-      'precipitation_probability',
-      'relative_humidity_2m',
-      'uv_index',
-    ].join(','))
-    url.searchParams.set('hourly',         'precipitation_probability')
-    url.searchParams.set('forecast_days',  '1')
-    url.searchParams.set('temperature_unit', 'fahrenheit')
-    url.searchParams.set('wind_speed_unit',  'mph')
-    url.searchParams.set('apikey', API_KEY)
-
-    const res  = await fetch(url.toString(), { next: { revalidate: 1800 } })
+    const url = `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${lat},${lng}&days=1&aqi=no&alerts=no`
+    const res  = await fetch(url, { next: { revalidate: 1800 } })
     const data = await res.json()
 
     const c    = data.current ?? {}
-    const code = c.weather_code ?? 0
-    const wmo  = WMO[code] ?? { label: 'Unknown', icon: '🌡️' }
+    const code = c.condition?.code ?? 1000
+    const icon = CONDITION_ICON[code] ?? '🌡️'
 
-    // Wind direction as compass bearing
-    const deg = c.wind_direction_10m ?? 0
-    const dirs = ['N','NE','E','SE','S','SW','W','NW']
-    const windDir = dirs[Math.round(deg / 45) % 8]
+    // Precipitation probability from first hourly forecast slot
+    const hourly   = data.forecast?.forecastday?.[0]?.hour ?? []
+    const nowHour  = new Date().getHours()
+    const thisHour = hourly.find((h: any) => new Date(h.time).getHours() === nowHour)
+    const precipProb = thisHour?.chance_of_rain ?? 0
 
     return NextResponse.json({
-      temp:        Math.round(c.temperature_2m      ?? 0),
-      feelsLike:   Math.round(c.apparent_temperature ?? 0),
-      humidity:    Math.round(c.relative_humidity_2m ?? 0),
-      windSpeed:   Math.round(c.wind_speed_10m       ?? 0),
-      windDir,
-      windDeg:     deg,
-      precipProb:  c.precipitation_probability       ?? 0,
-      uvIndex:     Math.round(c.uv_index             ?? 0),
-      condition:   wmo.label,
-      icon:        wmo.icon,
+      temp:       Math.round(c.temp_f       ?? 0),
+      feelsLike:  Math.round(c.feelslike_f  ?? 0),
+      humidity:   Math.round(c.humidity     ?? 0),
+      windSpeed:  Math.round(c.wind_mph     ?? 0),
+      windDir:    c.wind_dir                ?? 'N',
+      windDeg:    c.wind_degree             ?? 0,
+      precipProb,
+      uvIndex:    Math.round(c.uv           ?? 0),
+      condition:  c.condition?.text         ?? 'Unknown',
+      icon,
       code,
     })
   } catch {
