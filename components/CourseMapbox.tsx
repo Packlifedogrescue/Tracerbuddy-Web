@@ -123,15 +123,15 @@ export default function CourseMapbox({
         tileSize: 512,
         maxzoom: 14,
       })
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 2.5 })
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 3.5 })
 
       map.setFog({
-        range:           [0.5, 12],
-        color:           'rgb(220, 235, 245)',
-        'high-color':    'rgb(40, 90, 200)',
-        'horizon-blend': 0.06,
-        'space-color':   'rgb(5, 5, 20)',
-        'star-intensity': 0.35,
+        range:            [0.8, 14],
+        color:            'rgb(210, 230, 248)',
+        'high-color':     'rgb(30, 75, 195)',
+        'horizon-blend':  0.08,
+        'space-color':    'rgb(4, 4, 18)',
+        'star-intensity': 0.5,
       })
 
       map.addLayer({
@@ -139,10 +139,10 @@ export default function CourseMapbox({
         type: 'sky',
         paint: {
           'sky-type':                       'atmosphere',
-          'sky-atmosphere-sun':             [0.0, 90.0],
-          'sky-atmosphere-sun-intensity':   15,
-          'sky-atmosphere-color':           'rgba(135, 206, 235, 1.0)',
-          'sky-atmosphere-halo-color':      'rgba(255, 255, 255, 0.4)',
+          'sky-atmosphere-sun':             [0.0, 75.0],
+          'sky-atmosphere-sun-intensity':   18,
+          'sky-atmosphere-color':           'rgba(120, 200, 245, 1.0)',
+          'sky-atmosphere-halo-color':      'rgba(255, 255, 255, 0.6)',
         },
       })
     } catch (_) {}
@@ -164,7 +164,7 @@ export default function CourseMapbox({
     const lats  = pts.map(p => p[1])
     mapRef.current.fitBounds(
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-      { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 50 },
+      { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 58 },
     )
   }, [mapLoaded, holes, selectedHole])
 
@@ -195,7 +195,7 @@ export default function CourseMapbox({
       center: [centerLng, centerLat],
       zoom: 18.5,
       bearing,
-      pitch: 70,
+      pitch: 76,
       duration: 1500,
       essential: true,
     })
@@ -304,6 +304,47 @@ export default function CourseMapbox({
     })
   }, [activeHole])
 
+  // Distance rings as actual GeoJSON circles on the map surface
+  const ringCircles = useMemo((): GeoJSON.FeatureCollection => {
+    if (!activeHole) return { type: 'FeatureCollection', features: [] }
+    const gLat = parseNum(activeHole.GreenLatitude)
+    const gLng = parseNum(activeHole.GreenLongitude)
+    if (!gLat || !gLng) return { type: 'FeatureCollection', features: [] }
+    const holeYards = activeHole.Yardage ?? activeHole.Yards ?? 9999
+    const cosLat = Math.cos(gLat * Math.PI / 180)
+    const features = RING_YARDS.filter(y => y < holeYards).map(yards => {
+      const radiusM = yards * 0.9144
+      const steps   = 72
+      const coords: [number, number][] = []
+      for (let i = 0; i <= steps; i++) {
+        const angle = (i * 2 * Math.PI) / steps
+        coords.push([
+          gLng + (radiusM * Math.sin(angle)) / (111111 * cosLat),
+          gLat + (radiusM * Math.cos(angle)) / 111111,
+        ])
+      }
+      return { type: 'Feature' as const, geometry: { type: 'LineString' as const, coordinates: coords }, properties: { yards } }
+    })
+    return { type: 'FeatureCollection', features }
+  }, [activeHole])
+
+  // Green highlight circle (~15 m radius)
+  const greenCircle = useMemo((): GeoJSON.FeatureCollection => {
+    if (!activeHole) return { type: 'FeatureCollection', features: [] }
+    const gLat = parseNum(activeHole.GreenLatitude)
+    const gLng = parseNum(activeHole.GreenLongitude)
+    if (!gLat || !gLng) return { type: 'FeatureCollection', features: [] }
+    const cosLat = Math.cos(gLat * Math.PI / 180)
+    const r = 15
+    const steps = 48
+    const ring: [number, number][] = []
+    for (let i = 0; i <= steps; i++) {
+      const a = (i * 2 * Math.PI) / steps
+      ring.push([gLng + (r * Math.sin(a)) / (111111 * cosLat), gLat + (r * Math.cos(a)) / 111111])
+    }
+    return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} }] }
+  }, [activeHole])
+
   const SF = { fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }
 
   return (
@@ -338,6 +379,47 @@ export default function CourseMapbox({
           </Source>
         )}
 
+        {/* Green highlight circle */}
+        <Source id="green-circle" type="geojson" data={greenCircle}>
+          <Layer id="green-fill"    type="fill"   paint={{ 'fill-color': 'rgba(74,222,128,0.22)', 'fill-outline-color': 'rgba(74,222,128,0)' }} />
+          <Layer id="green-outline" type="line"   paint={{ 'line-color': 'rgba(134,239,172,0.9)', 'line-width': 2, 'line-blur': 1 }} />
+          <Layer id="green-glow"    type="line"   paint={{ 'line-color': 'rgba(74,222,128,0.4)',  'line-width': 8, 'line-blur': 6 }} />
+        </Source>
+
+        {/* Distance rings as circles on the map surface */}
+        <Source id="ring-circles" type="geojson" data={ringCircles}>
+          <Layer
+            id="ring-glow"
+            type="line"
+            paint={{
+              'line-color': [
+                'case',
+                ['==', ['get', 'yards'], 50],  'rgba(255,255,255,0.3)',
+                ['==', ['get', 'yards'], 100], 'rgba(34,197,94,0.4)',
+                ['==', ['get', 'yards'], 150], 'rgba(251,191,36,0.4)',
+                'rgba(239,68,68,0.4)',
+              ],
+              'line-width':  7,
+              'line-blur':   5,
+            } as any}
+          />
+          <Layer
+            id="ring-lines"
+            type="line"
+            paint={{
+              'line-color': [
+                'case',
+                ['==', ['get', 'yards'], 50],  'rgba(255,255,255,0.75)',
+                ['==', ['get', 'yards'], 100], 'rgba(34,197,94,0.9)',
+                ['==', ['get', 'yards'], 150], 'rgba(251,191,36,0.9)',
+                'rgba(239,68,68,0.9)',
+              ],
+              'line-width':     1.8,
+              'line-dasharray': [4, 3],
+            } as any}
+          />
+        </Source>
+
         {/* Yardage labels around green */}
         {ringLabels.map(r => (
           <Marker key={`ring-${r.yards}`} latitude={r.lat} longitude={r.lng} anchor="bottom">
@@ -368,9 +450,9 @@ export default function CourseMapbox({
 
         {/* Active hole — wide glow + animated flowing dashes */}
         <Source id="active-fairway" type="geojson" data={activeFairway}>
-          <Layer id="active-glow-wide" type="line" paint={{ 'line-color': '#C9A84C', 'line-width': 22, 'line-blur': 18, 'line-opacity': 0.3 }} />
-          <Layer id="active-glow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 8, 'line-blur': 6, 'line-opacity': 0.2 }} />
-          <Layer id="active-flow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 2.5, 'line-dasharray': [4, 3], 'line-opacity': 1 } as any} />
+          <Layer id="active-glow-wide" type="line" paint={{ 'line-color': '#C9A84C', 'line-width': 30, 'line-blur': 24, 'line-opacity': 0.35 }} />
+          <Layer id="active-glow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 10, 'line-blur': 8, 'line-opacity': 0.25 }} />
+          <Layer id="active-flow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 3, 'line-dasharray': [4, 3], 'line-opacity': 1 } as any} />
         </Source>
 
         {/* Tee markers */}
