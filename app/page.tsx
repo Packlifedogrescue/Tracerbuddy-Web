@@ -121,7 +121,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════ WAITLIST ════════════════════════ */}
-      <section className="px-6 md:px-12 pb-12 max-w-[1400px] mx-auto">
+      <section id="waitlist" className="px-6 md:px-12 pb-12 max-w-[1400px] mx-auto scroll-mt-24">
         <Reveal>
           <div className="bg-gradient-to-br from-[#EFE7D4] to-[#E5DBC2] rounded-3xl px-8 md:px-16 py-14 text-center relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(223,153,5,0.2) 0%, transparent 60%)' }} />
