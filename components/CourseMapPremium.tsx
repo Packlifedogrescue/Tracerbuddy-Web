@@ -1,6 +1,9 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
-import { X, MapPin, Search, Flag, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { X, MapPin, Search, Flag, Loader2, AlertCircle, ChevronLeft } from 'lucide-react'
+
+const CourseMapbox = dynamic(() => import('@/components/CourseMapbox'), { ssr: false })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface GolfCourse {
@@ -118,123 +121,6 @@ function Scorecard({ holes, active, onSelect }: {
       </table>
     </div>
   )
-}
-
-// ── Leaflet Map ───────────────────────────────────────────────────────────────
-function LeafletMap({ lat, lng, holes }: {
-  lat: number
-  lng: number
-  holes: GolfHole[]
-}) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef       = useRef<any>(null)
-  const markersRef   = useRef<any[]>([])
-
-  useEffect(() => {
-    if (!containerRef.current) return
-    // Leaflet must be imported dynamically (no SSR)
-    import('leaflet').then(L => {
-      // Fix default icon paths broken by webpack
-      delete (L.Icon.Default.prototype as any)._getIconUrl
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      })
-
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-      }
-
-      const map = L.map(containerRef.current!, {
-        center: [lat, lng],
-        zoom: 16,
-        zoomControl: true,
-        attributionControl: false,
-      })
-      mapRef.current = map
-
-      // ESRI World Imagery (satellite, free, no key required)
-      L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 20 }
-      ).addTo(map)
-
-      // Thin labels overlay
-      L.tileLayer(
-        'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 20, opacity: 0.6 }
-      ).addTo(map)
-
-      // Hole markers
-      markersRef.current.forEach(m => m.remove())
-      markersRef.current = []
-
-      holes.forEach(h => {
-        const n    = holeNum(h)
-        const tLat = parseNum(h.TeeLatitude)
-        const tLng = parseNum(h.TeeLongitude)
-        const gLat = parseNum(h.GreenLatitude)
-        const gLng = parseNum(h.GreenLongitude)
-
-        if (tLat && tLng) {
-          const teeIcon = L.divIcon({
-            html: `<div style="
-              background:#3B82F6;border:2px solid white;border-radius:50% 50% 50% 0;
-              transform:rotate(-45deg);width:18px;height:18px;
-              display:flex;align-items:center;justify-content:center;
-              box-shadow:0 2px 6px rgba(0,0,0,0.4);
-            "><span style="transform:rotate(45deg);font-size:9px;font-weight:900;color:white;display:block;text-align:center;line-height:14px">${n}</span></div>`,
-            className: '',
-            iconSize: [18, 18],
-            iconAnchor: [9, 18],
-          })
-          const m = L.marker([tLat, tLng], { icon: teeIcon })
-            .bindTooltip(`Hole ${n} Tee · Par ${h.Par ?? '—'} · ${holeYards(h) ?? '—'} yds`, { direction: 'top' })
-          m.addTo(map)
-          markersRef.current.push(m)
-        }
-
-        if (gLat && gLng) {
-          const greenIcon = L.divIcon({
-            html: `<div style="
-              background:#22A06B;border:2px solid white;border-radius:50%;
-              width:14px;height:14px;
-              box-shadow:0 2px 6px rgba(0,0,0,0.4);
-            "></div>`,
-            className: '',
-            iconSize: [14, 14],
-            iconAnchor: [7, 7],
-          })
-          const m = L.marker([gLat, gLng], { icon: greenIcon })
-            .bindTooltip(`Hole ${n} Green`, { direction: 'top' })
-          m.addTo(map)
-          markersRef.current.push(m)
-        }
-
-        // Draw line tee → green
-        if (tLat && tLng && gLat && gLng) {
-          const line = L.polyline([[tLat, tLng], [gLat, gLng]], {
-            color: 'rgba(255,255,255,0.35)',
-            weight: 1.5,
-            dashArray: '4 4',
-          })
-          line.addTo(map)
-          markersRef.current.push(line)
-        }
-      })
-    })
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-      }
-    }
-  }, [lat, lng, holes])
-
-  return <div ref={containerRef} className="w-full h-full" />
 }
 
 // ── Search Result Item ────────────────────────────────────────────────────────
@@ -456,26 +342,22 @@ export default function CourseMapPremium({
               ))}
             </div>
 
-            {/* Satellite map */}
+            {/* 3D Satellite map */}
             <div className={`flex-1 min-h-0 relative ${tab === 'scorecard' ? 'hidden sm:block' : ''}`}>
               {hasMap ? (
-                <LeafletMap lat={lat!} lng={lng!} holes={holes} />
+                <CourseMapbox
+                  lat={lat!}
+                  lng={lng!}
+                  holes={holes}
+                  courseName={name}
+                  selectedHole={activeHole ?? undefined}
+                  onHoleClick={n => setActiveHole(n ?? null)}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE]">
                   <div className="text-center">
                     <MapPin className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
                     <p className="text-[13px] text-gray-400">No GPS coordinates available</p>
-                  </div>
-                </div>
-              )}
-              {/* Legend */}
-              {hasMap && holes.length > 0 && (
-                <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-3 pointer-events-none">
-                  <div className="flex items-center gap-1.5 text-[10.5px] text-white font-medium">
-                    <div className="w-3 h-3 rounded-full bg-[#3B82F6] border border-white" /> Tee
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10.5px] text-white font-medium">
-                    <div className="w-3 h-3 rounded-full bg-[#22A06B] border border-white" /> Green
                   </div>
                 </div>
               )}
