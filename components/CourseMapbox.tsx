@@ -304,47 +304,6 @@ export default function CourseMapbox({
     })
   }, [activeHole])
 
-  // Distance rings as actual GeoJSON circles on the map surface
-  const ringCircles = useMemo((): GeoJSON.FeatureCollection => {
-    if (!activeHole) return { type: 'FeatureCollection', features: [] }
-    const gLat = parseNum(activeHole.GreenLatitude)
-    const gLng = parseNum(activeHole.GreenLongitude)
-    if (!gLat || !gLng) return { type: 'FeatureCollection', features: [] }
-    const holeYards = activeHole.Yardage ?? activeHole.Yards ?? 9999
-    const cosLat = Math.cos(gLat * Math.PI / 180)
-    const features = RING_YARDS.filter(y => y < holeYards).map(yards => {
-      const radiusM = yards * 0.9144
-      const steps   = 72
-      const coords: [number, number][] = []
-      for (let i = 0; i <= steps; i++) {
-        const angle = (i * 2 * Math.PI) / steps
-        coords.push([
-          gLng + (radiusM * Math.sin(angle)) / (111111 * cosLat),
-          gLat + (radiusM * Math.cos(angle)) / 111111,
-        ])
-      }
-      return { type: 'Feature' as const, geometry: { type: 'LineString' as const, coordinates: coords }, properties: { yards } }
-    })
-    return { type: 'FeatureCollection', features }
-  }, [activeHole])
-
-  // Green highlight circle (~15 m radius)
-  const greenCircle = useMemo((): GeoJSON.FeatureCollection => {
-    if (!activeHole) return { type: 'FeatureCollection', features: [] }
-    const gLat = parseNum(activeHole.GreenLatitude)
-    const gLng = parseNum(activeHole.GreenLongitude)
-    if (!gLat || !gLng) return { type: 'FeatureCollection', features: [] }
-    const cosLat = Math.cos(gLat * Math.PI / 180)
-    const r = 15
-    const steps = 48
-    const ring: [number, number][] = []
-    for (let i = 0; i <= steps; i++) {
-      const a = (i * 2 * Math.PI) / steps
-      ring.push([gLng + (r * Math.sin(a)) / (111111 * cosLat), gLat + (r * Math.cos(a)) / 111111])
-    }
-    return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} }] }
-  }, [activeHole])
-
   const SF = { fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }
 
   return (
@@ -378,47 +337,6 @@ export default function CourseMapbox({
             <Layer id="osm-green"    type="fill" filter={['==', ['get', 'golf'], 'green']}        paint={{ 'fill-color': 'rgba(74,222,128,0.55)',  'fill-outline-color': 'rgba(74,222,128,0.85)'  }} />
           </Source>
         )}
-
-        {/* Green highlight circle */}
-        <Source id="green-circle" type="geojson" data={greenCircle}>
-          <Layer id="green-fill"    type="fill"   paint={{ 'fill-color': 'rgba(74,222,128,0.22)', 'fill-outline-color': 'rgba(74,222,128,0)' }} />
-          <Layer id="green-outline" type="line"   paint={{ 'line-color': 'rgba(134,239,172,0.9)', 'line-width': 2, 'line-blur': 1 }} />
-          <Layer id="green-glow"    type="line"   paint={{ 'line-color': 'rgba(74,222,128,0.4)',  'line-width': 8, 'line-blur': 6 }} />
-        </Source>
-
-        {/* Distance rings as circles on the map surface */}
-        <Source id="ring-circles" type="geojson" data={ringCircles}>
-          <Layer
-            id="ring-glow"
-            type="line"
-            paint={{
-              'line-color': [
-                'case',
-                ['==', ['get', 'yards'], 50],  'rgba(255,255,255,0.3)',
-                ['==', ['get', 'yards'], 100], 'rgba(34,197,94,0.4)',
-                ['==', ['get', 'yards'], 150], 'rgba(251,191,36,0.4)',
-                'rgba(239,68,68,0.4)',
-              ],
-              'line-width':  7,
-              'line-blur':   5,
-            } as any}
-          />
-          <Layer
-            id="ring-lines"
-            type="line"
-            paint={{
-              'line-color': [
-                'case',
-                ['==', ['get', 'yards'], 50],  'rgba(255,255,255,0.75)',
-                ['==', ['get', 'yards'], 100], 'rgba(34,197,94,0.9)',
-                ['==', ['get', 'yards'], 150], 'rgba(251,191,36,0.9)',
-                'rgba(239,68,68,0.9)',
-              ],
-              'line-width':     1.8,
-              'line-dasharray': [4, 3],
-            } as any}
-          />
-        </Source>
 
         {/* Yardage labels around green */}
         {ringLabels.map(r => (
