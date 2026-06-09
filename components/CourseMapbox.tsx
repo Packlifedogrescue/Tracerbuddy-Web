@@ -69,6 +69,37 @@ function bearingTo(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return (Math.atan2(lng2 - lng1, lat2 - lat1) * 180 / Math.PI + 360) % 360
 }
 
+// Compute centerline of an OSM fairway polygon by slicing it perpendicular to the tee→green axis
+function polygonCenterline(
+  ring: [number, number][],
+  tee: [number, number],
+  green: [number, number],
+): [number, number][] {
+  const dx = green[0] - tee[0], dy = green[1] - tee[1]
+  const len = Math.sqrt(dx * dx + dy * dy) || 1
+  const nx = dx / len, ny = dy / len
+  const px = -ny, py = nx
+  const proj = ring.map(([lng, lat]) => ({
+    along: (lng - tee[0]) * nx + (lat - tee[1]) * ny,
+    perp:  (lng - tee[0]) * px + (lat - tee[1]) * py,
+  }))
+  const alongs = proj.map(p => p.along)
+  const minA = Math.min(...alongs), maxA = Math.max(...alongs)
+  const span = (maxA - minA) || 1
+  const N = 10
+  const pts: [number, number][] = [tee]
+  for (let i = 1; i < N; i++) {
+    const target = minA + (i / N) * span
+    const slice  = proj.filter(p => Math.abs(p.along - target) < span / N * 0.9)
+    if (slice.length < 2) continue
+    const lo = Math.min(...slice.map(p => p.perp))
+    const hi = Math.max(...slice.map(p => p.perp))
+    pts.push([tee[0] + target * nx + ((lo + hi) / 2) * px, tee[1] + target * ny + ((lo + hi) / 2) * py])
+  }
+  pts.push(green)
+  return pts
+}
+
 const PAR_COLOR: Record<number, string> = {
   3: 'rgba(96,165,250,0.85)',
   4: 'rgba(255,255,255,0.65)',
@@ -228,39 +259,42 @@ export default function CourseMapbox({
     return () => { cancelled = true }
   }, [lat, lng])
 
-  // ── GeoJSON fairways ────────────────────────────────────────────────────────
-  const fairways: GeoJSON.FeatureCollection = {
-    type: 'FeatureCollection',
-    features: holes.flatMap(h => {
-      const tLat = parseNum(h.TeeLatitude);  const tLng = parseNum(h.TeeLongitude)
-      const gLat = parseNum(h.GreenLatitude); const gLng = parseNum(h.GreenLongitude)
-      if (!tLat || !tLng || !gLat || !gLng) return []
-      const mid: [number, number][] = (h.Waypoints ?? []).map(w => [w.lng, w.lat])
-      return [{ type: 'Feature' as const,
-        geometry: { type: 'LineString' as const, coordinates: [[tLng, tLat], ...mid, [gLng, gLat]] },
-        properties: { holeNo: holeNum(h), par: h.Par ?? 4 },
-      }]
-    }),
-  }
-
   const activeHole = selectedHole != null ? holes.find(h => holeNum(h) === selectedHole) : null
 
-  // Active hole line for animation
+  // Curved fairway line: traces the OSM fairway polygon centerline when available
   const activeFairway = useMemo((): GeoJSON.FeatureCollection => {
     if (!activeHole) return { type: 'FeatureCollection', features: [] }
     const tLat = parseNum(activeHole.TeeLatitude),  tLng = parseNum(activeHole.TeeLongitude)
     const gLat = parseNum(activeHole.GreenLatitude), gLng = parseNum(activeHole.GreenLongitude)
     if (!tLat || !tLng || !gLat || !gLng) return { type: 'FeatureCollection', features: [] }
-    const mid: [number, number][] = (activeHole.Waypoints ?? []).map(w => [w.lng, w.lat])
-    return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: [[tLng, tLat], ...mid, [gLng, gLat]] }, properties: {} }] }
-  }, [activeHole])
+    const tee:   [number, number] = [tLng, tLat]
+    const green: [number, number] = [gLng, gLat]
+    let coordinates: [number, number][] = [tee, green]
+    if (osmData) {
+      const midLng = (tLng + gLng) / 2, midLat = (tLat + gLat) / 2
+      let best: GeoJSON.Polygon | null = null, bestDist = 0.008
+      for (const f of osmData.features) {
+        if (f.properties?.golf !== 'fairway' || f.geometry.type !== 'Polygon') continue
+        const ring = (f.geometry as GeoJSON.Polygon).coordinates[0] as [number, number][]
+        const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length
+        const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
+        const d = Math.sqrt((cx - midLng) ** 2 + (cy - midLat) ** 2)
+        if (d < bestDist) { bestDist = d; best = f.geometry as GeoJSON.Polygon }
+      }
+      if (best) coordinates = polygonCenterline(best.coordinates[0] as [number, number][], tee, green)
+    }
+    if (coordinates.length <= 2 && (activeHole.Waypoints ?? []).length > 0) {
+      const mid: [number, number][] = (activeHole.Waypoints ?? []).map(w => [w.lng, w.lat])
+      coordinates = [tee, ...mid, green]
+    }
+    return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: {} }] }
+  }, [activeHole, osmData])
 
-  // Animate flowing dashes on active line
+  // Animate dashes on the active line
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return
     const map = mapRef.current.getMap() as any
-    let offset = 0
-    let animId: number
+    let offset = 0, animId: number
     const step = () => {
       offset = (offset - 0.25 + 10) % 10
       try { map.setPaintProperty('active-flow', 'line-dash-offset', offset) } catch {}
@@ -269,7 +303,6 @@ export default function CourseMapbox({
     animId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(animId)
   }, [mapLoaded])
-
 
   const SF = { fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }
 
@@ -305,30 +338,11 @@ export default function CourseMapbox({
           </Source>
         )}
 
-        {/* Par-colored fairway lines — dimmed when a hole is active */}
-        <Source id="fairways" type="geojson" data={fairways}>
-          <Layer id="fairway-glow" type="line" paint={{ 'line-color': 'rgba(255,255,255,0.08)', 'line-width': 10, 'line-blur': 8, 'line-opacity': activeHole ? 0.4 : 1 }} />
-          <Layer
-            id="fairway-lines"
-            type="line"
-            paint={{
-              'line-color': [
-                'case',
-                ['==', ['get', 'par'], 3], 'rgba(96,165,250,0.7)',
-                ['==', ['get', 'par'], 5], 'rgba(52,211,153,0.7)',
-                'rgba(255,255,255,0.38)',
-              ],
-              'line-width': 1.5,
-              'line-opacity': activeHole ? 0.35 : 1,
-            }}
-          />
-        </Source>
-
-        {/* Active hole — wide glow + animated flowing dashes */}
+        {/* Active hole — curved line following the OSM fairway centerline */}
         <Source id="active-fairway" type="geojson" data={activeFairway}>
-          <Layer id="active-glow-wide" type="line" paint={{ 'line-color': '#C9A84C', 'line-width': 30, 'line-blur': 24, 'line-opacity': 0.35 }} />
-          <Layer id="active-glow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 10, 'line-blur': 8, 'line-opacity': 0.25 }} />
-          <Layer id="active-flow" type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 3, 'line-dasharray': [4, 3], 'line-opacity': 1 } as any} />
+          <Layer id="active-glow-wide" type="line" paint={{ 'line-color': '#C9A84C', 'line-width': 22, 'line-blur': 18, 'line-opacity': 0.28 }} />
+          <Layer id="active-glow"      type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 6,  'line-blur': 5,  'line-opacity': 0.18 }} />
+          <Layer id="active-flow"      type="line" paint={{ 'line-color': '#FFFFFF', 'line-width': 2.5, 'line-dasharray': [4, 3], 'line-opacity': 0.82 } as any} />
         </Source>
 
         {/* Tee markers */}
@@ -531,18 +545,6 @@ export default function CourseMapbox({
         </div>
       )}
 
-      {/* ── Par legend (no hole selected) ── */}
-      {holes.length > 0 && !selectedHole && (
-        <div className="absolute bottom-16 right-3 pointer-events-none flex flex-col gap-1.5"
-          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '8px 10px' }}>
-          {[{ par: 3, label: 'Par 3', color: 'rgba(96,165,250,0.85)' }, { par: 4, label: 'Par 4', color: 'rgba(255,255,255,0.65)' }, { par: 5, label: 'Par 5', color: 'rgba(52,211,153,0.85)' }].map(({ par, label, color }) => (
-            <div key={par} className="flex items-center gap-2">
-              <div style={{ width: 18, height: 2.5, borderRadius: 2, background: color }} />
-              <span style={{ ...SF, color: 'rgba(255,255,255,0.65)', fontSize: 10, fontWeight: 600 }}>{label}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
