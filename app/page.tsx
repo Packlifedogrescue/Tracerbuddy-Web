@@ -338,42 +338,6 @@ export default function HomePage() {
         </Reveal>
       </section>
 
-      {/* ════════════════════════ iPHONE + APPLE WATCH ════════════════════════ */}
-      <section id="watch" className="px-6 md:px-12 pb-8 max-w-[1400px] mx-auto">
-        <Reveal>
-          <div className="bg-gradient-to-br from-[#EFE7D4] via-[#EFE7D4] to-[#E5DBC2] rounded-3xl px-8 md:px-16 pt-14 pb-0 overflow-hidden relative">
-            {/* Decorative gradient orb */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.12) 0%, transparent 60%)' }} />
-            <div className="relative z-10 grid md:grid-cols-5 gap-10 items-end">
-              <div className="md:col-span-2 pb-14">
-                <div className="text-[11px] font-bold text-[#DF9905] tracking-[0.25em] mb-5">iPHONE + APPLE WATCH</div>
-                <h2 className="font-serif text-3xl md:text-[44px] font-medium leading-[1.1] tracking-[-0.02em] mb-8">
-                  Everything you need.<br />Right on your wrist.
-                </h2>
-                <div className="space-y-3.5">
-                  {[
-                    'Auto shot detection from your Apple Watch',
-                    'Live distances and hole maps as you play',
-                    'Swing speed, tempo, and motion analytics',
-                    'Syncs seamlessly between iPhone and Watch',
-                  ].map(item => (
-                    <div key={item} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#DF9905] flex items-center justify-center flex-shrink-0">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-                      </div>
-                      <span className="text-[14.5px] text-[#1A1A1A]">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="md:col-span-3 flex justify-center items-end">
-                <Image src="/images/watch-section.png" alt="iPhone and Apple Watch" width={1448} height={1086} className="w-full h-auto scale-[1.08] origin-bottom mix-blend-multiply" />
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
       {/* ════════════════════════ SWINGTRACE PREVIEW ════════════════════════ */}
       <section className="px-4 md:px-12 pb-8 max-w-[1400px] mx-auto">
         <Reveal>
