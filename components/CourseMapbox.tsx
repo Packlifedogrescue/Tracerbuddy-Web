@@ -271,14 +271,23 @@ export default function CourseMapbox({
     const green: [number, number] = [gLng, gLat]
     let coordinates: [number, number][] = [tee, green]
     if (osmData) {
-      const midLng = (tLng + gLng) / 2, midLat = (tLat + gLat) / 2
-      let best: GeoJSON.Polygon | null = null, bestDist = 0.008
+      // Match the fairway polygon whose centroid sits closest to the tee→green
+      // LINE SEGMENT (not just the midpoint) — prevents picking an adjacent hole's fairway
+      const dx = green[0] - tee[0], dy = green[1] - tee[1]
+      const len2 = dx*dx + dy*dy
+      const segDist = (cx: number, cy: number) => {
+        if (len2 === 0) return Math.sqrt((cx-tee[0])**2 + (cy-tee[1])**2)
+        const t = Math.max(0, Math.min(1, ((cx-tee[0])*dx + (cy-tee[1])*dy) / len2))
+        const px = tee[0] + t*dx, py = tee[1] + t*dy
+        return Math.sqrt((cx-px)**2 + (cy-py)**2)
+      }
+      let best: GeoJSON.Polygon | null = null, bestDist = 0.0025 // ~250m from the line
       for (const f of osmData.features) {
         if (f.properties?.golf !== 'fairway' || f.geometry.type !== 'Polygon') continue
         const ring = (f.geometry as GeoJSON.Polygon).coordinates[0] as [number, number][]
         const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length
         const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
-        const d = Math.sqrt((cx - midLng) ** 2 + (cy - midLat) ** 2)
+        const d = segDist(cx, cy)
         if (d < bestDist) { bestDist = d; best = f.geometry as GeoJSON.Polygon }
       }
       if (best) coordinates = polygonCenterline(best.coordinates[0] as [number, number][], tee, green)
