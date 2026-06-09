@@ -367,7 +367,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="md:col-span-3 flex justify-center items-end">
-                <Image src="/images/watch-section.png" alt="iPhone and Apple Watch" width={1448} height={1086} className="w-full h-auto scale-[1.08] origin-bottom" />
+                <Image src="/images/watch-section.png" alt="iPhone and Apple Watch" width={1448} height={1086} className="w-full h-auto scale-[1.08] origin-bottom mix-blend-multiply" />
               </div>
             </div>
           </div>
