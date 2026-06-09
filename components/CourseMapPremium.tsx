@@ -323,63 +323,64 @@ export default function CourseMapPremium({
           </div>
         )}
 
-        {/* Course detail: map + scorecard */}
+        {/* Course detail: full-width map + tab scorecard */}
         {selected && !loading && (
-          <div className="flex flex-col sm:flex-row flex-1 min-h-0">
+          <div className="flex flex-col flex-1 min-h-0">
 
-            {/* Map / scorecard tabs on mobile */}
-            <div className="sm:hidden flex border-b border-[#F0EAE0] shrink-0">
+            {/* Tab bar */}
+            <div className="flex border-b border-[#F0EAE0] shrink-0">
               {(['map', 'scorecard'] as const).map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`flex-1 py-2.5 text-[12.5px] font-semibold capitalize transition-colors ${
-                    tab === t ? 'text-[#C9A84C] border-b-2 border-[#C9A84C]' : 'text-gray-400'
+                  className={`flex-1 py-2.5 text-[13px] font-semibold transition-colors ${
+                    tab === t ? 'text-[#C9A84C] border-b-2 border-[#C9A84C]' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  {t === 'map' ? 'Satellite Map' : 'Scorecard'}
+                  {t === 'map' ? '3D Satellite' : 'Scorecard'}
                 </button>
               ))}
             </div>
 
-            {/* 3D Satellite map */}
-            <div className={`flex-1 min-h-0 relative ${tab === 'scorecard' ? 'hidden sm:block' : ''}`}>
-              {hasMap ? (
-                <CourseMapbox
-                  lat={lat!}
-                  lng={lng!}
-                  holes={holes}
-                  courseName={name}
-                  selectedHole={activeHole ?? undefined}
-                  onHoleClick={n => setActiveHole(n ?? null)}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE]">
-                  <div className="text-center">
-                    <MapPin className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
-                    <p className="text-[13px] text-gray-400">No GPS coordinates available</p>
+            {/* Full-width 3D map */}
+            {tab === 'map' && (
+              <div className="flex-1 min-h-0 relative">
+                {hasMap ? (
+                  <CourseMapbox
+                    lat={lat!}
+                    lng={lng!}
+                    holes={holes}
+                    courseName={name}
+                    selectedHole={activeHole ?? undefined}
+                    onHoleClick={n => setActiveHole(n ?? null)}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE]">
+                    <div className="text-center">
+                      <MapPin className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
+                      <p className="text-[13px] text-gray-400">No GPS coordinates available</p>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Scorecard panel */}
-            <div className={`sm:w-[220px] shrink-0 border-l border-[#F0EAE0] flex flex-col ${tab === 'map' ? 'hidden sm:flex' : 'flex'}`}>
-              <div className="px-4 py-3 border-b border-[#F0EAE0] shrink-0">
-                <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Scorecard</div>
+                )}
               </div>
-              {holes.length > 0 ? (
-                <Scorecard
-                  holes={holes}
-                  active={activeHole}
-                  onSelect={n => flyToHole(n)}
-                />
-              ) : (
-                <div className="flex-1 flex items-center justify-center p-6 text-center">
-                  <p className="text-[12px] text-gray-400">Hole-by-hole data not available for this course.</p>
-                </div>
-              )}
-            </div>
+            )}
+
+            {/* Scorecard */}
+            {tab === 'scorecard' && (
+              <div className="flex-1 overflow-auto">
+                {holes.length > 0 ? (
+                  <Scorecard
+                    holes={holes}
+                    active={activeHole}
+                    onSelect={n => flyToHole(n)}
+                  />
+                ) : (
+                  <div className="flex-1 flex items-center justify-center p-6 text-center">
+                    <p className="text-[12px] text-gray-400">Hole-by-hole data not available for this course.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

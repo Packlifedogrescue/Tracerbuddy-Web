@@ -69,14 +69,6 @@ function bearingTo(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return (Math.atan2(lng2 - lng1, lat2 - lat1) * 180 / Math.PI + 360) % 360
 }
 
-const RING_YARDS = [50, 100, 150, 200]
-const RING_COLOR: Record<number, string> = {
-  50:  'rgba(255,255,255,0.55)',
-  100: 'rgba(34,197,94,0.75)',
-  150: 'rgba(251,191,36,0.75)',
-  200: 'rgba(239,68,68,0.75)',
-}
-
 const PAR_COLOR: Record<number, string> = {
   3: 'rgba(96,165,250,0.85)',
   4: 'rgba(255,255,255,0.65)',
@@ -123,15 +115,15 @@ export default function CourseMapbox({
         tileSize: 512,
         maxzoom: 14,
       })
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 3.5 })
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.2 })
 
       map.setFog({
-        range:            [0.8, 14],
-        color:            'rgb(210, 230, 248)',
-        'high-color':     'rgb(30, 75, 195)',
-        'horizon-blend':  0.08,
-        'space-color':    'rgb(4, 4, 18)',
-        'star-intensity': 0.5,
+        range:            [4, 20],
+        color:            'rgb(186, 210, 235)',
+        'high-color':     'rgb(80, 140, 220)',
+        'horizon-blend':  0.03,
+        'space-color':    'rgb(8, 8, 25)',
+        'star-intensity': 0.3,
       })
 
       map.addLayer({
@@ -139,10 +131,10 @@ export default function CourseMapbox({
         type: 'sky',
         paint: {
           'sky-type':                       'atmosphere',
-          'sky-atmosphere-sun':             [0.0, 75.0],
-          'sky-atmosphere-sun-intensity':   18,
-          'sky-atmosphere-color':           'rgba(120, 200, 245, 1.0)',
-          'sky-atmosphere-halo-color':      'rgba(255, 255, 255, 0.6)',
+          'sky-atmosphere-sun':             [0.0, 90.0],
+          'sky-atmosphere-sun-intensity':   12,
+          'sky-atmosphere-color':           'rgba(140, 200, 240, 1.0)',
+          'sky-atmosphere-halo-color':      'rgba(255, 255, 255, 0.4)',
         },
       })
     } catch (_) {}
@@ -164,7 +156,7 @@ export default function CourseMapbox({
     const lats  = pts.map(p => p[1])
     mapRef.current.fitBounds(
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-      { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 58 },
+      { padding: { top: 60, bottom: 100, left: 52, right: 52 }, duration: 1400, maxZoom: 16, pitch: 45 },
     )
   }, [mapLoaded, holes, selectedHole])
 
@@ -193,9 +185,9 @@ export default function CourseMapbox({
     const mbMap = mapRef.current.getMap() as any
     mbMap.flyTo({
       center: [centerLng, centerLat],
-      zoom: 18.5,
+      zoom: 18.2,
       bearing,
-      pitch: 76,
+      pitch: 62,
       duration: 1500,
       essential: true,
     })
@@ -278,31 +270,6 @@ export default function CourseMapbox({
     return () => cancelAnimationFrame(animId)
   }, [mapLoaded])
 
-  const ringLabels = useMemo(() => {
-    if (!activeHole) return []
-    const gLat = parseNum(activeHole.GreenLatitude)
-    const gLng = parseNum(activeHole.GreenLongitude)
-    const tLat = parseNum(activeHole.TeeLatitude)
-    const tLng = parseNum(activeHole.TeeLongitude)
-    if (!gLat || !gLng || !tLat || !tLng) return []
-    const holeYards = activeHole.Yardage ?? activeHole.Yards ?? 9999
-    // Normalize in meter-space so the direction is correct regardless of latitude
-    const cosLat  = Math.cos(gLat * Math.PI / 180)
-    const dLat_m  = (tLat - gLat) * 111111
-    const dLng_m  = (tLng - gLng) * 111111 * cosLat
-    const len_m   = Math.sqrt(dLat_m * dLat_m + dLng_m * dLng_m) || 1
-    const nLat_m  = dLat_m / len_m
-    const nLng_m  = dLng_m / len_m
-    return RING_YARDS.filter(y => y < holeYards).map(yards => {
-      const m = yards * 0.9144
-      return {
-        yards,
-        lat: gLat + nLat_m * m / 111111,
-        lng: gLng + nLng_m * m / (111111 * cosLat),
-        color: RING_COLOR[yards],
-      }
-    })
-  }, [activeHole])
 
   const SF = { fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }
 
@@ -318,7 +285,7 @@ export default function CourseMapbox({
       <Map
         ref={mapRef}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        initialViewState={{ latitude: lat, longitude: lng, zoom: 15, pitch: 50 }}
+        initialViewState={{ latitude: lat, longitude: lng, zoom: 15.5, pitch: 45 }}
         mapStyle="mapbox://styles/mapbox/satellite-v9"
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
@@ -337,15 +304,6 @@ export default function CourseMapbox({
             <Layer id="osm-green"    type="fill" filter={['==', ['get', 'golf'], 'green']}        paint={{ 'fill-color': 'rgba(74,222,128,0.55)',  'fill-outline-color': 'rgba(74,222,128,0.85)'  }} />
           </Source>
         )}
-
-        {/* Yardage labels around green */}
-        {ringLabels.map(r => (
-          <Marker key={`ring-${r.yards}`} latitude={r.lat} longitude={r.lng} anchor="bottom">
-            <div style={{ ...SF, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)', border: `1px solid ${r.color}`, borderRadius: 5, padding: '2px 6px', fontSize: 9, fontWeight: 800, color: r.color, letterSpacing: 0.5, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
-              {r.yards}y
-            </div>
-          </Marker>
-        ))}
 
         {/* Par-colored fairway lines — dimmed when a hole is active */}
         <Source id="fairways" type="geojson" data={fairways}>
@@ -395,7 +353,7 @@ export default function CourseMapbox({
                       ? 'linear-gradient(145deg, #D4AF45 0%, #8B6420 100%)'
                       : 'linear-gradient(145deg, rgba(20,14,4,0.95) 0%, rgba(0,0,0,0.9) 100%)',
                     border: `${active ? 2 : 1.5}px solid ${active ? '#FFD700' : '#C9A84C'}`,
-                    borderRadius: 9,
+                    borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     boxShadow: active
                       ? '0 0 0 5px rgba(201,168,76,0.35), 0 8px 24px rgba(0,0,0,0.9)'
