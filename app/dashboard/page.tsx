@@ -210,11 +210,38 @@ export default function DashboardPage() {
   const puttRds     = rounds.filter(r => r.putts)
   const avgPutts    = puttRds.length ? (puttRds.reduce((a, r) => a + r.putts, 0) / puttRds.length).toFixed(1) : null
   const girRds      = rounds.filter(r => r.gir_count != null)
-  const avgGIR      = girRds.length ? Math.round(girRds.reduce((a, r) => a + r.gir_count, 0) / girRds.length / 18 * 100) : null
+  const avgGIR      = girRds.length ? Math.round(girRds.reduce((a, r) => a + r.gir_count, 0) / girRds.length) : null
   // Only show handicap when the user has actual rounds (avoids showing 0.0 default)
   const latestHcp   = totalRounds > 0 ? ((profile as any)?.handicap_index ?? null) : null
   const latestRound = rounds[0] ?? null
   const firstName   = userName.split(' ')[0] || 'Golfer'
+
+  // Short-game stats
+  const scramRds    = rounds.filter(r => r.scrambling_pct != null)
+  const avgScrambling = scramRds.length ? Math.round(scramRds.reduce((a, r) => a + r.scrambling_pct, 0) / scramRds.length) : null
+  const upDownRds   = rounds.filter(r => r.up_and_down_pct != null)
+  const avgUpDown   = upDownRds.length ? Math.round(upDownRds.reduce((a, r) => a + r.up_and_down_pct, 0) / upDownRds.length) : null
+  const sandRds     = rounds.filter(r => r.sand_save_pct != null)
+  const avgSandSave = sandRds.length ? Math.round(sandRds.reduce((a, r) => a + r.sand_save_pct, 0) / sandRds.length) : null
+
+  // Trend arrows: 'good' | 'bad' | null  (good = green, bad = red)
+  const scoreTrend = (() => {
+    const r5 = scored.slice(0, 5); const p5 = scored.slice(5, 10)
+    if (r5.length < 3 || p5.length < 3) return null
+    const ra = r5.reduce((a, r) => a + r.total_score, 0) / r5.length
+    const pa = p5.reduce((a, r) => a + r.total_score, 0) / p5.length
+    return ra < pa ? 'good' : ra > pa ? 'bad' : null
+  })()
+  const hcpTrend = handicapHistory.length >= 4
+    ? (handicapHistory[handicapHistory.length - 1] < handicapHistory[0] ? 'good' : handicapHistory[handicapHistory.length - 1] > handicapHistory[0] ? 'bad' : null)
+    : null
+  const puttTrend = (() => {
+    const r5 = puttRds.slice(0, 5); const p5 = puttRds.slice(5, 10)
+    if (r5.length < 3 || p5.length < 3) return null
+    const ra = r5.reduce((a, r) => a + r.putts, 0) / r5.length
+    const pa = p5.reduce((a, r) => a + r.putts, 0) / p5.length
+    return ra < pa ? 'good' : ra > pa ? 'bad' : null
+  })()
 
   function dismissBanner() {
     setBannerDismissed(true)
@@ -278,18 +305,24 @@ export default function DashboardPage() {
       value: latestHcp != null ? latestHcp.toFixed(1) : '—',
       footer: totalRounds > 0 ? 'Current index' : 'No rounds yet',
       spark: handicapHistory.slice(-8),
+      trend: hcpTrend,
+      trendLabel: hcpTrend === 'good' ? 'Improving' : hcpTrend === 'bad' ? 'Rising' : null,
     },
     {
       label: 'Rounds Tracked',
       value: totalRounds > 0 ? String(totalRounds) : '—',
       footer: 'All time',
       spark: [],
+      trend: null,
+      trendLabel: null,
     },
     {
       label: 'Avg Score',
       value: avgScore != null ? String(avgScore) : '—',
       footer: scored.length > 0 ? `Last ${Math.min(scored.length, 20)} rounds` : 'No data yet',
       spark: scoreSparkData,
+      trend: scoreTrend,
+      trendLabel: scoreTrend === 'good' ? 'Trending down' : scoreTrend === 'bad' ? 'Trending up' : null,
     },
     {
       label: 'Best Round',
@@ -297,12 +330,16 @@ export default function DashboardPage() {
       footer: 'All time low',
       spark: [],
       gold: true,
+      trend: null,
+      trendLabel: null,
     },
     {
       label: 'Avg Putts',
       value: avgPutts ?? '—',
       footer: puttRds.length ? `${puttRds.length} rounds` : 'No data yet',
       spark: [],
+      trend: puttTrend,
+      trendLabel: puttTrend === 'good' ? 'Improving' : puttTrend === 'bad' ? 'Increasing' : null,
     },
   ]
 
@@ -357,6 +394,14 @@ export default function DashboardPage() {
               </div>
             )}
             <div className="text-[11px] text-gray-400 mt-1">{c.footer}</div>
+            {c.trendLabel && (
+              <div className={`flex items-center gap-1 mt-1.5 text-[10.5px] font-semibold ${c.trend === 'good' ? 'text-[#22A06B]' : 'text-red-400'}`}>
+                {c.trend === 'good'
+                  ? <ArrowDown className="w-3 h-3" />
+                  : <ArrowUp className="w-3 h-3" />}
+                {c.trendLabel}
+              </div>
+            )}
           </Card>
         ))}
       </div>
@@ -626,9 +671,12 @@ export default function DashboardPage() {
               <div className="text-[13px] font-bold text-[#111] mb-3">Quick Stats</div>
               <div className="space-y-3">
                 {[
-                  { label: 'Avg GIR',          value: avgGIR != null ? `${avgGIR}%` : '—', icon: Flag },
-                  { label: 'Avg Putts',         value: avgPutts ?? '—',                     icon: Trophy },
-                  { label: 'Courses Visited',   value: String(coursesVisited.length),        icon: MapPin },
+                  { label: 'Greens / Round',  value: avgGIR != null ? `${avgGIR}/18` : '—',       icon: Flag   },
+                  { label: 'Avg Putts',        value: avgPutts ?? '—',                              icon: Trophy },
+                  { label: 'Scrambling',       value: avgScrambling != null ? `${avgScrambling}%` : '—', icon: Target },
+                  { label: 'Up & Down',        value: avgUpDown != null ? `${avgUpDown}%` : '—',   icon: TrendingUp },
+                  { label: 'Sand Save',        value: avgSandSave != null ? `${avgSandSave}%` : '—', icon: MapPin },
+                  { label: 'Courses Visited',  value: String(coursesVisited.length),                icon: Map    },
                 ].map(s => {
                   const Icon = s.icon
                   return (
