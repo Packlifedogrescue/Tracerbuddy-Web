@@ -36,7 +36,7 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 bg-[#F5EFE0] border-b border-black/[0.04]">
         <div className="flex items-center justify-between px-6 md:px-12 py-4 max-w-[1400px] mx-auto">
           <div className="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-20 w-auto mix-blend-multiply" />
+            <img src="/images/logo-horizontal.png" alt="TracerBuddy" className="h-12 md:h-20 w-auto mix-blend-multiply" />
           </div>
           <div className="hidden md:flex items-center gap-9">
             <a href="#features" className="text-[14px] text-[#333] hover:text-black transition-colors">Features</a>
@@ -107,7 +107,7 @@ export default function HomePage() {
 
           <Reveal delay={200} className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.18) 0%, rgba(223,153,5,0.05) 40%, transparent 70%)' }} />
+              <div className="w-[240px] h-[240px] md:w-[400px] md:h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(223,153,5,0.18) 0%, rgba(223,153,5,0.05) 40%, transparent 70%)' }} />
             </div>
             <Image
               src="/images/hero-phone.png"

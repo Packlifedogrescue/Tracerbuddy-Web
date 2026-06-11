@@ -259,7 +259,7 @@ export default function DashboardPage() {
         ))}
       </div>
       {/* main content skeleton */}
-      <div className="grid md:grid-cols-[1fr_340px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5">
         <div className="bg-white rounded-xl shadow-[0_2px_16px_rgba(0,0,0,0.055)] p-5 space-y-4">
           <div className="skeleton h-5 w-28 rounded" />
           <div className="skeleton h-40 w-full rounded-lg" />
@@ -362,10 +362,10 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Main two-column grid ── */}
-      <div className="flex gap-4 items-start">
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
 
         {/* ── Left column ── */}
-        <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex-1 min-w-0 space-y-4 w-full">
 
           {/* Latest Round */}
           <Card>
@@ -529,7 +529,8 @@ export default function DashboardPage() {
             </div>
 
             {rounds.length > 0 ? (
-              <div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[360px]">
                 <div className="grid grid-cols-12 px-5 py-2 text-[10.5px] font-semibold text-gray-400 uppercase tracking-wider border-b border-[#F8F4EE]">
                   <div className="col-span-5">Course</div>
                   <div className="col-span-3">Date</div>
@@ -575,6 +576,7 @@ export default function DashboardPage() {
                     </Link>
                   )
                 })}
+                </div>
               </div>
             ) : (
               <Empty icon={ClipboardList} title="No rounds yet" sub="Track your first round in the TracerBuddy app to see your history here." />
@@ -583,7 +585,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Right panel ── */}
-        <div className="w-[268px] shrink-0 space-y-3">
+        <div className="w-full lg:w-[268px] lg:shrink-0 space-y-3">
 
           {/* Handicap trend */}
           <Card className="p-4">
