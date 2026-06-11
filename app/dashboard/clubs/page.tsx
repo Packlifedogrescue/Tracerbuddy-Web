@@ -266,13 +266,13 @@ export default function ClubsPage() {
                 <div className="flex items-center gap-4 md:gap-5">
 
                   {/* Club info */}
-                  <div className="w-28 md:w-36 shrink-0">
+                  <div className="w-20 sm:w-28 md:w-36 shrink-0">
                     <div className="text-[16px] font-black text-[#111] leading-tight">{club.club_type}</div>
                     <div className="text-[11.5px] text-[#C9A84C] font-semibold mt-0.5">{club.brand}</div>
                   </div>
 
                   {/* Avg yards */}
-                  <div className="text-center shrink-0 w-16 md:w-20">
+                  <div className="text-center shrink-0 w-14 md:w-20">
                     {profile ? (
                       <>
                         <div className="text-[32px] md:text-[36px] font-black text-[#C9A84C] leading-none">
@@ -320,7 +320,7 @@ export default function ClubsPage() {
                   </div>
 
                   {/* Miss pattern */}
-                  <div className="w-24 text-right shrink-0 space-y-0.5">
+                  <div className="hidden sm:block w-24 text-right shrink-0 space-y-0.5">
                     {profile ? (
                       <>
                         {profile.fade_pct > 25 && (
