@@ -3,28 +3,18 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Home, FileText, Map, Activity, Watch, Wrench,
-  BarChart2, Settings2, Star, ChevronRight,
-  Brain, Target, Dumbbell, Trophy, Users, Flag, X, Globe,
+  Home, FileText, Watch, Wrench,
+  BarChart2, Settings2, Star, X,
 } from 'lucide-react'
 import { fetchUserProfile } from '@/lib/supabase'
 
 const nav = [
-  { href: '/dashboard',              icon: Home,      label: 'Dashboard'   },
-  { href: '/dashboard/rounds',       icon: FileText,  label: 'Rounds'      },
-  { href: '/dashboard/courses',      icon: Map,       label: 'Courses'     },
-  { href: '/dashboard/swing',        icon: Activity,  label: 'SwingTrace'  },
-  { href: '/dashboard/watch',        icon: Watch,     label: 'Apple Watch' },
-  { href: '/dashboard/putting',      icon: Target,    label: 'Putting'     },
-  { href: '/dashboard/clubs',        icon: Wrench,    label: 'Clubs'       },
-  { href: '/dashboard/practice',     icon: Dumbbell,  label: 'Practice'    },
-  { href: '/dashboard/coach',        icon: Brain,     label: 'AI Coach'    },
-  { href: '/dashboard/goals',        icon: Flag,      label: 'Goals'       },
-  { href: '/dashboard/tournament',   icon: Trophy,    label: 'Tournament'  },
-  { href: '/dashboard/buddies',      icon: Users,     label: 'Buddies'     },
-  { href: '/dashboard/stats',        icon: BarChart2, label: 'Insights'    },
-  { href: '/community',              icon: Globe,     label: 'Community'   },
-  { href: '/dashboard/profile',      icon: Settings2, label: 'Settings'    },
+  { href: '/dashboard',         icon: Home,      label: 'Dashboard'   },
+  { href: '/dashboard/rounds',  icon: FileText,  label: 'Rounds'      },
+  { href: '/dashboard/clubs',   icon: Wrench,    label: 'Clubs'       },
+  { href: '/dashboard/stats',   icon: BarChart2, label: 'Insights'    },
+  { href: '/dashboard/watch',   icon: Watch,     label: 'Apple Watch' },
+  { href: '/dashboard/profile', icon: Settings2, label: 'Settings'    },
 ]
 
 function NavLinks({ path, onNav }: { path: string; onNav?: () => void }) {

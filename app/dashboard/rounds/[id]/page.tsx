@@ -87,7 +87,7 @@ export default function RoundDetailPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {[
           { label: 'GIR',       value: `${round.gir_count ?? 0}/18` },
           { label: 'Fairways',  value: `${round.fairways_hit ?? 0}/14` },
@@ -124,7 +124,7 @@ export default function RoundDetailPage() {
             <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Scorecard</div>
           </div>
           <div className="overflow-auto flex-1">
-            <table className="w-full border-collapse">
+            <table className="w-full min-w-[280px] border-collapse">
               <thead>
                 <tr className="border-b border-[#F0EAE0]">
                   {['Hole','Par','Score','GIR','Putts'].map(h => (
