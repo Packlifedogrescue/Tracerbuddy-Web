@@ -1,105 +1,211 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase, fetchUserProfile } from '@/lib/supabase'
+import { Target, Brain, TrendingDown, Check } from 'lucide-react'
+import ProGate from '@/components/ProGate'
+import { track } from '@/lib/analytics'
 
 export default function GoalsPage() {
-  const [goal, setGoal]         = useState<any>(null)
-  const [profile, setProfile]   = useState<any>(null)
-  const [target, setTarget]     = useState('')
-  const [saving, setSaving]     = useState(false)
-  const [loading, setLoading]   = useState(true)
+  const [goal,    setGoal]    = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [target,  setTarget]  = useState('')
+  const [saving,  setSaving]  = useState(false)
+  const [saved,   setSaved]   = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       supabase.from('goal_settings').select('*').single(),
-      fetchUserProfile()
+      fetchUserProfile(),
     ]).then(([g, p]) => {
-      setGoal(g.data); setProfile(p)
+      setGoal(g.data)
+      setProfile(p)
       setTarget(g.data?.target_handicap?.toString() ?? '')
-      setLoading(false)
-    })
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   async function saveGoal(e: React.FormEvent) {
-    e.preventDefault(); setSaving(true)
-    await supabase.from('goal_settings').upsert({ target_handicap: parseFloat(target) })
-    setSaving(false)
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await supabase.from('goal_settings').upsert({ target_handicap: parseFloat(target) })
+      track('goal_updated', { target_handicap: parseFloat(target) })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const current    = profile?.handicap_index ?? 0
-  const targetNum  = parseFloat(target) || 0
-  const needed     = Math.max(0, current - targetNum)
-  const progress   = targetNum < current ? Math.min(100, Math.round(((current - targetNum) / current) * 100)) : 0
+  const current   = profile?.handicap_index ?? 0
+  const targetNum = parseFloat(target) || 0
+  const needed    = Math.max(0, current - targetNum)
 
-  if (loading) return <div className="p-8 text-gray-500">Loading goals...</div>
+  // progress = how much of the goal has been covered (0 → 100%)
+  const progressPct  = current > 0 && targetNum < current
+    ? Math.min(100, Math.round(((current - targetNum) / current) * 100))
+    : 0
+
+  const milestones = targetNum > 0 && current > 0 && targetNum < current ? [
+    { label: 'Current',  value: current.toFixed(1),                                                done: true  },
+    { label: 'Halfway',  value: ((current + targetNum) / 2).toFixed(1),                            done: current <= (current + targetNum) / 2 },
+    { label: 'Target',   value: targetNum.toFixed(1),                                              done: current <= targetNum },
+  ] : []
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-[13px] text-gray-400">Loading goals…</div>
+    </div>
+  )
 
   return (
-    <div className="p-8 max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Goals</h1>
-        <p className="text-gray-500 mt-1">Set your target handicap and track your path there</p>
+    <ProGate feature="Goals & AI Coaching Plan" description="Set your target handicap and get a personalized AI coaching plan to help you reach it.">
+    <div className="p-6 md:p-8 max-w-2xl space-y-4 pb-10">
+      <div>
+        <h1 className="text-[26px] font-black text-[#111] tracking-tight">Goals</h1>
+        <p className="text-[13.5px] text-gray-400 mt-0.5">Set your target handicap and track your path there</p>
       </div>
 
-      {/* Current vs target */}
-      <div className="card p-6 mb-6">
+      {/* Current vs Target */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="grid grid-cols-3 gap-4 mb-6 text-center">
           <div>
-            <div className="stat-label mb-2">CURRENT</div>
-            <div className="text-5xl font-black text-white">{current.toFixed(1)}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Current</div>
+            <div className="text-[52px] font-black text-[#111] leading-none">{current.toFixed(1)}</div>
+            <div className="text-[11px] text-gray-400 mt-1">Handicap Index</div>
           </div>
           <div className="flex items-center justify-center">
-            <div className="text-3xl text-gray-600">→</div>
+            <TrendingDown className="w-6 h-6 text-gray-300" />
           </div>
           <div>
-            <div className="stat-label mb-2">TARGET</div>
-            <div className="text-5xl font-black text-[#FFD700]">{targetNum || '?'}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Target</div>
+            <div className="text-[52px] font-black text-[#C9A84C] leading-none">{targetNum || '?'}</div>
+            <div className="text-[11px] text-gray-400 mt-1">Goal</div>
           </div>
         </div>
 
-        {targetNum > 0 && current > 0 && (
-          <>
-            <div className="h-3 bg-[#1F1F1F] rounded-full overflow-hidden mb-2">
-              <div className="h-full bg-gradient-to-r from-[#FFD700] to-[#00E578] rounded-full transition-all duration-500"
-                style={{ width: `${100 - progress}%` }} />
+        {targetNum > 0 && current > 0 && targetNum < current && (
+          <div className="flex flex-col items-center gap-3 pt-2">
+            {(() => {
+              const r = 54, cx = 70, cy = 70
+              const circ = 2 * Math.PI * r
+              const filled = (progressPct / 100) * circ
+              return (
+                <div className="relative" style={{ width: 140, height: 140 }}>
+                  <svg width="140" height="140" viewBox="0 0 140 140">
+                    <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F0EAE0" strokeWidth="10" strokeLinecap="round" />
+                    <circle
+                      cx={cx} cy={cy} r={r} fill="none"
+                      stroke="url(#arcGrad)" strokeWidth="10" strokeLinecap="round"
+                      strokeDasharray={`${filled} ${circ}`}
+                      strokeDashoffset={circ * 0.25}
+                      transform={`rotate(-90 ${cx} ${cy})`}
+                      style={{ transition: 'stroke-dasharray 0.8s ease' }}
+                    />
+                    <defs>
+                      <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%"   stopColor="#C9A84C" />
+                        <stop offset="100%" stopColor="#22A06B" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-[28px] font-black text-[#111] leading-none">{progressPct}%</div>
+                    <div className="text-[10px] text-gray-400 mt-1 font-semibold">Progress</div>
+                  </div>
+                </div>
+              )
+            })()}
+            <div className="text-[13px] font-bold text-[#111]">{needed.toFixed(1)} strokes to drop</div>
+          </div>
+        )}
+        {targetNum > 0 && current > 0 && targetNum >= current && (
+          <div className="text-center py-2">
+            <div className="inline-flex items-center gap-2 text-[#22A06B] font-bold text-[14px]">
+              <Check className="w-4 h-4" /> You've reached your goal!
             </div>
-            <div className="text-sm text-gray-500 text-center">
-              {needed.toFixed(1)} strokes to go
-            </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* Set goal */}
-      <div className="card p-6 mb-6">
-        <div className="stat-label mb-4">SET YOUR TARGET HANDICAP</div>
+      {/* Milestones */}
+      {milestones.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-5">Milestones</div>
+          <div className="flex items-center">
+            {milestones.map((m, i) => (
+              <div key={m.label} className="flex items-center flex-1">
+                <div className="flex flex-col items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-[12px] border-2 ${
+                    m.done
+                      ? 'bg-[#22A06B] border-[#22A06B] text-white'
+                      : 'bg-white border-gray-200 text-gray-400'
+                  }`}>
+                    {m.value}
+                  </div>
+                  <div className="text-[10px] text-gray-400 mt-1.5 font-semibold">{m.label}</div>
+                </div>
+                {i < milestones.length - 1 && (
+                  <div className={`flex-1 h-0.5 mb-4 ${m.done ? 'bg-[#22A06B]/30' : 'bg-gray-100'}`} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Set goal form */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Target className="w-4 h-4 text-[#C9A84C]" />
+          <span className="text-[13.5px] font-bold text-[#111]">Set Target Handicap</span>
+        </div>
         <form onSubmit={saveGoal} className="flex gap-3">
           <input
-            type="number" value={target} onChange={e => setTarget(e.target.value)}
-            placeholder="e.g. 10.0" step="0.1" min="0" max="54"
-            className="flex-1 bg-[#0A0A0A] border border-[#1F1F1F] rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#FFD700]/40 text-xl font-black"
+            type="number"
+            value={target}
+            onChange={e => setTarget(e.target.value)}
+            placeholder="e.g. 10.0"
+            step="0.1"
+            min="0"
+            max="54"
+            className="flex-1 bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-3 text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] text-[22px] font-black transition"
           />
-          <button type="submit" disabled={saving}
-            className="bg-[#FFD700] text-black font-black px-6 py-3 rounded-xl hover:bg-yellow-400 disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save'}
+          <button
+            type="submit"
+            disabled={saving}
+            className={`font-black px-6 py-3 rounded-xl transition-colors flex items-center gap-2 ${
+              saved ? 'bg-[#22A06B] text-white' : 'bg-[#C9A84C] text-white hover:bg-[#A07828]'
+            } disabled:opacity-50`}
+          >
+            {saving ? 'Saving…' : saved ? <><Check className="w-4 h-4" /> Saved</> : 'Save'}
           </button>
         </form>
       </div>
 
       {/* AI coaching plan */}
       {goal?.ai_coaching_plan ? (
-        <div className="card p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-xl">🧠</span>
-            <div className="stat-label text-[#FFD700]">YOUR AI COACHING PLAN</div>
+            <div className="w-7 h-7 rounded-full bg-[#F8F4EE] flex items-center justify-center">
+              <Brain className="w-4 h-4 text-[#C9A84C]" />
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-[#C9A84C]">Your AI Coaching Plan</div>
           </div>
-          <p className="text-white leading-relaxed">{goal.ai_coaching_plan}</p>
+          <p className="text-[13px] text-[#111] leading-relaxed">{goal.ai_coaching_plan}</p>
         </div>
       ) : (
-        <div className="card p-6 text-center text-gray-600">
-          <div className="text-4xl mb-3">🧠</div>
-          <p>Your AI coaching plan will appear here after you complete a round with a coach card analysis in the app.</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+          <div className="w-12 h-12 rounded-full bg-[#F8F4EE] flex items-center justify-center mx-auto mb-3">
+            <Brain className="w-6 h-6 text-[#C9A84C]" />
+          </div>
+          <p className="text-[14px] font-semibold text-[#111] mb-1">No coaching plan yet</p>
+          <p className="text-[13px] text-gray-400 leading-relaxed max-w-sm mx-auto">
+            Your AI coaching plan will appear here after you complete a round with a coach card analysis in the app.
+          </p>
         </div>
       )}
     </div>
+    </ProGate>
   )
 }

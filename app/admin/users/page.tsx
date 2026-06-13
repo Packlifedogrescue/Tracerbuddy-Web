@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Trash2, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function AdminUsers() {
@@ -43,6 +43,16 @@ export default function AdminUsers() {
     load()
   }
 
+  async function toggleSubscription(userId: string, current: string) {
+    const next = current === 'pro' ? 'free' : 'pro'
+    await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'x-admin-email': email, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, subscription: next }),
+    })
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, subscription: next } : u))
+  }
+
   const pages = Math.ceil(total / limit)
 
   return (
@@ -72,6 +82,7 @@ export default function AdminUsers() {
             <tr className="border-b border-white/[0.06]">
               <th className="text-left px-5 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">User</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Email</th>
+              <th className="text-left px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Plan</th>
               <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Rounds</th>
               <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Handicap</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Last Active</th>
@@ -82,14 +93,14 @@ export default function AdminUsers() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-600">
+                <td colSpan={8} className="text-center py-12 text-gray-600">
                   <div className="w-5 h-5 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin mx-auto" />
                 </td>
               </tr>
             )}
             {!loading && users.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-600 text-sm">No users found</td>
+                <td colSpan={8} className="text-center py-12 text-gray-600 text-sm">No users found</td>
               </tr>
             )}
             {!loading && users.map(u => (
@@ -99,10 +110,24 @@ export default function AdminUsers() {
                     <div className="w-7 h-7 rounded-full bg-[#DF9905]/20 flex items-center justify-center shrink-0 text-[11px] font-bold text-[#DF9905]">
                       {(u.display_name || u.email || '?')[0].toUpperCase()}
                     </div>
-                    <span className="text-white font-medium truncate max-w-[140px]">{u.display_name || 'No name'}</span>
+                    <span className="text-white font-medium truncate max-w-[140px]">{u.display_name || u.email?.split('@')[0] || 'Unknown'}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-gray-400 truncate max-w-[180px]">{u.email || '—'}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => toggleSubscription(u.id, u.subscription)}
+                    title={u.subscription === 'pro' ? 'Click to downgrade to Free' : 'Click to upgrade to Pro'}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all hover:scale-105 ${
+                      u.subscription === 'pro'
+                        ? 'bg-[#DF9905]/15 text-[#DF9905] border border-[#DF9905]/30'
+                        : 'bg-white/[0.05] text-gray-500 border border-white/[0.08] hover:border-[#DF9905]/30'
+                    }`}
+                  >
+                    {u.subscription === 'pro' && <Star className="w-2.5 h-2.5 fill-current" />}
+                    {u.subscription === 'pro' ? 'PRO' : 'FREE'}
+                  </button>
+                </td>
                 <td className="px-4 py-3 text-center">
                   <span className="text-white font-medium">{u.roundCount}</span>
                 </td>

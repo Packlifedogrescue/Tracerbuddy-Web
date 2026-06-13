@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAIL = 'miller.brett88@gmail.com'
+const ADMIN_EMAILS = ['miller.brett88@gmail.com', 'brett@tracerbuddy.com']
 
 const sb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,7 +10,7 @@ const sb = () => createClient(
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('x-admin-email')
-  if (authHeader !== ADMIN_EMAIL) {
+  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
@@ -18,40 +18,45 @@ export async function GET(req: NextRequest) {
   const page   = parseInt(searchParams.get('page')  ?? '1')
   const limit  = parseInt(searchParams.get('limit') ?? '25')
   const search = searchParams.get('search') ?? ''
-  const offset = (page - 1) * limit
 
   const db = sb()
 
-  let query = db
-    .from('courses')
-    .select('id, name, city, state, country, par, course_rating, slope_rating, created_at', { count: 'exact' })
-    .order('name', { ascending: true })
-    .range(offset, offset + limit - 1)
+  const { data: rounds, error } = await db
+    .from('rounds')
+    .select('course_name, total_score, created_at')
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const courseMap: Record<string, { roundCount: number; totalScore: number; scoreCount: number; lastPlayed: string }> = {}
+  for (const r of rounds ?? []) {
+    const name = r.course_name
+    if (!name) continue
+    if (!courseMap[name]) courseMap[name] = { roundCount: 0, totalScore: 0, scoreCount: 0, lastPlayed: '' }
+    courseMap[name].roundCount++
+    if (r.total_score != null) {
+      courseMap[name].totalScore += r.total_score
+      courseMap[name].scoreCount++
+    }
+    if (!courseMap[name].lastPlayed || r.created_at > courseMap[name].lastPlayed) {
+      courseMap[name].lastPlayed = r.created_at
+    }
+  }
+
+  let courses = Object.entries(courseMap)
+    .map(([name, stats]) => ({
+      name,
+      roundCount: stats.roundCount,
+      avgScore: stats.scoreCount > 0 ? Math.round(stats.totalScore / stats.scoreCount) : null,
+      lastPlayed: stats.lastPlayed || null,
+    }))
+    .sort((a, b) => b.roundCount - a.roundCount)
 
   if (search) {
-    query = query.or(`name.ilike.%${search}%,city.ilike.%${search}%,state.ilike.%${search}%`)
+    courses = courses.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
   }
 
-  const { data: courses, count, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const total = courses.length
+  const paginated = courses.slice((page - 1) * limit, page * limit)
 
-  return NextResponse.json({ courses: courses ?? [], total: count ?? 0, page, limit })
-}
-
-export async function PATCH(req: NextRequest) {
-  const authHeader = req.headers.get('x-admin-email')
-  if (authHeader !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-  }
-
-  const { id, ...updates } = await req.json()
-  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-
-  const allowed = ['name', 'city', 'state', 'country', 'par', 'course_rating', 'slope_rating']
-  const safe = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)))
-
-  const { error } = await sb().from('courses').update(safe).eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ updated: true })
+  return NextResponse.json({ courses: paginated, total, page, limit })
 }
