@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { X, MapPin, Search, Flag, Loader2, AlertCircle, ChevronLeft } from 'lucide-react'
 
-const CourseMapbox = dynamic(() => import('@/components/CourseMapbox'), { ssr: false })
+const CourseMapkit = dynamic(() => import('@/components/CourseMapkit'), { ssr: false })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface GolfCourse {
@@ -346,7 +346,7 @@ export default function CourseMapPremium({
             {tab === 'map' && (
               <div className="flex-1 min-h-0 relative">
                 {hasMap ? (
-                  <CourseMapbox
+                  <CourseMapkit
                     lat={lat!}
                     lng={lng!}
                     holes={holes}
