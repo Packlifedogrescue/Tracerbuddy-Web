@@ -10,9 +10,9 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import WeatherWidget from '@/components/WeatherWidget'
-import type { TeeData } from '@/components/CourseMapbox'
+import type { TeeData } from '@/components/CourseMapkit'
 
-const CourseMapbox = dynamic(() => import('@/components/CourseMapbox'), { ssr: false })
+const CourseMapkit = dynamic(() => import('@/components/CourseMapkit'), { ssr: false })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface GolfCourse {
@@ -667,7 +667,7 @@ export default function CoursesPage() {
                 {/* Satellite map */}
                 <div className="flex-1 relative m-3 rounded-2xl overflow-hidden shadow-2xl">
                   {lat && lng ? (
-                    <CourseMapbox
+                    <CourseMapkit
                       lat={lat} lng={lng} holes={holes} courseName={name}
                       selectedHole={selectedHole}
                       onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
