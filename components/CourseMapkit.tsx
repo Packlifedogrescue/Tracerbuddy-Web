@@ -18,6 +18,8 @@ interface GolfHole {
   HoleNo?: number
   Number?: number
   Par?: number
+  Yardage?: number
+  Yards?: number
   TeeLatitude?: string | number | null
   TeeLongitude?: string | number | null
   GreenLatitude?: string | number | null
@@ -41,13 +43,10 @@ declare global {
   interface Window { mapkit: any }
 }
 
-// POI type constants (must match API route)
 const POI_FAIRWAY = 2
 const POI_ROUGH   = 3
 const POI_BUNKER  = 4
-// 5 = water, 6 = OB — handled by default branch below
 
-// Load MapKit JS once globally
 let mkState: 'idle' | 'loading' | 'ready' = 'idle'
 const mkQueue: Array<() => void> = []
 
@@ -105,6 +104,26 @@ function polyStyle(mk: any, poi: number) {
   })
 }
 
+function courseBounds(holes: GolfHole[]) {
+  const coords: number[][] = []
+  for (const h of holes) {
+    const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
+    const gLat = parseCoord(h.GreenLatitude), gLng = parseCoord(h.GreenLongitude)
+    if (tLat && tLng) coords.push([tLat, tLng])
+    if (gLat && gLng) coords.push([gLat, gLng])
+  }
+  if (coords.length === 0) return null
+  const lats = coords.map(c => c[0])
+  const lngs = coords.map(c => c[1])
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats)
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
+  const cLat = (minLat + maxLat) / 2
+  const cLng = (minLng + maxLng) / 2
+  // Use generous padding so the full course fits with room on all sides
+  const span = Math.max((maxLat - minLat) * 1.8, (maxLng - minLng) * 1.8, 0.015)
+  return { cLat, cLng, span }
+}
+
 export default function CourseMapkit({
   lat, lng, holes, selectedHole, onHoleClick, polygons,
 }: Props) {
@@ -125,7 +144,6 @@ export default function CourseMapkit({
     overlaysRef.current    = []
 
     // ── Polygon overlays ─────────────────────────────────────────────────
-    // Show rough/OB for all holes always; fairway/bunker/water only for selected hole
     for (const poly of polygons ?? []) {
       const isDetailPoly = poly.poi === POI_FAIRWAY || poly.poi === POI_BUNKER || poly.poi === 5
       if (isDetailPoly && selectedHole !== undefined && poly.hole !== selectedHole) continue
@@ -138,11 +156,11 @@ export default function CourseMapkit({
 
     // ── Hole markers ─────────────────────────────────────────────────────
     for (const h of holes) {
-      const n    = holeNum(h)
-      const tLat = parseCoord(h.TeeLatitude)
-      const tLng = parseCoord(h.TeeLongitude)
-      const gLat = parseCoord(h.GreenLatitude)
-      const gLng = parseCoord(h.GreenLongitude)
+      const n      = holeNum(h)
+      const tLat   = parseCoord(h.TeeLatitude)
+      const tLng   = parseCoord(h.TeeLongitude)
+      const gLat   = parseCoord(h.GreenLatitude)
+      const gLng   = parseCoord(h.GreenLongitude)
       const active = selectedHole === n
 
       // Tee marker — numbered badge
@@ -152,15 +170,16 @@ export default function CourseMapkit({
           () => {
             const el = document.createElement('div')
             Object.assign(el.style, {
-              width: '22px', height: '22px', borderRadius: '6px',
-              background: active ? '#C9A84C' : '#111',
-              color: 'white', fontSize: '10px', fontWeight: '900',
+              width: '28px', height: '28px', borderRadius: '8px',
+              background: active ? '#C9A84C' : 'rgba(10,10,10,0.88)',
+              color: active ? '#111' : 'white',
+              fontSize: '12px', fontWeight: '900',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer',
-              border: `2px solid ${active ? '#fff' : 'rgba(255,255,255,0.5)'}`,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
-              transform: active ? 'scale(1.25)' : 'scale(1)',
-              transition: 'transform 0.15s',
+              border: `2px solid ${active ? '#fff' : 'rgba(255,255,255,0.3)'}`,
+              boxShadow: `0 3px 10px rgba(0,0,0,${active ? '0.3' : '0.7'})`,
+              transform: active ? 'scale(1.3)' : 'scale(1)',
+              transition: 'transform 0.2s, background 0.2s',
             })
             el.textContent = String(n)
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
@@ -171,14 +190,14 @@ export default function CourseMapkit({
         annotationsRef.current.push(ann)
       }
 
-      // Green marker — flag
+      // Green marker — flag pin SVG
       if (gLat && gLng) {
         const grn = new mk.Annotation(
           new mk.Coordinate(gLat, gLng),
           () => {
             const el = document.createElement('div')
-            el.style.cssText = 'font-size:16px;line-height:1;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.6));'
-            el.textContent = '🚩'
+            el.style.cssText = 'cursor:pointer;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.75));'
+            el.innerHTML = '<svg width="16" height="26" viewBox="0 0 16 26" fill="none"><line x1="3" y1="1" x2="3" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/><polygon points="3,2 15,7 3,12" fill="#C9A84C"/><circle cx="3" cy="25" r="2.5" fill="white" fill-opacity="0.9"/></svg>'
             el.addEventListener('click', e => { e.stopPropagation(); onHoleClick?.(n) })
             return el
           },
@@ -197,14 +216,11 @@ export default function CourseMapkit({
               Object.assign(el.style, {
                 background: '#1C1C1E',
                 color: '#FFD60A',
-                fontSize: '9px',
-                fontWeight: '800',
-                padding: '2px 5px',
-                borderRadius: '5px',
+                fontSize: '9px', fontWeight: '800',
+                padding: '2px 5px', borderRadius: '5px',
                 border: '1.5px solid rgba(255,214,10,0.5)',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.6)',
-                whiteSpace: 'nowrap',
-                letterSpacing: '0.02em',
+                whiteSpace: 'nowrap', letterSpacing: '0.02em',
               })
               el.textContent = spot.yards ? `${spot.yards}y` : '◆'
               return el
@@ -215,7 +231,7 @@ export default function CourseMapkit({
         }
       }
 
-      // Tee → green dashed line, routing through dogleg waypoints when available
+      // Tee → green dashed line (active hole only)
       if (active && tLat && tLng && gLat && gLng) {
         const waypoints = (h.Waypoints ?? []).map(w => new mk.Coordinate(w.lat, w.lng))
         const linePoints = [
@@ -225,12 +241,40 @@ export default function CourseMapkit({
         ]
         const line = new mk.PolylineOverlay(linePoints)
         line.style = new mk.Style({
-          lineWidth:   2.5,
-          strokeColor: '#C9A84C',
-          lineOpacity: 0.95,
-          lineDash:    [8, 5],
+          lineWidth: 2.5, strokeColor: '#C9A84C',
+          lineOpacity: 0.95, lineDash: [8, 5],
         })
         overlaysRef.current.push(line)
+
+        // Yardage + par label at midpoint
+        const yds = h.Yardage ?? h.Yards
+        const par = h.Par
+        if (yds || par) {
+          const wpts    = h.Waypoints ?? []
+          const midIdx  = Math.floor(wpts.length / 2)
+          const midLat  = wpts.length > 0 ? wpts[midIdx].lat : (tLat + gLat) / 2
+          const midLng  = wpts.length > 0 ? wpts[midIdx].lng : (tLng + gLng) / 2
+          const ydsAnn  = new mk.Annotation(
+            new mk.Coordinate(midLat, midLng),
+            () => {
+              const el = document.createElement('div')
+              Object.assign(el.style, {
+                background: 'rgba(0,0,0,0.82)',
+                color: '#C9A84C', fontSize: '10px', fontWeight: '900',
+                padding: '3px 8px', borderRadius: '6px',
+                whiteSpace: 'nowrap', letterSpacing: '0.02em',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+              })
+              const parts: string[] = []
+              if (yds) parts.push(`${yds}y`)
+              if (par) parts.push(`Par ${par}`)
+              el.textContent = parts.join(' · ')
+              return el
+            },
+            { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false }
+          )
+          annotationsRef.current.push(ydsAnn)
+        }
       }
     }
 
@@ -249,7 +293,7 @@ export default function CourseMapkit({
         if (tLat && tLng && gLat && gLng) {
           const cLat = (tLat + gLat) / 2
           const cLng = (tLng + gLng) / 2
-          const span = Math.min(Math.max(Math.abs(gLat - tLat) * 2.0, Math.abs(gLng - tLng) * 2.0, 0.002), 0.008)
+          const span = Math.min(Math.max(Math.abs(gLat - tLat) * 2.2, Math.abs(gLng - tLng) * 2.2, 0.002), 0.009)
           map.setRegionAnimated(new mk.CoordinateRegion(
             new mk.Coordinate(cLat, cLng),
             new mk.CoordinateSpan(span, span),
@@ -265,24 +309,12 @@ export default function CourseMapkit({
         }
       }
     } else if (centeredRef.current) {
-      // Deselected — zoom back to full course bounding box, reset north
-      const coords: number[][] = []
-      for (const h of holes) {
-        const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
-        const gLat = parseCoord(h.GreenLatitude), gLng = parseCoord(h.GreenLongitude)
-        if (tLat && tLng) coords.push([tLat, tLng])
-        if (gLat && gLng) coords.push([gLat, gLng])
-      }
-      if (coords.length > 0) {
-        const lats = coords.map(c => c[0])
-        const lngs = coords.map(c => c[1])
-        const minLat = Math.min(...lats), maxLat = Math.max(...lats)
-        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
-        const cLat = (minLat + maxLat) / 2, cLng = (minLng + maxLng) / 2
-        const span = Math.max((maxLat - minLat) * 1.3, (maxLng - minLng) * 1.3, 0.004)
+      // Deselected — zoom back to full course
+      const bounds = courseBounds(holes)
+      if (bounds) {
         map.setRegionAnimated(new mk.CoordinateRegion(
-          new mk.Coordinate(cLat, cLng),
-          new mk.CoordinateSpan(span, span),
+          new mk.Coordinate(bounds.cLat, bounds.cLng),
+          new mk.CoordinateSpan(bounds.span, bounds.span),
         ))
         map.setRotationAnimated(0)
       }
@@ -301,29 +333,16 @@ export default function CourseMapkit({
       const map = new mk.Map(containerRef.current, {
         mapType:             mk.Map.MapTypes.Satellite,
         showsCompass:        mk.FeatureVisibility.Hidden,
-        showsZoomControl:    true,
+        showsZoomControl:    false,
         showsMapTypeControl: false,
         isRotationEnabled:   true,
       })
 
-      const coords: number[][] = []
-      for (const h of holes) {
-        const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
-        const gLat = parseCoord(h.GreenLatitude), gLng = parseCoord(h.GreenLongitude)
-        if (tLat && tLng) coords.push([tLat, tLng])
-        if (gLat && gLng) coords.push([gLat, gLng])
-      }
-
-      let cLat = lat, cLng = lng, span = 0.004
-      if (coords.length > 0) {
-        const lats = coords.map(c => c[0])
-        const lngs = coords.map(c => c[1])
-        const minLat = Math.min(...lats), maxLat = Math.max(...lats)
-        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
-        cLat = (minLat + maxLat) / 2
-        cLng = (minLng + maxLng) / 2
-        span = Math.max((maxLat - minLat) * 1.3, (maxLng - minLng) * 1.3, 0.004)
-      }
+      // Initial region — fit whole course
+      const bounds = courseBounds(holes)
+      const cLat   = bounds?.cLat ?? lat
+      const cLng   = bounds?.cLng ?? lng
+      const span   = bounds?.span ?? 0.015
 
       map.setRegionAnimated(
         new mk.CoordinateRegion(
@@ -348,32 +367,16 @@ export default function CourseMapkit({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng])
 
-  // Re-center to hole GPS bounding box once data arrives
+  // Re-center to course bounding box once hole data arrives
   useEffect(() => {
     const map = mapRef.current
     if (!map || !window.mapkit || centeredRef.current) return
-
-    const coords: number[][] = []
-    for (const h of holes) {
-      const tLat = parseCoord(h.TeeLatitude),  tLng = parseCoord(h.TeeLongitude)
-      const gLat = parseCoord(h.GreenLatitude), gLng = parseCoord(h.GreenLongitude)
-      if (tLat && tLng) coords.push([tLat, tLng])
-      if (gLat && gLng) coords.push([gLat, gLng])
-    }
-    if (coords.length === 0) return
-
+    const bounds = courseBounds(holes)
+    if (!bounds) return
     centeredRef.current = true
-    const lats = coords.map(c => c[0])
-    const lngs = coords.map(c => c[1])
-    const minLat = Math.min(...lats), maxLat = Math.max(...lats)
-    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
-    const cLat = (minLat + maxLat) / 2
-    const cLng = (minLng + maxLng) / 2
-    const span = Math.max((maxLat - minLat) * 1.3, (maxLng - minLng) * 1.3, 0.004)
-    const mk = window.mapkit
-    map.setRegionAnimated(new mk.CoordinateRegion(
-      new mk.Coordinate(cLat, cLng),
-      new mk.CoordinateSpan(span, span),
+    map.setRegionAnimated(new window.mapkit.CoordinateRegion(
+      new window.mapkit.Coordinate(bounds.cLat, bounds.cLng),
+      new window.mapkit.CoordinateSpan(bounds.span, bounds.span),
     ))
   }, [holes])
 
@@ -385,12 +388,18 @@ export default function CourseMapkit({
   return (
     <div className="w-full h-full relative" style={{ minHeight: 400 }}>
       <div ref={containerRef} className="absolute inset-0" />
+      {/* North reset button */}
       <button
         onClick={() => { if (mapRef.current) mapRef.current.setRotationAnimated(0) }}
-        title="Reset to north"
-        className="absolute top-3 left-3 z-10 w-8 h-8 bg-black/70 backdrop-blur rounded-lg shadow-lg flex items-center justify-center text-base hover:bg-black/90 transition-colors"
+        title="Reset north"
+        className="absolute top-3 right-3 z-10 w-9 h-9 rounded-xl shadow-lg flex items-center justify-center transition-colors"
+        style={{ background: 'rgba(10,10,10,0.82)', backdropFilter: 'blur(6px)' }}
       >
-        🧭
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <polygon points="9,2 12,10 9,8.5 6,10" fill="#C9A84C"/>
+          <polygon points="9,16 6,8 9,9.5 12,8" fill="rgba(255,255,255,0.35)"/>
+          <text x="9" y="5.5" textAnchor="middle" fill="white" fontSize="3.5" fontWeight="bold" fontFamily="system-ui">N</text>
+        </svg>
       </button>
     </div>
   )

@@ -346,14 +346,74 @@ export default function CourseMapPremium({
             {tab === 'map' && (
               <div className="flex-1 min-h-0 relative">
                 {hasMap ? (
-                  <CourseMapkit
-                    lat={lat!}
-                    lng={lng!}
-                    holes={holes}
-                    courseName={name}
-                    selectedHole={activeHole ?? undefined}
-                    onHoleClick={n => setActiveHole(n ?? null)}
-                  />
+                  <>
+                    <CourseMapkit
+                      lat={lat!}
+                      lng={lng!}
+                      holes={holes}
+                      courseName={name}
+                      selectedHole={activeHole ?? undefined}
+                      onHoleClick={n => setActiveHole(prev => prev === n ? null : n)}
+                    />
+
+                    {/* Active hole info card */}
+                    {activeHole != null && (() => {
+                      const h = holes.find(h => holeNum(h) === activeHole)
+                      if (!h) return null
+                      const yards = holeYards(h)
+                      return (
+                        <div
+                          className="absolute top-3 left-3 z-10 rounded-2xl px-4 py-3 pointer-events-none"
+                          style={{ background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(10px)' }}
+                        >
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
+                            Hole {activeHole}
+                          </div>
+                          <div className="flex items-baseline gap-2.5">
+                            {h.Par   && <span className="text-white font-black text-[18px] leading-none">Par {h.Par}</span>}
+                            {yards   && <span className="font-bold text-[14px] leading-none" style={{ color: '#C9A84C' }}>{yards}y</span>}
+                            {h.Handicap && <span className="text-gray-400 text-[11px]">HCP {h.Handicap}</span>}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Hole selector strip */}
+                    {holes.length > 0 && (
+                      <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10 px-4">
+                        <div
+                          className="flex gap-1.5 px-3 py-2 rounded-2xl overflow-x-auto"
+                          style={{
+                            background: 'rgba(10,10,10,0.82)',
+                            backdropFilter: 'blur(10px)',
+                            maxWidth: '100%',
+                            scrollbarWidth: 'none',
+                          }}
+                        >
+                          {[...holes]
+                            .sort((a, b) => holeNum(a) - holeNum(b))
+                            .map(h => {
+                              const n = holeNum(h)
+                              const isActive = activeHole === n
+                              return (
+                                <button
+                                  key={n}
+                                  onClick={() => setActiveHole(prev => prev === n ? null : n)}
+                                  className="shrink-0 w-8 h-8 rounded-xl text-[12px] font-black transition-all"
+                                  style={{
+                                    background: isActive ? '#C9A84C' : 'transparent',
+                                    color: isActive ? '#111' : 'rgba(255,255,255,0.75)',
+                                    border: isActive ? 'none' : '1px solid rgba(255,255,255,0.18)',
+                                  }}
+                                >
+                                  {n}
+                                </button>
+                              )
+                            })}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE]">
                     <div className="text-center">
