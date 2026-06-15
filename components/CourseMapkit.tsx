@@ -291,25 +291,43 @@ export default function CourseMapkit({
         const gLng = parseCoord(h.GreenLongitude)
 
         if (tLat && tLng && gLat && gLng) {
-          const cLat = (tLat + gLat) / 2
-          const cLng = (tLng + gLng) / 2
-          const span = Math.min(Math.max(Math.abs(gLat - tLat) * 2.2, Math.abs(gLng - tLng) * 2.2, 0.002), 0.009)
-          map.setRegionAnimated(new mk.CoordinateRegion(
-            new mk.Coordinate(cLat, cLng),
-            new mk.CoordinateSpan(span, span),
-          ))
-          const lat1r = tLat * Math.PI / 180
-          const lat2r = gLat * Math.PI / 180
-          const dLngR = (gLng - tLng) * Math.PI / 180
-          const y = Math.sin(dLngR) * Math.cos(lat2r)
-          const x = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLngR)
-          map.setRotationAnimated(Math.atan2(y, x) * 180 / Math.PI)
+          // Bearing tee → green
+          const lat1r   = tLat * Math.PI / 180
+          const lat2r   = gLat * Math.PI / 180
+          const dLngR   = (gLng - tLng) * Math.PI / 180
+          const y       = Math.sin(dLngR) * Math.cos(lat2r)
+          const x       = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLngR)
+          const heading = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+
+          // Haversine distance in metres
+          const dLat  = (gLat - tLat) * Math.PI / 180
+          const a     = Math.sin(dLat / 2) ** 2 + Math.cos(lat1r) * Math.cos(lat2r) * Math.sin(dLngR / 2) ** 2
+          const distM = 2 * 6371000 * Math.asin(Math.sqrt(a))
+
+          // Camera sits 35% of the way from tee to green, pitched 50° down the fairway
+          const camLat   = tLat + (gLat - tLat) * 0.35
+          const camLng   = tLng + (gLng - tLng) * 0.35
+          const altitude = Math.max(90, distM * 0.55)
+
+          try {
+            map.setCameraAnimated(
+              new mk.MapCamera(new mk.Coordinate(camLat, camLng), altitude, heading, 50)
+            )
+          } catch {
+            // Fallback to flat 2D view if MapCamera not available
+            const span = Math.min(Math.max(Math.abs(gLat - tLat) * 2.2, Math.abs(gLng - tLng) * 2.2, 0.002), 0.009)
+            map.setRegionAnimated(new mk.CoordinateRegion(
+              new mk.Coordinate((tLat + gLat) / 2, (tLng + gLng) / 2),
+              new mk.CoordinateSpan(span, span),
+            ))
+            map.setRotationAnimated(heading)
+          }
         } else if (tLat && tLng) {
           map.setCenterAnimated(new mk.Coordinate(tLat, tLng))
         }
       }
     } else if (centeredRef.current) {
-      // Deselected — zoom back to full course
+      // Deselected — zoom back to full top-down course overview
       const bounds = courseBounds(holes)
       if (bounds) {
         map.setRegionAnimated(new mk.CoordinateRegion(
