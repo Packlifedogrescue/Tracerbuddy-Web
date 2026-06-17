@@ -141,6 +141,17 @@ export default function WeatherWidget({ lat, lng, courseName }: {
           Conditions at {courseName}
         </div>
       )}
+
+      <div className="mt-2 text-center">
+        <a
+          href="https://weatherkit.apple.com/legal-attribution.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[9.5px] text-gray-400 hover:text-gray-500 transition-colors"
+        >
+          🍎 Weather
+        </a>
+      </div>
     </div>
   )
 }
