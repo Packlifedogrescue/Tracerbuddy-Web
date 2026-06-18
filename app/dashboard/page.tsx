@@ -161,6 +161,7 @@ export default function DashboardPage() {
   const [mapOpen,          setMapOpen]         = useState(false)
   const [mapInitialName,   setMapInitialName]  = useState<string | undefined>()
   const [weatherPos,       setWeatherPos]      = useState<{ lat: number; lng: number } | null>(null)
+  const [loadError,        setLoadError]       = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -180,22 +181,27 @@ export default function DashboardPage() {
   }, [])
 
   async function load() {
-    const [p, r, h, c, { data: { user } }] = await Promise.all([
-      fetchUserProfile(),
-      fetchRounds(50),
-      fetchHandicapHistory(),
-      fetchClubProfiles(),
-      supabase.auth.getUser(),
-    ])
-    setProfile(p)
-    setRounds(r)
-    setHandicapHistory((h as any[]).map((x: any) => parseFloat(x.handicap?.toFixed(1))))
-    setClubs(c)
-    const m = user?.user_metadata ?? {}
-    const candidates = [(p as any)?.display_name, m.display_name, m.full_name, m.name]
-    const resolved = candidates.find(c => c && c.trim() && !c.includes('@')) || 'Golfer'
-    setUserName(resolved.trim())
-    setLoading(false)
+    try {
+      const [p, r, h, c, { data: { user } }] = await Promise.all([
+        fetchUserProfile(),
+        fetchRounds(50),
+        fetchHandicapHistory(),
+        fetchClubProfiles(),
+        supabase.auth.getUser(),
+      ])
+      setProfile(p)
+      setRounds(r)
+      setHandicapHistory((h as any[]).map((x: any) => parseFloat(x.handicap?.toFixed(1))))
+      setClubs(c)
+      const m = user?.user_metadata ?? {}
+      const candidates = [(p as any)?.display_name, m.display_name, m.full_name, m.name]
+      const resolved = candidates.find(c => c && c.trim() && !c.includes('@')) || 'Golfer'
+      setUserName(resolved.trim())
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const live = useRealtime(['rounds', 'putt_data', 'club_profiles'], () => {
@@ -263,6 +269,22 @@ export default function DashboardPage() {
   }
   const coursesVisited = Object.values(courseMap).sort((a, b) => b.count - a.count)
   const scoreSparkData = scored.slice(0, 8).map(r => r.total_score).reverse()
+
+  // ── Error ─────────────────────────────────────────────────────────────────
+  if (loadError) return (
+    <div className="p-6 md:p-8 flex items-center justify-center min-h-[60vh]">
+      <div className="text-center max-w-sm">
+        <div className="text-[15px] font-semibold text-[#333] mb-1">Couldn't load your dashboard</div>
+        <p className="text-[13px] text-gray-400 mb-5">Check your connection and try again.</p>
+        <button
+          onClick={() => { setLoadError(false); setLoading(true); load() }}
+          className="px-5 py-2.5 rounded-xl bg-[#1A1A1A] text-white text-[13px] font-semibold hover:bg-black transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  )
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) return (
