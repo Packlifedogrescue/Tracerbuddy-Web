@@ -76,17 +76,22 @@ export default function HomePage() {
               </a>
             </div>
 
-            {/* Coming soon */}
+            {/* App Store badge */}
             <div className="flex flex-wrap items-center gap-4 mb-6">
-              <div className="inline-flex items-center gap-2.5 bg-[#1A1A1A]/[0.06] border border-black/[0.08] px-4 py-2.5 rounded-xl">
+              <a
+                href="https://apps.apple.com/app/tracerbuddy/id6767404969"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2.5 bg-[#1A1A1A]/[0.06] border border-black/[0.08] px-4 py-2.5 rounded-xl hover:bg-[#1A1A1A]/[0.1] transition-colors"
+              >
                 <svg width="18" height="22" viewBox="0 0 18 22" fill="#1A1A1A" opacity="0.5">
                   <path d="M14.94 11.55c-.02-2.16 1.77-3.2 1.85-3.25-1.01-1.48-2.58-1.68-3.14-1.7-1.33-.14-2.6.79-3.28.79-.68 0-1.72-.77-2.83-.75-1.45.02-2.8.85-3.54 2.15-1.52 2.63-.39 6.52 1.08 8.65.73 1.05 1.59 2.22 2.72 2.18 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.69.71 2.84.69 1.18-.02 1.92-1.07 2.63-2.13.84-1.21 1.18-2.4 1.19-2.46-.03-.01-2.36-.9-2.36-3.46zM12.68 4.5c.6-.73 1.01-1.74.9-2.75-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.87 2.65.97.07 1.95-.49 2.51-1.2z"/>
                 </svg>
                 <div>
-                  <div className="text-[9px] leading-none text-[#999] mb-0.5">Coming soon to the</div>
+                  <div className="text-[9px] leading-none text-[#999] mb-0.5">Download on the</div>
                   <div className="text-[14px] font-semibold leading-none text-[#555]">App Store</div>
                 </div>
-              </div>
+              </a>
             </div>
 
             <div className="flex items-center gap-5 text-[12px] text-[#888]">
