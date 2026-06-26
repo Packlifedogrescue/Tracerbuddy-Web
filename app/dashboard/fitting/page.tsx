@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase, fetchClubProfiles, fetchUserProfile, fetchRounds } from '@/lib/supabase'
 import { format } from 'date-fns'
+import ProGate from '@/components/ProGate'
 
 // ── Types ─────────────────────────────────────────────────────
 interface ClubData {
@@ -125,22 +126,25 @@ export default function FittingReportPage() {
   )
 
   if (clubs.length === 0) return (
+    <ProGate feature="Club Fitting Report" description="Real on-course data to optimize your bag — club distances, gap analysis, confidence scores, and printable PDF report.">
     <div className="p-8 max-w-2xl">
-      <h1 className="text-3xl font-black text-white mb-4">Club Fitting Report</h1>
+      <h1 className="text-3xl font-black text-[#111] mb-4">Club Fitting Report</h1>
       <div className="card p-16 text-center text-gray-600">
         <div className="text-5xl mb-4">🏌️</div>
         <p className="text-lg">No club data yet.</p>
         <p className="mt-2">Track shots in the TracerBuddy app to build your club profiles. You need at least 5 shots per club for a meaningful report.</p>
       </div>
     </div>
+    </ProGate>
   )
 
   return (
+    <ProGate feature="Club Fitting Report" description="Real on-course data to optimize your bag — club distances, gap analysis, confidence scores, and printable PDF report.">
     <>
       {/* Print button — hidden when printing */}
-      <div className="no-print p-6 flex items-center justify-between border-b border-[#1F1F1F] bg-[#0D0D0D] sticky top-0 z-10">
+      <div className="no-print p-6 flex items-center justify-between border-b border-[#F0EAE0] bg-[#0D0D0D] sticky top-0 z-10">
         <div>
-          <h1 className="text-xl font-black text-white">Club Fitting Report</h1>
+          <h1 className="text-xl font-black text-[#111]">Club Fitting Report</h1>
           <p className="text-gray-500 text-sm">Based on {totalShots} tracked shots · {clubs.length} clubs analyzed</p>
         </div>
         <button onClick={printReport}
@@ -159,20 +163,20 @@ export default function FittingReportPage() {
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-4xl">⛳</span>
-                <span className="text-2xl font-black text-white">TracerBuddy</span>
+                <span className="text-2xl font-black text-[#111]">TracerBuddy</span>
               </div>
-              <h1 className="text-5xl font-black text-white leading-tight">
+              <h1 className="text-5xl font-black text-[#111] leading-tight">
                 Real Game<br />
                 <span className="text-[#FFD700]">Club Fitting Report</span>
               </h1>
-              <p className="text-gray-400 mt-3 text-lg">
+              <p className="text-gray-500 mt-3 text-lg">
                 Based on actual on-course performance — not range data
               </p>
             </div>
             <div className="text-right">
               <div className="text-gray-500 text-sm mb-1">PREPARED FOR</div>
-              <div className="text-2xl font-black text-white">{profile?.display_name || 'Golfer'}</div>
-              <div className="text-gray-400">{profile?.home_course || ''}</div>
+              <div className="text-2xl font-black text-[#111]">{profile?.display_name || 'Golfer'}</div>
+              <div className="text-gray-500">{profile?.home_course || ''}</div>
               <div className="text-gray-500 text-sm mt-2">Handicap Index: <span className="text-[#FFD700] font-black">{profile?.handicap_index?.toFixed(1) ?? '—'}</span></div>
               <div className="text-gray-500 text-sm">{format(new Date(), 'MMMM d, yyyy')}</div>
             </div>
@@ -182,7 +186,7 @@ export default function FittingReportPage() {
           <div className="grid grid-cols-4 gap-4 mb-10">
             {[
               { label:'BAG SCORE',      value:`${bagScore}%`,       color:'text-[#FFD700]', sub:'Overall confidence'  },
-              { label:'CLUBS ANALYZED', value:analyzed.length,      color:'text-white',     sub:'In your tracked bag'  },
+              { label:'CLUBS ANALYZED', value:analyzed.length,      color:'text-[#111]',     sub:'In your tracked bag'  },
               { label:'HIGH CONFIDENCE',value:highConf,             color:'text-[#00E578]', sub:'Clubs you can rely on'},
               { label:'NEED ATTENTION', value:lowConf + smallGaps,  color:'text-red-400',   sub:'Review recommended'  },
             ].map(s => (
@@ -199,7 +203,7 @@ export default function FittingReportPage() {
             <div className="report-label text-[#FFD700] mb-3">EXECUTIVE SUMMARY</div>
             <div className="space-y-2 text-sm text-gray-300 leading-relaxed">
               <p>
-                This report analyzes your bag based on <strong className="text-white">{totalShots} real shots</strong> tracked
+                This report analyzes your bag based on <strong className="text-[#111]">{totalShots} real shots</strong> tracked
                 during actual rounds — not simulated or range conditions. Your distances reflect how the clubs
                 perform when it matters, accounting for pressure, lie, and course conditions.
               </p>
@@ -236,7 +240,7 @@ export default function FittingReportPage() {
             <div className="space-y-2">
               {analyzed.filter(c => c.avg_yards > 0 && c.club_name !== 'Putter').map(club => (
                 <div key={club.club_name} className="flex items-center gap-3">
-                  <div className="w-14 text-sm font-bold text-white text-right">{club.club_name}</div>
+                  <div className="w-14 text-sm font-bold text-[#111] text-right">{club.club_name}</div>
                   <div className="flex-1 relative h-7 bg-[#1a1a1a] rounded">
                     {/* Background range bar */}
                     <div className="absolute top-0 bottom-0 rounded bg-white/5"
@@ -278,7 +282,7 @@ export default function FittingReportPage() {
         <div className="print-page-break">
           <div className="report-section-header mb-6">
             <div className="report-label text-[#FFD700]">DETAILED CLUB ANALYSIS</div>
-            <h2 className="text-2xl font-black text-white">Club-by-Club Report</h2>
+            <h2 className="text-2xl font-black text-[#111]">Club-by-Club Report</h2>
           </div>
 
           <div className="space-y-4">
@@ -289,7 +293,7 @@ export default function FittingReportPage() {
                 <div className="flex items-start gap-5">
                   {/* Club name + shots */}
                   <div className="w-20 shrink-0">
-                    <div className="text-2xl font-black text-white">{club.club_name}</div>
+                    <div className="text-2xl font-black text-[#111]">{club.club_name}</div>
                     <div className="text-xs text-gray-500">{club.shot_count} shots</div>
                   </div>
 
@@ -303,7 +307,7 @@ export default function FittingReportPage() {
                     </div>
                     <div>
                       <div className="report-label">RANGE</div>
-                      <div className="text-sm font-bold text-white">
+                      <div className="text-sm font-bold text-[#111]">
                         {club.realYards > 0 ? `${club.minYards}–${club.maxYards}y` : '—'}
                       </div>
                     </div>
@@ -312,7 +316,7 @@ export default function FittingReportPage() {
                       <div className={`text-sm font-bold ${
                         club.gapAbove === null ? 'text-gray-500' :
                         club.gapAbove < 8 ? 'text-orange-400' :
-                        club.gapAbove > 25 ? 'text-yellow-400' : 'text-white'}`}>
+                        club.gapAbove > 25 ? 'text-yellow-400' : 'text-[#111]'}`}>
                         {club.gapAbove !== null ? `${club.gapAbove}y` : 'First club'}
                       </div>
                     </div>
@@ -337,15 +341,15 @@ export default function FittingReportPage() {
                 <div className="grid grid-cols-3 gap-4 text-xs">
                   <div>
                     <span className="text-gray-500">TENDENCY: </span>
-                    <span className="text-white">{club.tendency}</span>
+                    <span className="text-[#111]">{club.tendency}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">ASSESSMENT: </span>
-                    <span className="text-white">{club.verdict}</span>
+                    <span className="text-[#111]">{club.verdict}</span>
                   </div>
                   <div>
                     <span className="text-[#FFD700]">→ </span>
-                    <span className="text-white font-semibold">{club.action}</span>
+                    <span className="text-[#111] font-semibold">{club.action}</span>
                   </div>
                 </div>
               </div>
@@ -357,7 +361,7 @@ export default function FittingReportPage() {
         <div className="print-page-break mt-10">
           <div className="report-section-header mb-6">
             <div className="report-label text-[#FFD700]">GAP ANALYSIS</div>
-            <h2 className="text-2xl font-black text-white">Bag Configuration Review</h2>
+            <h2 className="text-2xl font-black text-[#111]">Bag Configuration Review</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-6 mb-8">
@@ -368,8 +372,8 @@ export default function FittingReportPage() {
                 <p className="text-[#00E578] text-sm">✓ No redundant gaps found — good bag setup</p>
               ) : analyzed.filter(c => c.gapAbove !== null && c.gapAbove < 8).map(c => (
                 <div key={c.club_name} className="mb-3 p-3 bg-orange-400/5 border border-orange-400/20 rounded-lg">
-                  <div className="font-bold text-white text-sm">{c.club_name} — only {c.gapAbove}y above previous</div>
-                  <div className="text-xs text-gray-400 mt-1">Consider removing this club or adjusting your setup with both clubs</div>
+                  <div className="font-bold text-[#111] text-sm">{c.club_name} — only {c.gapAbove}y above previous</div>
+                  <div className="text-xs text-gray-500 mt-1">Consider removing this club or adjusting your setup with both clubs</div>
                 </div>
               ))}
             </div>
@@ -381,8 +385,8 @@ export default function FittingReportPage() {
                 <p className="text-[#00E578] text-sm">✓ No major gaps — your bag covers distances well</p>
               ) : gapWarnings.map(c => (
                 <div key={c.club_name} className="mb-3 p-3 bg-yellow-400/5 border border-yellow-400/20 rounded-lg">
-                  <div className="font-bold text-white text-sm">{c.club_name} — {c.gapAbove}y gap above</div>
-                  <div className="text-xs text-gray-400 mt-1">
+                  <div className="font-bold text-[#111] text-sm">{c.club_name} — {c.gapAbove}y gap above</div>
+                  <div className="text-xs text-gray-500 mt-1">
                     You may be leaving shots on the table. Consider adding a club to fill the {Math.round((c.gapAbove || 0)/2 + c.realYards)}y range.
                   </div>
                 </div>
@@ -397,7 +401,7 @@ export default function FittingReportPage() {
               <div className="space-y-2">
                 {toReview.map(c => (
                   <div key={c.club_name} className="flex items-center gap-4 p-3 bg-red-500/5 border border-red-500/15 rounded-lg">
-                    <div className="font-black text-white w-14">{c.club_name}</div>
+                    <div className="font-black text-[#111] w-14">{c.club_name}</div>
                     <div className="flex-1 text-sm text-gray-300">{c.verdict}</div>
                     <div className="text-sm text-[#FFD700] font-semibold">{c.action}</div>
                   </div>
@@ -430,7 +434,7 @@ export default function FittingReportPage() {
                 </p>
               )}
               <p>
-                <strong className="text-white">Important:</strong> This report reflects your real on-course performance, not
+                <strong className="text-[#111]">Important:</strong> This report reflects your real on-course performance, not
                 range or ideal conditions. The "real number" shown is a conservative playing distance based on your
                 middle-50% of tracked shots. This is the distance to use for club selection — not your best shot.
               </p>
@@ -438,7 +442,7 @@ export default function FittingReportPage() {
           </div>
 
           {/* Footer */}
-          <div className="mt-10 pt-6 border-t border-[#1F1F1F] flex items-center justify-between text-xs text-gray-600">
+          <div className="mt-10 pt-6 border-t border-[#F0EAE0] flex items-center justify-between text-xs text-gray-600">
             <div className="flex items-center gap-2">
               <span>⛳</span>
               <span>TracerBuddy — Real Game Club Fitting Report</span>
@@ -468,7 +472,7 @@ export default function FittingReportPage() {
           .print-page-break { page-break-before: auto; }
           h1, h2 { color: black !important; }
           p, span, div { color: inherit; }
-          .text-white, .text-gray-300, .text-gray-400 { color: #111 !important; }
+          .text-[#111], .text-gray-300, .text-gray-500 { color: #111 !important; }
           .text-gray-500, .text-gray-600 { color: #666 !important; }
           .bg-\\[\\#1a1a1a\\], .bg-\\[\\#0D0D0D\\] { background: #f0f0f0 !important; }
           @page { margin: 1.5cm; size: A4; }
@@ -487,5 +491,6 @@ export default function FittingReportPage() {
         }
       `}</style>
     </>
+    </ProGate>
   )
 }

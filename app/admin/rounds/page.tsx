@@ -4,13 +4,6 @@ import { supabase } from '@/lib/supabase'
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
-function toPar(score: number, par: number) {
-  const diff = score - par
-  if (diff === 0) return <span className="text-gray-400">E</span>
-  if (diff > 0)  return <span className="text-red-400">+{diff}</span>
-  return <span className="text-green-400">{diff}</span>
-}
-
 export default function AdminRounds() {
   const [rounds,  setRounds]  = useState<any[]>([])
   const [total,   setTotal]   = useState(0)
@@ -64,9 +57,6 @@ export default function AdminRounds() {
               <th className="text-left px-5 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Player</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Course</th>
               <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Score</th>
-              <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">+/-</th>
-              <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">GIR</th>
-              <th className="text-center px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Putts</th>
               <th className="text-left px-4 py-3 text-[11px] font-semibold tracking-[0.1em] text-gray-500 uppercase">Date</th>
               <th className="px-4 py-3" />
             </tr>
@@ -74,14 +64,14 @@ export default function AdminRounds() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={8} className="text-center py-12">
+                <td colSpan={5} className="text-center py-12">
                   <div className="w-5 h-5 border-2 border-[#DF9905] border-t-transparent rounded-full animate-spin mx-auto" />
                 </td>
               </tr>
             )}
             {!loading && rounds.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-gray-600 text-sm">No rounds found</td>
+                <td colSpan={5} className="text-center py-12 text-gray-600 text-sm">No rounds found</td>
               </tr>
             )}
             {!loading && rounds.map(r => (
@@ -90,15 +80,10 @@ export default function AdminRounds() {
                   <div className="text-white font-medium text-xs">{r.user_profiles?.display_name || 'Unknown'}</div>
                   <div className="text-gray-600 text-[11px]">{r.user_profiles?.email || '—'}</div>
                 </td>
-                <td className="px-4 py-3 text-gray-300 max-w-[160px] truncate">{r.course_name || '—'}</td>
+                <td className="px-4 py-3 text-gray-300 max-w-[200px] truncate">{r.course_name || '—'}</td>
                 <td className="px-4 py-3 text-center text-white font-bold">{r.total_score ?? '—'}</td>
-                <td className="px-4 py-3 text-center font-medium">
-                  {r.total_score && r.course_par ? toPar(r.total_score, r.course_par) : '—'}
-                </td>
-                <td className="px-4 py-3 text-center text-gray-400">{r.gir_count ?? '—'}</td>
-                <td className="px-4 py-3 text-center text-gray-400">{r.putts ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
-                  {r.played_at ? format(new Date(r.played_at), 'MMM d, yyyy') : '—'}
+                  {r.created_at ? format(new Date(r.created_at), 'MMM d, yyyy') : '—'}
                 </td>
                 <td className="px-4 py-3">
                   <button

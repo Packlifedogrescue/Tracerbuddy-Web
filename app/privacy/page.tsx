@@ -40,7 +40,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2>1. Who We Are</h2>
-            <p>TracerBuddy (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is a golf performance platform. We operate the website at tracerbuddy.app (also accessible at tracerbuddy.com) and the TracerBuddy iOS and Apple Watch applications (collectively, the &ldquo;Service&rdquo;).</p>
+            <p>TracerBuddy ("we", "our", or "us") is a golf performance platform. We operate the website at tracerbuddy.app (also accessible at tracerbuddy.com) and the TracerBuddy iOS and Apple Watch applications (collectively, the "Service").</p>
             <p>If you have questions about this policy, contact us at <a href="mailto:privacy@tracerbuddy.com">privacy@tracerbuddy.com</a>.</p>
           </section>
 
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
             <h2>3. How We Use Your Information</h2>
             <ul>
               <li>To provide, operate, and improve the Service.</li>
-              <li>To process your subscription and manage billing through Apple&apos;s in-app purchase system.</li>
+              <li>To process your subscription and manage billing through Apple's in-app purchase system.</li>
               <li>To generate round analysis, AI coaching insights, and performance stats.</li>
               <li>To send important service notifications (e.g., subscription renewal, security alerts). We do not send marketing emails without explicit consent.</li>
               <li>To detect and prevent fraud, abuse, and security incidents.</li>
@@ -80,6 +80,7 @@ export default function PrivacyPage() {
             <p>We do not sell your personal data. We share data only in the following circumstances:</p>
             <ul>
               <li><strong>Service providers:</strong> trusted third parties that help us operate the Service (e.g., Supabase for database hosting, Apple Maps for course maps, Apple for in-app purchases). These providers are contractually bound to protect your data.</li>
+              <li><strong>AI provider:</strong> AI-generated coaching insights, round analysis, and caddie suggestions are powered by Anthropic (Claude). Relevant round statistics and performance data are sent to Anthropic's API to generate these insights. Anthropic's privacy policy is available at <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer">anthropic.com/privacy</a>. We do not share your name, email, or account credentials with Anthropic.</li>
               <li><strong>Buddy Battles:</strong> when you connect with another TracerBuddy user, your display name and selected stats are visible to that user. You control what you share.</li>
               <li><strong>Legal requirements:</strong> if required by law, court order, or to protect the rights and safety of our users or the public.</li>
             </ul>
@@ -129,10 +130,11 @@ export default function PrivacyPage() {
       {/* Footer */}
       <footer className="px-6 md:px-12 py-10 max-w-[1400px] mx-auto border-t border-black/[0.06]">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-[12px] text-[#888]">© 2026 TracerBuddy. All rights reserved.</div>
+          <div className="text-[12px] text-[#888]">© 2026 TracerBuddy LLC. All rights reserved.</div>
           <div className="flex items-center gap-6 text-[12px] text-[#888]">
             <Link href="/privacy" className="hover:text-black transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-black transition-colors">Terms</Link>
+            <Link href="/disclaimer" className="hover:text-black transition-colors">Disclaimer</Link>
             <Link href="/about" className="hover:text-black transition-colors">About</Link>
             <Link href="/contact" className="hover:text-black transition-colors">Contact</Link>
           </div>
