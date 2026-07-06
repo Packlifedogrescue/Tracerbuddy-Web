@@ -45,9 +45,30 @@ export const metadata: Metadata = {
   },
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'TracerBuddy',
+  applicationCategory: 'SportsApplication',
+  operatingSystem: 'iOS',
+  description: 'Premium shot tracking, course mapping, swing motion data, and round insights for serious golfers.',
+  url: siteUrl,
+  image: `${siteUrl}/images/og-image.png`,
+  offers: {
+    '@type': 'Offer',
+    category: 'Freemium',
+  },
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="antialiased"><ToastProvider>{children}</ToastProvider><CookieBanner /><Analytics /></body>
     </html>
   )
