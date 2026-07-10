@@ -39,8 +39,12 @@ export async function POST(req: NextRequest) {
     }
 
     const msg = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 16000,
+      thinking: {
+        type: 'enabled',
+        budget_tokens: 10000,
+      },
       system: system ?? '',
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
@@ -48,9 +52,13 @@ export async function POST(req: NextRequest) {
       })),
     })
 
-    const reply = (msg.content[0] as any)?.text ?? ''
+    // Extended thinking returns multiple content blocks — extract only the text reply
+    const reply = msg.content
+      .filter(block => block.type === 'text')
+      .map(block => (block as Anthropic.TextBlock).text)
+      .join('')
 
-    // Increment usage counter — each call = 2 messages (user + caddie)
+    // Increment usage counter
     if (userId) {
       const today = new Date().toISOString().slice(0, 10)
       await sb().rpc('increment_caddie_usage', { p_user_id: userId, p_date: today })
