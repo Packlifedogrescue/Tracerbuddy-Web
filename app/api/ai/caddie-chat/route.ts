@@ -40,10 +40,10 @@ export async function POST(req: NextRequest) {
 
     const msg = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 16000,
+      max_tokens: 4000,
       thinking: {
         type: 'enabled',
-        budget_tokens: 10000,
+        budget_tokens: 3000,
       },
       system: system ?? '',
       messages: messages.map((m: { role: string; content: string }) => ({
