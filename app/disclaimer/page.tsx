@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Disclaimer — TracerBuddy',
   description: 'Important disclaimers regarding the use of TracerBuddy and its AI-powered features.',
+  alternates: { canonical: '/disclaimer' },
 }
 
 export default function DisclaimerPage() {

@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Terms of Service — TracerBuddy',
   description: 'Terms governing your use of the TracerBuddy golf performance platform.',
+  alternates: { canonical: '/terms' },
 }
 
 export default function TermsPage() {

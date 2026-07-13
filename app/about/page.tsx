@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'About — TracerBuddy',
   description: 'TracerBuddy brings tour-level performance analytics to every golfer.',
+  alternates: { canonical: '/about' },
 }
 
 export default function AboutPage() {

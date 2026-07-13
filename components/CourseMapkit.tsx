@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 
 export interface TeeData {
   name: string
@@ -81,6 +81,16 @@ function parseCoord(v: string | number | null | undefined): number | null {
   return isNaN(n) || n === 0 ? null : n
 }
 
+function yardsBetween(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371000
+  const φ1 = a.lat * Math.PI / 180, φ2 = b.lat * Math.PI / 180
+  const Δφ = (b.lat - a.lat) * Math.PI / 180
+  const Δλ = (b.lng - a.lng) * Math.PI / 180
+  const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2
+  const meters = R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+  return Math.round(meters * 1.09361)
+}
+
 function polyStyle(mk: any, poi: number) {
   const isFairway = poi === POI_FAIRWAY
   const isRough   = poi === POI_ROUGH
@@ -132,6 +142,127 @@ export default function CourseMapkit({
   const annotationsRef = useRef<any[]>([])
   const overlaysRef    = useRef<any[]>([])
   const centeredRef    = useRef(false)
+
+  // ── Measure distance ─────────────────────────────────────────────────────
+  const [measureMode, setMeasureMode] = useState(false)
+  const measureModeRef    = useRef(false)
+  const measureAnchorRef  = useRef<{ lat: number; lng: number } | null>(null)
+  const measurePinRef     = useRef<any>(null)
+  const measureLineRef    = useRef<any>(null)
+  const measureLabelElRef = useRef<HTMLDivElement | null>(null)
+  const [measureYards, setMeasureYards] = useState<number | null>(null)
+
+  useEffect(() => { measureModeRef.current = measureMode }, [measureMode])
+
+  // Anchor is always the selected hole's tee — distances read "from the tee"
+  useEffect(() => {
+    if (selectedHole == null) { measureAnchorRef.current = null; return }
+    const h    = holes.find(h => holeNum(h) === selectedHole)
+    const tLat = parseCoord(h?.TeeLatitude)
+    const tLng = parseCoord(h?.TeeLongitude)
+    measureAnchorRef.current = (tLat != null && tLng != null) ? { lat: tLat, lng: tLng } : null
+  }, [selectedHole, holes])
+
+  const clearMeasure = useCallback(() => {
+    const map = mapRef.current
+    if (map) {
+      if (measurePinRef.current)  { try { map.removeAnnotation(measurePinRef.current) } catch {} }
+      if (measureLineRef.current) { try { map.removeOverlay(measureLineRef.current) } catch {} }
+    }
+    measurePinRef.current     = null
+    measureLineRef.current    = null
+    measureLabelElRef.current = null
+    setMeasureYards(null)
+  }, [])
+
+  // Anchor changed (new hole selected) — old pin no longer means anything
+  useEffect(() => { clearMeasure() }, [selectedHole, clearMeasure])
+
+  const redrawMeasureLine = useCallback((target: { lat: number; lng: number }) => {
+    const map    = mapRef.current
+    const mk     = window.mapkit
+    const anchor = measureAnchorRef.current
+    if (!map || !mk || !anchor) return
+
+    if (measureLineRef.current) { try { map.removeOverlay(measureLineRef.current) } catch {} }
+    const line = new mk.PolylineOverlay([
+      new mk.Coordinate(anchor.lat, anchor.lng),
+      new mk.Coordinate(target.lat, target.lng),
+    ])
+    line.style = new mk.Style({ lineWidth: 2.5, strokeColor: '#5AC8FA', lineOpacity: 0.9, lineDash: [4, 5] })
+    measureLineRef.current = line
+    map.addOverlay(line)
+
+    const yds = yardsBetween(anchor, target)
+    setMeasureYards(yds)
+    if (measureLabelElRef.current) measureLabelElRef.current.textContent = `${yds} yd`
+  }, [])
+
+  const placeMeasurePin = useCallback((coord: { lat: number; lng: number }) => {
+    const map    = mapRef.current
+    const mk     = window.mapkit
+    const anchor = measureAnchorRef.current
+    if (!map || !mk || !anchor) return
+
+    if (measurePinRef.current) { try { map.removeAnnotation(measurePinRef.current) } catch {} }
+
+    const ann = new mk.Annotation(
+      new mk.Coordinate(coord.lat, coord.lng),
+      () => {
+        const el = document.createElement('div')
+        el.setAttribute('data-measure-pin', '1')
+        Object.assign(el.style, {
+          display: 'flex', alignItems: 'center', gap: '4px',
+          background: '#5AC8FA', color: '#0A0A0A',
+          fontSize: '11px', fontWeight: '900',
+          padding: '4px 10px', borderRadius: '10px',
+          boxShadow: '0 3px 10px rgba(0,0,0,0.5)',
+          border: '2px solid rgba(255,255,255,0.9)',
+          cursor: 'grab', whiteSpace: 'nowrap',
+        })
+        el.textContent = `${yardsBetween(anchor, coord)} yd`
+        measureLabelElRef.current = el
+        return el
+      },
+      { anchorOffset: new DOMPoint(0, 0), calloutEnabled: false, draggable: true }
+    )
+
+    const onMove = () => {
+      const c = ann.coordinate
+      redrawMeasureLine({ lat: c.latitude, lng: c.longitude })
+    }
+    ann.addEventListener('dragging', onMove)
+    ann.addEventListener('drag-end', onMove)
+
+    measurePinRef.current = ann
+    map.addAnnotation(ann)
+    redrawMeasureLine(coord)
+  }, [redrawMeasureLine])
+
+  // Tap-to-place while measure mode is on
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    function handleClick(e: MouseEvent) {
+      if (!measureModeRef.current) return
+      if (!mapRef.current || !window.mapkit || !measureAnchorRef.current) return
+      const target = e.target as HTMLElement
+      if (target.closest('[data-measure-pin]')) return // let the pin's own drag handle this
+      const coord = mapRef.current.convertPointOnPageToCoordinate(new DOMPoint(e.pageX, e.pageY))
+      placeMeasurePin({ lat: coord.latitude, lng: coord.longitude })
+    }
+
+    container.addEventListener('click', handleClick)
+    return () => container.removeEventListener('click', handleClick)
+  }, [placeMeasurePin])
+
+  function toggleMeasure() {
+    setMeasureMode(prev => {
+      if (prev) clearMeasure()
+      return !prev
+    })
+  }
 
   const buildMarkers = useCallback(() => {
     const map = mapRef.current
@@ -373,7 +504,10 @@ export default function CourseMapkit({
 
     return () => {
       destroyed = true
-      centeredRef.current = false
+      centeredRef.current      = false
+      measurePinRef.current    = null
+      measureLineRef.current   = null
+      measureLabelElRef.current = null
       if (mapRef.current) {
         try { mapRef.current.destroy() } catch {}
         mapRef.current = null
@@ -400,9 +534,43 @@ export default function CourseMapkit({
     if (mapRef.current) buildMarkers()
   }, [buildMarkers])
 
+  const measureDisabled = selectedHole == null
+
   return (
     <div className="w-full h-full relative" style={{ minHeight: 400 }}>
-      <div ref={containerRef} className="absolute inset-0" />
+      <div ref={containerRef} className="absolute inset-0" style={{ cursor: measureMode ? 'crosshair' : undefined }} />
+
+      {/* Measure distance toggle */}
+      <button
+        onClick={toggleMeasure}
+        disabled={measureDisabled}
+        title={measureDisabled ? 'Select a hole to measure distances' : measureMode ? 'Exit measure mode' : 'Measure distance from tee'}
+        className="absolute top-3 left-3 z-10 w-9 h-9 rounded-xl shadow-lg flex items-center justify-center transition-colors disabled:opacity-40"
+        style={{ background: measureMode ? '#5AC8FA' : 'rgba(10,10,10,0.82)', backdropFilter: 'blur(6px)' }}
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={measureMode ? '#0A0A0A' : '#5AC8FA'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4Z" />
+          <path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2" />
+        </svg>
+      </button>
+
+      {/* Measure mode hint / readout */}
+      {measureMode && (
+        <div
+          className="absolute top-3 left-14 z-10 rounded-2xl px-4 py-2.5 pointer-events-none"
+          style={{ background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(10px)' }}
+        >
+          {measureYards != null ? (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[18px] font-black leading-none" style={{ color: '#5AC8FA' }}>{measureYards}</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">yds from tee</span>
+            </div>
+          ) : (
+            <span className="text-[11px] font-semibold text-gray-300">Tap anywhere on the map to measure</span>
+          )}
+        </div>
+      )}
+
       {/* North reset button */}
       <button
         onClick={() => { if (mapRef.current) mapRef.current.setRotationAnimated(0) }}

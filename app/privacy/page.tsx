@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Privacy Policy — TracerBuddy',
   description: 'How TracerBuddy collects, uses, and protects your personal data.',
+  alternates: { canonical: '/privacy' },
 }
 
 export default function PrivacyPage() {
