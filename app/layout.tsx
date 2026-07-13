@@ -25,6 +25,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'TracerBuddy — Know your shot. Know your miss. Know what to fix.',
   description: 'Premium shot tracking, course mapping, swing motion data, and round insights. The golf performance app for serious players.',
+  alternates: {
+    canonical: '/',
+  },
+  manifest: '/manifest.webmanifest',
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
   icons: {
     icon: '/images/logo-icon.png',
     apple: '/images/logo-icon.png',
