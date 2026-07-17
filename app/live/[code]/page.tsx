@@ -5,14 +5,12 @@ import Link from 'next/link'
 import { Loader2, RadioTower } from 'lucide-react'
 
 interface Participant {
-  user_id: string
   display_name: string
   handicap: number
   scores: Record<string, number>
 }
 
 interface LiveRound {
-  id: string
   course_name: string | null
   round_mode: string
   status: string
@@ -148,7 +146,7 @@ export default function LiveRoundPage() {
               {sorted.map((p, i) => {
                 const t = totals(p)
                 return (
-                  <div key={p.user_id} className="flex items-center gap-4 px-5 md:px-7 py-4 border-b border-white/[0.06] last:border-0">
+                  <div key={`${p.display_name}-${i}`} className="flex items-center gap-4 px-5 md:px-7 py-4 border-b border-white/[0.06] last:border-0">
                     <div className="font-serif text-[20px] font-medium text-[#DF9905] w-7 shrink-0 text-center">
                       {t.thru > 0 ? i + 1 : '—'}
                     </div>
@@ -187,8 +185,8 @@ export default function LiveRoundPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {sorted.map(p => (
-                        <tr key={p.user_id} className="border-b border-black/[0.04] last:border-0">
+                      {sorted.map((p, i) => (
+                        <tr key={`${p.display_name}-${i}`} className="border-b border-black/[0.04] last:border-0">
                           <td className="sticky left-0 bg-white text-[12.5px] font-semibold px-5 py-2.5 whitespace-nowrap">{p.display_name}</td>
                           {HOLES.map(h => {
                             const s = p.scores?.[String(h)]

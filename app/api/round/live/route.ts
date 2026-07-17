@@ -150,11 +150,14 @@ export async function GET(req: NextRequest) {
 
     const { data: participants, error: pErr } = await sb()
       .from('live_round_participants')
-      .select('user_id, display_name, handicap, scores')
+      .select('display_name, handicap, scores')
       .eq('live_round_id', round.id)
 
     if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 })
-    return NextResponse.json({ liveRound: round, participants })
+    // Spectator view: no internal IDs — the round id + a user_id would be
+    // enough to forge score updates via PATCH, which has no auth.
+    const { id: _id, ...publicRound } = round
+    return NextResponse.json({ liveRound: publicRound, participants })
   }
 
   if (!liveRoundId) return NextResponse.json({ error: 'liveRoundId required' }, { status: 400 })
