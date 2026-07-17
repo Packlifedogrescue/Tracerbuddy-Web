@@ -130,9 +130,33 @@ export async function PATCH(req: NextRequest) {
 }
 
 // GET /api/round/live?liveRoundId=xxx — fetch all participants + scores
+// GET /api/round/live?code=XXXXXX  — spectator lookup by invite code (no join)
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const liveRoundId = searchParams.get('liveRoundId')
+  const code        = searchParams.get('code')
+
+  if (code) {
+    const { data: round, error: rErr } = await sb()
+      .from('live_rounds')
+      .select('id, course_name, round_mode, status, created_at')
+      .eq('invite_code', code.toUpperCase())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (rErr)   return NextResponse.json({ error: rErr.message }, { status: 500 })
+    if (!round) return NextResponse.json({ error: 'Round not found' }, { status: 404 })
+
+    const { data: participants, error: pErr } = await sb()
+      .from('live_round_participants')
+      .select('user_id, display_name, handicap, scores')
+      .eq('live_round_id', round.id)
+
+    if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 })
+    return NextResponse.json({ liveRound: round, participants })
+  }
+
   if (!liveRoundId) return NextResponse.json({ error: 'liveRoundId required' }, { status: 400 })
 
   const { data, error } = await sb()
