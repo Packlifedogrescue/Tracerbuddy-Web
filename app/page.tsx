@@ -244,7 +244,7 @@ export default function HomePage() {
 
         {/* Apple Watch feature highlight */}
         <Reveal delay={100}>
-          <div className="mt-5 bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-7 md:p-10 grid md:grid-cols-2 gap-8 items-center relative overflow-hidden">
+          <div id="watch" className="mt-5 bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-7 md:p-10 grid md:grid-cols-2 gap-8 items-center relative overflow-hidden scroll-mt-24">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #F5EFE0 1px, transparent 0)', backgroundSize: '28px 28px' }} />
             <div className="relative z-10">
               <div className="text-[10px] font-bold text-[#DF9905] tracking-[0.25em] mb-3">APPLE WATCH · SWINGTRACE</div>
@@ -356,7 +356,7 @@ export default function HomePage() {
               </div>
               <p className="text-[13px] text-[#888] mb-6">Just $6.67/month, billed annually</p>
               <div className="space-y-3 mb-8">
-                {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Tournament & match-play modes'].map(item => (
+                {['Everything in Monthly', 'Priority support', 'Early access to new features', '2 months free vs monthly'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#DF9905" strokeWidth="2" strokeLinecap="round"/></svg>
                     <span className="text-[13.5px] text-[#ddd]">{item}</span>
@@ -412,6 +412,7 @@ export default function HomePage() {
             <div className="text-[12px] font-bold text-[#1A1A1A] mb-4 tracking-wider">COMPANY</div>
             <div className="space-y-2.5 text-[13px] text-[#666]">
               <Link href="/about" className="block hover:text-black transition-colors">About</Link>
+              <Link href="/community" className="block hover:text-black transition-colors">Community</Link>
               <Link href="/contact" className="block hover:text-black transition-colors">Contact</Link>
             </div>
           </div>
