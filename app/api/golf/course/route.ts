@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const GOLF_BASE      = 'https://golfapi.io/api/v2.3'
 const CACHE_TTL_DAYS = 30
-const CACHE_VERSION  = 4
+const CACHE_VERSION  = 5
 
 // POI types from the coordinates endpoint
 const POI_GREEN     = 1
@@ -12,7 +12,10 @@ const POI_ROUGH     = 3
 const POI_BUNKER    = 4
 const POI_WATER     = 5
 const POI_OB        = 6  // out of bounds
-const POI_DOGLEG    = 7  // ordered waypoints along the fairway path
+const POI_DOGLEG    = 9  // ordered waypoints along the fairway path — confirmed against live
+                          // data: poi 9 appears wherever dogleg-shaped holes are mapped, poi 7
+                          // never appears at all, so Waypoints has been silently empty for
+                          // every course since this route was added
 const POI_LAYUP     = 8  // recommended layup spots
 const POI_FRONT_TEE = 11
 const POI_BACK_TEE  = 12
@@ -40,6 +43,29 @@ function yardsFromCoords(lat1: number, lon1: number, lat2: number, lon2: number)
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.09361)
 }
 
+// Initial bearing in degrees from point 1 to point 2
+function bearingDegrees(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180
+  const Δλ = (lon2 - lon1) * Math.PI / 180
+  const y = Math.sin(Δλ) * Math.cos(φ2)
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ)
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+}
+
+// Destination point given a start point, bearing (degrees), and distance (yards)
+function destinationPoint(lat: number, lon: number, bearingDeg: number, yards: number): { lat: number; lng: number } {
+  const R = 6371000
+  const δ = (yards / 1.09361) / R
+  const θ = bearingDeg * Math.PI / 180
+  const φ1 = lat * Math.PI / 180, λ1 = lon * Math.PI / 180
+  const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ))
+  const λ2 = λ1 + Math.atan2(
+    Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
+    Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2)
+  )
+  return { lat: φ2 * 180 / Math.PI, lng: λ2 * 180 / Math.PI }
+}
+
 function buildCoursePayload(course: any, coordinates: any[]) {
   const parsMen       = course.parsMen       ?? []
   const indexesMen    = course.indexesMen    ?? []
@@ -48,7 +74,10 @@ function buildCoursePayload(course: any, coordinates: any[]) {
   const firstTee      = course.tees?.[0]     ?? {}
   const mainTee       = course.tees?.find((t: any) => /blue|champ|black|gold/i.test(t.teeName ?? '')) ?? firstTee
 
-  const holeCoords: Record<number, { tLat?: string; tLng?: string; gLat?: string; gLng?: string }> = {}
+  const holeCoords: Record<number, {
+    tLat?: string; tLng?: string; gLat?: string; gLng?: string
+    gFrontLat?: string; gFrontLng?: string; gBackLat?: string; gBackLng?: string
+  }> = {}
   const holeGreenPoints: Record<number, { lat: number; lng: number }[]> = {}
   const polygonMap: Record<string, CoursePolygon> = {}
   const doglegMap: Record<number, { lat: number; lng: number; order: number }[]> = {}
@@ -81,13 +110,45 @@ function buildCoursePayload(course: any, coordinates: any[]) {
     }
   }
 
-  // Average green POI points per hole → true green center
+  // Average green POI points per hole → true green center. When the tee is known too,
+  // also take the closest/farthest green point from the tee as front/back of green — the
+  // green points aren't labeled front/back individually, but their spread along the
+  // approach line is a reasonable stand-in for green depth.
   for (const [h, pts] of Object.entries(holeGreenPoints)) {
     if (pts.length === 0) continue
+    const hole = Number(h)
     const avgLat = pts.reduce((s, p) => s + p.lat, 0) / pts.length
     const avgLng = pts.reduce((s, p) => s + p.lng, 0) / pts.length
-    holeCoords[Number(h)].gLat = String(avgLat)
-    holeCoords[Number(h)].gLng = String(avgLng)
+    holeCoords[hole].gLat = String(avgLat)
+    holeCoords[hole].gLng = String(avgLng)
+
+    const tLat = holeCoords[hole].tLat ? Number(holeCoords[hole].tLat) : null
+    const tLng = holeCoords[hole].tLng ? Number(holeCoords[hole].tLng) : null
+    if (tLat != null && tLng != null && pts.length > 1) {
+      const byDist = pts.map(p => ({ p, d: yardsFromCoords(tLat, tLng, p.lat, p.lng) }))
+        .sort((a, b) => a.d - b.d)
+      const front = byDist[0].p, back = byDist[byDist.length - 1].p
+      holeCoords[hole].gFrontLat = String(front.lat); holeCoords[hole].gFrontLng = String(front.lng)
+      holeCoords[hole].gBackLat  = String(back.lat);  holeCoords[hole].gBackLng  = String(back.lng)
+    }
+  }
+
+  // 100/150/200y markers: computed geometrically along the tee→green-center line rather
+  // than from a dedicated POI type (GolfAPI's coordinates endpoint doesn't have one) — a
+  // marker N yards out is just the point N yards short of the green along that bearing.
+  const markerDistances = [100, 150, 200]
+  const holeMarkers: Record<number, Record<number, { lat: number; lng: number }>> = {}
+  for (const [h, coords] of Object.entries(holeCoords)) {
+    if (!coords.tLat || !coords.tLng || !coords.gLat || !coords.gLng) continue
+    const tLat = Number(coords.tLat), tLng = Number(coords.tLng)
+    const gLat = Number(coords.gLat), gLng = Number(coords.gLng)
+    const totalYards = yardsFromCoords(tLat, tLng, gLat, gLng)
+    const bearing = bearingDegrees(tLat, tLng, gLat, gLng)
+    holeMarkers[Number(h)] = {}
+    for (const m of markerDistances) {
+      if (totalYards <= m) continue
+      holeMarkers[Number(h)][m] = destinationPoint(tLat, tLng, bearing, totalYards - m)
+    }
   }
 
   // Sort ordered point sets by group number
@@ -107,6 +168,7 @@ function buildCoursePayload(course: any, coordinates: any[]) {
       lat, lng,
       yards: tLat && tLng ? yardsFromCoords(tLat, tLng, lat, lng) : null,
     }))
+    const markers = holeMarkers[holeNo] ?? {}
     return {
       HoleNo:          holeNo,
       Par:             par,
@@ -118,6 +180,13 @@ function buildCoursePayload(course: any, coordinates: any[]) {
       TeeLongitude:    coords.tLng      ?? null,
       GreenLatitude:   coords.gLat      ?? null,
       GreenLongitude:  coords.gLng      ?? null,
+      GreenFrontLatitude:  coords.gFrontLat ?? null,
+      GreenFrontLongitude: coords.gFrontLng ?? null,
+      GreenBackLatitude:   coords.gBackLat  ?? null,
+      GreenBackLongitude:  coords.gBackLng  ?? null,
+      Marker100:       markers[100] ?? null,
+      Marker150:       markers[150] ?? null,
+      Marker200:       markers[200] ?? null,
       Waypoints:       waypoints,
       LayupSpots:      layupSpots,
     }
