@@ -10,25 +10,53 @@ function randomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
+// Picks a code with no currently-active round already using it. This narrows the
+// window but doesn't fully close it (two requests could still race between this check
+// and the insert below) — the unique index on live_rounds(invite_code) where
+// status = 'active' is the actual guarantee; this just avoids relying on it in the
+// common case and gives a clean retry path if the insert does hit that constraint.
+async function uniqueActiveCode(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = randomCode()
+    const { data } = await sb()
+      .from('live_rounds')
+      .select('id')
+      .eq('invite_code', code)
+      .eq('status', 'active')
+      .maybeSingle()
+    if (!data) return code
+  }
+  // Astronomically unlikely to exhaust 5 attempts at random(36^6) — fall back to a
+  // fresh code and let the insert's unique constraint be the final word.
+  return randomCode()
+}
+
 // POST /api/round/live — create or join a live round
 export async function POST(req: NextRequest) {
   try {
     const { action, userId, displayName, handicap, courseId, courseName, roundMode, inviteCode } = await req.json()
 
     if (action === 'create') {
-      const code = randomCode()
-      const { data, error } = await sb()
-        .from('live_rounds')
-        .insert({
-          host_user_id: userId,
-          course_id:    courseId,
-          course_name:  courseName,
-          round_mode:   roundMode ?? 'stroke',
-          invite_code:  code,
-          status:       'active',
-        })
-        .select()
-        .single()
+      let code = await uniqueActiveCode()
+      let data: any, error: any
+      for (let attempt = 0; attempt < 3; attempt++) {
+        ;({ data, error } = await sb()
+          .from('live_rounds')
+          .insert({
+            host_user_id: userId,
+            course_id:    courseId,
+            course_name:  courseName,
+            round_mode:   roundMode ?? 'stroke',
+            invite_code:  code,
+            status:       'active',
+          })
+          .select()
+          .single())
+        // 23505 = Postgres unique_violation — someone else grabbed this exact code
+        // between our check and this insert. Regenerate and try again.
+        if (!error || error.code !== '23505') break
+        code = randomCode()
+      }
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
