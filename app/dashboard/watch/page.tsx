@@ -10,7 +10,10 @@ export default function WatchPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('swing_data')
+    // swing_data was never a real table — the Watch's swing metrics upload to
+    // club_sessions (see PhoneConnector.swift), with the club name column called
+    // club_name rather than club.
+    supabase.from('club_sessions')
       .select('*')
       .order('recorded_at', { ascending: false })
       .limit(200)
@@ -22,7 +25,7 @@ export default function WatchPage() {
   const maxSpeed     = swings.length ? Math.max(...swings.map(s => s.swing_speed || 0)) : 0
   const todaySwings  = swings.filter(s => new Date(s.recorded_at).toDateString() === new Date().toDateString())
   const connected    = lastSync && new Date(lastSync) > new Date(Date.now() - 24 * 3600000)
-  const driverSwings = swings.filter(s => s.club === 'Driver')
+  const driverSwings = swings.filter(s => s.club_name === 'Driver')
   const avgDriver    = driverSwings.length
     ? (driverSwings.reduce((a, s) => a + (s.swing_speed || 0), 0) / driverSwings.length).toFixed(1)
     : '—'
@@ -34,9 +37,9 @@ export default function WatchPage() {
 
   const byClub: Record<string, number[]> = {}
   swings.forEach(s => {
-    if (s.club && s.swing_speed) {
-      byClub[s.club] = byClub[s.club] || []
-      byClub[s.club].push(s.swing_speed)
+    if (s.club_name && s.swing_speed) {
+      byClub[s.club_name] = byClub[s.club_name] || []
+      byClub[s.club_name].push(s.swing_speed)
     }
   })
   const clubAvgs = Object.entries(byClub)
@@ -186,7 +189,7 @@ export default function WatchPage() {
                       <Activity className="w-4 h-4 text-[#C9A84C]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-semibold text-[#111]">{s.club || 'Unknown club'}</div>
+                      <div className="text-[13px] font-semibold text-[#111]">{s.club_name || 'Unknown club'}</div>
                       <div className="text-[11px] text-gray-400 mt-0.5">
                         {format(new Date(s.recorded_at), 'MMM d, h:mm a')}
                       </div>

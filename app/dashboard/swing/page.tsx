@@ -12,7 +12,10 @@ export default function SwingPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('swing_data')
+    // swing_data was never a real table — the Watch's swing metrics upload to
+    // club_sessions (see PhoneConnector.swift), with the club name column called
+    // club_name rather than club.
+    supabase.from('club_sessions')
       .select('*')
       .order('recorded_at', { ascending: false })
       .limit(200)
@@ -21,7 +24,7 @@ export default function SwingPage() {
 
   const avgSpeed     = swings.length ? (swings.reduce((a, s) => a + (s.swing_speed || 0), 0) / swings.length).toFixed(1) : '—'
   const maxSpeed     = swings.length ? Math.max(...swings.map(s => s.swing_speed || 0)) : 0
-  const driverSwings = swings.filter(s => s.club === 'Driver')
+  const driverSwings = swings.filter(s => s.club_name === 'Driver')
   const avgDriver    = driverSwings.length
     ? (driverSwings.reduce((a, s) => a + (s.swing_speed || 0), 0) / driverSwings.length).toFixed(1)
     : '—'
@@ -29,14 +32,14 @@ export default function SwingPage() {
   const trendData = [...swings].reverse().slice(-50).map(s => ({
     speed: s.swing_speed,
     date:  format(new Date(s.recorded_at), 'M/d'),
-    club:  s.club,
+    club:  s.club_name,
   }))
 
   const byClub: Record<string, number[]> = {}
   swings.forEach(s => {
-    if (s.club && s.swing_speed) {
-      byClub[s.club] = byClub[s.club] || []
-      byClub[s.club].push(s.swing_speed)
+    if (s.club_name && s.swing_speed) {
+      byClub[s.club_name] = byClub[s.club_name] || []
+      byClub[s.club_name].push(s.swing_speed)
     }
   })
   const clubAvgs = Object.entries(byClub)

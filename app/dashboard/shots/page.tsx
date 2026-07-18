@@ -8,9 +8,11 @@ export default function ShotShapesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('shot_shapes')
-      .select('*')
-      .order('recorded_at', { ascending: false })
+    // shot_shapes was never a real table the app writes to — shot shape is a column
+    // (shot_shape) on the shots table it already uploads every round.
+    supabase.from('shots')
+      .select('club, shot_shape')
+      .not('shot_shape', 'is', null)
       .limit(500)
       .then(({ data }) => { setShapes(data || []); setLoading(false) })
   }, [])
@@ -40,7 +42,7 @@ export default function ShotShapesPage() {
         <div className="flex flex-wrap gap-3">
           {Object.entries(
             shapes.reduce((acc: Record<string, number>, s) => {
-              if (s.shape) acc[s.shape] = (acc[s.shape] || 0) + 1
+              if (s.shot_shape) acc[s.shot_shape] = (acc[s.shot_shape] || 0) + 1
               return acc
             }, {})
           ).sort((a, b) => b[1] - a[1]).map(([shape, count]) => (
@@ -67,7 +69,7 @@ export default function ShotShapesPage() {
         return order.indexOf(a[0]) - order.indexOf(b[0])
       }).map(([club, shots]) => {
         const shapeCounts = shots.reduce((acc: Record<string, number>, s) => {
-          if (s.shape) acc[s.shape] = (acc[s.shape] || 0) + 1
+          if (s.shot_shape) acc[s.shot_shape] = (acc[s.shot_shape] || 0) + 1
           return acc
         }, {})
         const topShape = Object.entries(shapeCounts).sort((a, b) => b[1] - a[1])[0]
