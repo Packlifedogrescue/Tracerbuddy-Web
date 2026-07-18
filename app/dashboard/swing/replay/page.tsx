@@ -1,17 +1,12 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { Play, Pause, ChevronLeft, MoreHorizontal, RotateCcw } from 'lucide-react'
+import { Play, Pause, ChevronLeft, MoreHorizontal, RotateCcw, Activity } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
-const MOCK_METRICS = {
-  clubSpeed:        94.0,
-  attackAngle:      -3.2,
-  tempoRatio:       3.1,
-  clubPath:         -1.4,
-  backswingMs:      800,
-  downswingMs:      260,
-  followthruMs:     450,
-}
+// Animation pacing (ms per swing phase) — not a claimed metric, just playback
+// speed for the illustrative frame sequence, so a fixed baseline is fine here.
+const SWING_PACING = { backswingMs: 800, downswingMs: 260, followthruMs: 450 }
 
 // ─── Frame configuration ────────────────────────────────────────────────────
 // Maps to the actual files in /public/images/swing/
@@ -160,10 +155,30 @@ export default function SwingReplayPage() {
   const [speed,       setSpeed]       = useState(1.0)
   const [showImpact,  setShowImpact]  = useState(false)
   const [impactFired, setImpactFired] = useState(false)
+  const [swing,       setSwing]       = useState<any>(null)
+  const [loadingSwing, setLoadingSwing] = useState(true)
   const rafRef      = useRef<number | null>(null)
   const startRef    = useRef<number>(0)
   const arcPathRef  = useRef<SVGPathElement>(null)
-  const m           = MOCK_METRICS
+
+  useEffect(() => {
+    // Most recent real swing from the Watch (club_sessions — see PhoneConnector.swift),
+    // not a canned demo value. RLS scopes this to the signed-in user's own rows.
+    supabase.from('club_sessions')
+      .select('swing_speed, attack_angle, swing_tempo, club_path, club_name, recorded_at')
+      .order('recorded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => { setSwing(data); setLoadingSwing(false) })
+  }, [])
+
+  const m = {
+    clubSpeed:    swing?.swing_speed  ?? 0,
+    attackAngle:  swing?.attack_angle ?? 0,
+    tempoRatio:   swing?.swing_tempo  ?? 0,
+    clubPath:     swing?.club_path    ?? 0,
+    ...SWING_PACING,
+  }
 
   const stopAnim = useCallback(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
@@ -226,6 +241,21 @@ export default function SwingReplayPage() {
   }
 
   const cycleSpeed = () => setSpeed(s => s === 0.5 ? 1.0 : s === 1.0 ? 2.0 : 0.5)
+
+  if (loadingSwing) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#080604' }}>
+      <div className="text-[13px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Loading swing data…</div>
+    </div>
+  )
+
+  if (!swing) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6" style={{ background: '#080604' }}>
+      <Activity className="w-10 h-10" style={{ color: 'rgba(255,255,255,0.15)' }} />
+      <p className="text-[14px] font-semibold" style={{ color: '#fff' }}>No swing data yet</p>
+      <p className="text-[13px] text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>Wear your Apple Watch during a round to capture a swing to replay.</p>
+      <Link href="/dashboard/swing" className="text-[13px] font-bold mt-2" style={{ color: '#C9A84C' }}>Back to SwingTrace</Link>
+    </div>
+  )
 
   // Compute data-driven arc shape from real swing metrics
   const { arcPath, glowScale, seg1, seg2 } = computeSwingArc(m.attackAngle, m.clubPath, m.clubSpeed)
