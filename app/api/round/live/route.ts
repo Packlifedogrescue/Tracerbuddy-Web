@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendPushToUser } from '@/lib/push'
 
 const sb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,6 +94,17 @@ export async function POST(req: NextRequest) {
         }, { onConflict: 'live_round_id,user_id' })
 
       if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 })
+
+      // Awaited (not fire-and-forget) — a serverless function can be torn down
+      // right after it responds, which would kill an un-awaited send. Errors are
+      // swallowed: a push failure shouldn't fail the join itself.
+      if (round.host_user_id && round.host_user_id !== userId) {
+        await sendPushToUser(round.host_user_id, {
+          title: 'Live Round',
+          body: `${displayName || 'Someone'} joined your round at ${round.course_name || 'your course'}`,
+        }).catch(() => {})
+      }
+
       return NextResponse.json({ liveRound: round })
     }
 

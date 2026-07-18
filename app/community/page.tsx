@@ -169,6 +169,11 @@ export default function CommunityPage() {
     } else {
       if (post.user_reaction) await supabase.from('community_reactions').delete().eq('post_id', postId).eq('user_id', userId)
       await supabase.from('community_reactions').insert({ post_id: postId, user_id: userId, emoji })
+      fetch('/api/notifications/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'reaction', postId, actorId: userId, actorName: userName, emoji }),
+      }).catch(() => {})
     }
     setPosts(prev => prev.map(p => {
       if (p.id !== postId) return p

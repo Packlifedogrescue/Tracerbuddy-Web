@@ -107,7 +107,16 @@ export default function PostPage({ params }: { params: { id: string } }) {
       if (post.user_reaction) next[post.user_reaction] = Math.max(0, (next[post.user_reaction] ?? 1) - 1)
       next[emoji] = (next[emoji] ?? 0) + 1
       setPost({ ...post, reactions: next, user_reaction: emoji })
+      notifyPostOwner('reaction', { emoji })
     }
+  }
+
+  function notifyPostOwner(type: 'comment' | 'reaction', extra: { emoji?: string } = {}) {
+    fetch('/api/notifications/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, postId: params.id, actorId: userId, actorName: authorName, ...extra }),
+    }).catch(() => {}) // best-effort — a failed notify shouldn't surface to the user
   }
 
   async function handleComment(e: React.FormEvent) {
@@ -120,6 +129,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
     if (!error && data) {
       setComments(prev => [...prev, data as Comment])
       setNewComment('')
+      notifyPostOwner('comment')
     }
     setSubmitting(false)
   }
