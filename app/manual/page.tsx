@@ -372,19 +372,19 @@ const MANUAL_BODY = `
         <table>
           <thead><tr><th>Say</th><th>What happens</th></tr></thead>
           <tbody>
-            <tr><td class="phrase">&ldquo;Start my round&rdquo;</td><td>Detects the course you're standing on by GPS and tees off &mdash; no app, no search.</td></tr>
-            <tr><td class="phrase">&ldquo;Ask my caddie&rdquo;</td><td>Ask any golf question, get a spoken answer using your live round context.</td></tr>
-            <tr><td class="phrase">&ldquo;What club should I hit&rdquo;</td><td>Club recommendation with the wind-adjusted yardage.</td></tr>
-            <tr><td class="phrase">&ldquo;What are the yardages&rdquo;</td><td>Front, center, and back distances, plus current wind.</td></tr>
-            <tr><td class="phrase">&ldquo;I made a birdie&rdquo;<br><span style="color:var(--muted); font-family:var(--sans); font-size:12px;">(or eagle, par, bogey, etc.)</span></td><td>Logs the result for the hole and moves you to the next.</td></tr>
-            <tr><td class="phrase">&ldquo;Add a stroke&rdquo; / &ldquo;Remove a stroke&rdquo;</td><td>Nudges the current hole's score by one.</td></tr>
-            <tr><td class="phrase">&ldquo;Next hole&rdquo;</td><td>Advances to the next hole and reads back its par and yardage.</td></tr>
-            <tr><td class="phrase">&ldquo;What's my score&rdquo;</td><td>Your total, spoken back to you.</td></tr>
-            <tr><td class="phrase">&ldquo;What's my handicap&rdquo;</td><td>Your current index, spoken back to you.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, start my round&rdquo;</td><td>Detects the course you're standing on by GPS and tees off &mdash; no app, no search.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, ask my caddie&rdquo;</td><td>Ask any golf question, get a spoken answer using your live round context.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, what club should I hit&rdquo;</td><td>Club recommendation with the wind-adjusted yardage.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, what are the yardages&rdquo;</td><td>Front, center, and back distances, plus current wind.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, I made a birdie&rdquo;<br><span style="color:var(--muted); font-family:var(--sans); font-size:12px;">(or eagle, par, bogey, etc.)</span></td><td>Logs the result for the hole and moves you to the next.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, add a stroke&rdquo;<br>&ldquo;Hey Siri, TracerBuddy, remove a stroke&rdquo;</td><td>Nudges the current hole's score by one.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, next hole&rdquo;</td><td>Advances to the next hole and reads back its par and yardage.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, what's my score&rdquo;</td><td>Your total, spoken back to you.</td></tr>
+            <tr><td class="phrase">&ldquo;Hey Siri, TracerBuddy, what's my handicap&rdquo;</td><td>Your current index, spoken back to you.</td></tr>
           </tbody>
         </table>
       </div>
-      <p style="font-size:13.5px; color:var(--muted);">Every phrase needs &ldquo;TracerBuddy&rdquo; in it so Siri knows which app to route to &mdash; say &ldquo;Hey Siri&rdquo;, then &ldquo;TracerBuddy&rdquo;, then the phrase, e.g. <em>&ldquo;Hey Siri, TracerBuddy, next hole.&rdquo;</em></p>
+      <p style="font-size:13.5px; color:var(--muted);">Say the whole thing as one sentence &mdash; wake word, app name, then the command. &ldquo;TracerBuddy&rdquo; is what tells Siri which app to route to, so it can't be dropped.</p>
 
       <h3 class="feature"><span class="dot"></span>Ask my caddie &mdash; the on-screen card</h3>
       <p>&ldquo;Ask my caddie&rdquo; is the one phrase that also shows something, not just speaks it. Alongside the spoken answer, a card appears on screen (in the Shortcuts app response, Lock Screen, or Dynamic Island, depending on the device) showing your current hole and par, the full advice text, and a &ldquo;TracerBuddy Caddie&rdquo; footer &mdash; a quick way to glance back at the exact wording Siri just read.</p>
