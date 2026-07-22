@@ -4,16 +4,113 @@
 
 html, body {
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
 }
+
+html { scroll-behavior: smooth; }
 
 ::selection { background: #1A1A1A; color: #F5EFE0; }
 
 @layer components {
   .card {
-    @apply bg-[#111111] border border-[#1F1F1F] rounded-xl;
+    @apply bg-white rounded-xl shadow-[0_2px_16px_rgba(0,0,0,0.055)];
   }
 
   .stat-label {
-    @apply text-[10px] font-black tracking-[0.15em] text-[#666] uppercase;
+    @apply text-[10px] font-semibold tracking-[0.13em] text-gray-400 uppercase;
   }
+
+  .premium-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-[#1A1A1A] text-[#F5EFE0] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-black hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.97];
+  }
+
+  .premium-btn-gold {
+    @apply inline-flex items-center justify-center gap-2 bg-[#DF9905] text-white px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-[#A07509] hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(184,134,11,0.35)] active:translate-y-0 active:scale-[0.97];
+  }
+
+  .premium-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 bg-white/60 backdrop-blur border border-black/10 text-[#1A1A1A] px-7 py-3.5 rounded-full font-semibold text-[14.5px] transition-all hover:bg-white hover:border-black/20 hover:-translate-y-0.5 active:scale-[0.97];
+  }
+
+  .skeleton {
+    @apply bg-gray-200 rounded animate-pulse;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #1A1A1A 0%, #1A1A1A 40%, #DF9905 50%, #1A1A1A 60%, #1A1A1A 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+.noise-bg {
+  background-image: radial-gradient(rgba(26,26,26,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.prose-custom section {
+  padding: 32px;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+.prose-custom h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-bottom: 12px;
+  margin-top: 0;
+}
+.prose-custom h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+.prose-custom p {
+  font-size: 14.5px;
+  color: #444;
+  line-height: 1.75;
+  margin-bottom: 12px;
+}
+.prose-custom ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.prose-custom ul li {
+  font-size: 14.5px;
+  color: #444;
+  line-height: 1.75;
+  padding-left: 20px;
+  position: relative;
+  margin-bottom: 8px;
+}
+.prose-custom ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #DF9905;
+}
+.prose-custom a {
+  color: #DF9905;
+  text-decoration: none;
+}
+.prose-custom a:hover {
+  text-decoration: underline;
 }

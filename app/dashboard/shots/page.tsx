@@ -1,15 +1,18 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import ProGate from '@/components/ProGate'
 
 export default function ShotShapesPage() {
   const [shapes, setShapes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('shot_shapes')
-      .select('*')
-      .order('recorded_at', { ascending: false })
+    // shot_shapes was never a real table the app writes to — shot shape is a column
+    // (shot_shape) on the shots table it already uploads every round.
+    supabase.from('shots')
+      .select('club, shot_shape')
+      .not('shot_shape', 'is', null)
       .limit(500)
       .then(({ data }) => { setShapes(data || []); setLoading(false) })
   }, [])
@@ -26,9 +29,10 @@ export default function ShotShapesPage() {
   if (loading) return <div className="p-8 text-gray-500">Loading shot shapes...</div>
 
   return (
+    <ProGate feature="Shot Shapes" description="Your ball flight tendencies per club — identify your fade, draw, or slice patterns and fix them with data.">
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Shot Shapes</h1>
+        <h1 className="text-3xl font-black text-[#111]">Shot Shapes</h1>
         <p className="text-gray-500 mt-1">Your ball flight tendencies per club — logged from every round</p>
       </div>
 
@@ -38,14 +42,14 @@ export default function ShotShapesPage() {
         <div className="flex flex-wrap gap-3">
           {Object.entries(
             shapes.reduce((acc: Record<string, number>, s) => {
-              if (s.shape) acc[s.shape] = (acc[s.shape] || 0) + 1
+              if (s.shot_shape) acc[s.shot_shape] = (acc[s.shot_shape] || 0) + 1
               return acc
             }, {})
           ).sort((a, b) => b[1] - a[1]).map(([shape, count]) => (
             <div key={shape} className="flex items-center gap-2 px-4 py-2 rounded-full border"
               style={{ borderColor: `${shapeColors[shape] || '#666'}40`, background: `${shapeColors[shape] || '#666'}15` }}>
               <div className="w-2 h-2 rounded-full" style={{ background: shapeColors[shape] || '#666' }} />
-              <span className="text-sm font-bold text-white">{shape}</span>
+              <span className="text-sm font-bold text-[#111]">{shape}</span>
               <span className="text-xs font-black" style={{ color: shapeColors[shape] || '#666' }}>
                 {Math.round((count / shapes.length) * 100)}%
               </span>
@@ -65,7 +69,7 @@ export default function ShotShapesPage() {
         return order.indexOf(a[0]) - order.indexOf(b[0])
       }).map(([club, shots]) => {
         const shapeCounts = shots.reduce((acc: Record<string, number>, s) => {
-          if (s.shape) acc[s.shape] = (acc[s.shape] || 0) + 1
+          if (s.shot_shape) acc[s.shot_shape] = (acc[s.shot_shape] || 0) + 1
           return acc
         }, {})
         const topShape = Object.entries(shapeCounts).sort((a, b) => b[1] - a[1])[0]
@@ -73,7 +77,7 @@ export default function ShotShapesPage() {
         return (
           <div key={club} className="card p-5 mb-3">
             <div className="flex items-center gap-4 mb-3">
-              <div className="text-xl font-black text-white w-16">{club}</div>
+              <div className="text-xl font-black text-[#111] w-16">{club}</div>
               <div className="flex-1">
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(shapeCounts).sort((a,b) => b[1]-a[1]).map(([shape, count]) => (
@@ -106,5 +110,6 @@ export default function ShotShapesPage() {
         )
       })}
     </div>
+    </ProGate>
   )
 }

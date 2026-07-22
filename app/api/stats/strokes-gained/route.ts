@@ -1,65 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// PGA Tour strokes-to-hole-out baselines (industry standard public data)
-// Source: Mark Broadie "Every Shot Counts" research
-const PUTTING_BASELINES: Record<number, number> = {
-  1: 1.0, 2: 1.003, 3: 1.022, 4: 1.057, 5: 1.083, 6: 1.108, 7: 1.134,
-  8: 1.158, 9: 1.183, 10: 1.208, 12: 1.255, 14: 1.297, 16: 1.335,
-  18: 1.370, 20: 1.402, 25: 1.471, 30: 1.530, 40: 1.625, 50: 1.695,
-  60: 1.750, 75: 1.810, 100: 1.900,
+// Strokes Gained lookup tables — expected strokes to hole from distance/lie
+// Based on Mark Broadie's SG research (adapted for amateur baselines)
+const SG_TABLE: Record<string, [number, number][]> = {
+  fairway: [
+    [500, 4.70], [450, 4.50], [400, 4.30], [350, 4.10], [300, 3.90],
+    [250, 3.70], [200, 3.50], [150, 3.20], [125, 3.05], [100, 2.90],
+    [75,  2.70], [50,  2.50], [30,  2.30], [20,  2.15], [10,  2.05],
+  ],
+  tee: [
+    [500, 4.70], [450, 4.50], [400, 4.30], [350, 4.10], [300, 3.90],
+    [250, 3.70], [200, 3.50], [150, 3.20], [125, 3.05], [100, 2.90],
+    [75,  2.70], [50,  2.50], [30,  2.30], [20,  2.15], [10,  2.05],
+  ],
+  rough: [
+    [500, 4.85], [450, 4.65], [400, 4.45], [350, 4.25], [300, 4.05],
+    [250, 3.85], [200, 3.60], [150, 3.35], [125, 3.20], [100, 3.05],
+    [75,  2.85], [50,  2.65], [30,  2.45], [20,  2.30], [10,  2.15],
+  ],
+  sand: [
+    [200, 3.80], [150, 3.55], [100, 3.25], [75, 3.05], [50, 2.85],
+    [30,  2.65], [20,  2.50], [10,  2.35],
+  ],
+  recovery: [
+    [200, 4.10], [150, 3.80], [100, 3.50], [75, 3.25], [50, 3.00],
+    [30,  2.80], [20,  2.60], [10,  2.40],
+  ],
+  green: [
+    [100, 2.40], [60, 2.35], [50, 2.30], [40, 2.22], [30, 2.12],
+    [20,  2.00], [15, 1.90], [10, 1.78], [7,  1.65], [5,  1.52],
+    [3,   1.35], [2,  1.20], [1,  1.08],
+  ],
 }
 
-// Approach shot baselines by distance (yards) from fairway
-const APPROACH_FAIRWAY: Record<number, number> = {
-  50: 2.60, 75: 2.72, 100: 2.83, 125: 2.96, 150: 3.10, 175: 3.24,
-  200: 3.38, 225: 3.52, 250: 3.65,
-}
-
-const APPROACH_ROUGH: Record<number, number> = {
-  50: 2.72, 75: 2.86, 100: 2.99, 125: 3.14, 150: 3.29, 175: 3.45,
-  200: 3.60, 225: 3.75, 250: 3.90,
-}
-
-const APPROACH_SAND: Record<number, number> = {
-  10: 2.40, 20: 2.52, 30: 2.65, 40: 2.80, 50: 2.98, 75: 3.20, 100: 3.45,
-}
-
-// Tee shot baselines by hole distance
-const TEE_SHOT: Record<number, number> = {
-  100: 2.60, 125: 2.72, 150: 2.85, 175: 2.98, 200: 3.11, 225: 3.24,
-  250: 3.37, 275: 3.50, 300: 3.63, 325: 3.75, 350: 3.87, 375: 3.98,
-  400: 4.08, 425: 4.17, 450: 4.25, 475: 4.32, 500: 4.38, 525: 4.43, 550: 4.48,
-}
-
-function interpolate(table: Record<number, number>, distance: number): number {
-  const keys = Object.keys(table).map(Number).sort((a, b) => a - b)
-  if (distance <= keys[0]) return table[keys[0]]
-  if (distance >= keys[keys.length - 1]) return table[keys[keys.length - 1]]
-  for (let i = 0; i < keys.length - 1; i++) {
-    const lo = keys[i], hi = keys[i + 1]
-    if (distance >= lo && distance <= hi) {
-      const t = (distance - lo) / (hi - lo)
-      return table[lo] + t * (table[hi] - table[lo])
+function expectedStrokes(lie: string, distanceYards: number): number {
+  if (distanceYards <= 0) return 0
+  const table = SG_TABLE[lie] ?? SG_TABLE.fairway
+  if (distanceYards >= table[0][0]) return table[0][1]
+  if (distanceYards <= table[table.length - 1][0]) return table[table.length - 1][1]
+  for (let i = 0; i < table.length - 1; i++) {
+    const [d1, s1] = table[i]
+    const [d2, s2] = table[i + 1]
+    if (distanceYards <= d1 && distanceYards >= d2) {
+      const t = (distanceYards - d2) / (d1 - d2)
+      return s2 + t * (s1 - s2)
     }
   }
-  return 3.5
+  return table[table.length - 1][1]
 }
 
-function baselineStrokes(distance: number, lie: string): number {
-  switch (lie) {
-    case 'tee':     return interpolate(TEE_SHOT, distance)
-    case 'fairway': return interpolate(APPROACH_FAIRWAY, distance)
-    case 'rough':   return interpolate(APPROACH_ROUGH, distance)
-    case 'sand':    return interpolate(APPROACH_SAND, distance)
-    case 'green':   return interpolate(PUTTING_BASELINES, distance)
-    default:        return interpolate(APPROACH_ROUGH, distance)
-  }
+function categorizeShotByLieAndDistance(lie: string, distanceYards: number): string {
+  if (lie === 'tee')   return 'off_tee'
+  if (lie === 'green') return 'putting'
+  if (distanceYards <= 30) return 'around_green'
+  return 'approach'
 }
 
 interface Shot {
-  distance: number   // yards to hole
-  lie: string        // 'tee' | 'fairway' | 'rough' | 'sand' | 'green' | 'penalty'
-  distanceAfter?: number  // yards to hole after shot (null if holed)
+  distance: number
+  lie: string
+  distanceAfter?: number
   lieAfter?: string
 }
 
@@ -67,56 +67,34 @@ export async function POST(req: NextRequest) {
   try {
     const { shots }: { shots: Shot[] } = await req.json()
 
-    if (!shots?.length) {
+    if (!Array.isArray(shots) || shots.length === 0) {
       return NextResponse.json({ error: 'shots array required' }, { status: 400 })
     }
 
-    let totalSG = 0
-    const breakdown: any[] = []
-
-    for (let i = 0; i < shots.length; i++) {
-      const shot = shots[i]
-      const before = baselineStrokes(shot.distance, shot.lie)
-
-      let after: number
-      if (shot.distanceAfter == null || shot.distanceAfter === 0) {
-        // Holed out
-        after = 0
-      } else {
-        after = baselineStrokes(shot.distanceAfter, shot.lieAfter ?? 'fairway')
-      }
-
-      // SG = baseline_before - (1 + baseline_after)
-      const sg = before - (1 + after)
-      totalSG += sg
-
-      breakdown.push({
-        shotNumber:   i + 1,
-        distance:     shot.distance,
-        lie:          shot.lie,
-        baseline:     parseFloat(before.toFixed(3)),
-        sg:           parseFloat(sg.toFixed(3)),
-        category:     shot.lie === 'green' ? 'putting'
-                    : shot.lie === 'tee'   ? 'off_tee'
-                    : ['sand'].includes(shot.lie) ? 'around_green'
-                    : shot.distance > 100  ? 'approach'
-                    : 'around_green',
-      })
+    const byCategory: Record<string, number> = {
+      off_tee: 0,
+      approach: 0,
+      around_green: 0,
+      putting: 0,
     }
 
-    // Aggregate by category
-    const byCategory: Record<string, number> = {}
-    for (const s of breakdown) {
-      byCategory[s.category] = (byCategory[s.category] ?? 0) + s.sg
+    for (const shot of shots) {
+      const { distance, lie, distanceAfter, lieAfter } = shot
+      if (distance == null || lie == null) continue
+
+      const startExp = expectedStrokes(lie, distance)
+      const endExp   = expectedStrokes(lieAfter ?? 'green', distanceAfter ?? 0)
+      const sg       = startExp - endExp - 1
+
+      const category = categorizeShotByLieAndDistance(lie, distance)
+      byCategory[category] = (byCategory[category] ?? 0) + sg
     }
 
-    return NextResponse.json({
-      totalSG:    parseFloat(totalSG.toFixed(3)),
-      byCategory: Object.fromEntries(
-        Object.entries(byCategory).map(([k, v]) => [k, parseFloat((v as number).toFixed(3))])
-      ),
-      breakdown,
-    })
+    for (const k of Object.keys(byCategory)) {
+      byCategory[k] = Math.round(byCategory[k] * 100) / 100
+    }
+
+    return NextResponse.json({ byCategory })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
