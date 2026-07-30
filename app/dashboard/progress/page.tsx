@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { fetchRounds, fetchHandicapHistory, fetchUserProfile } from '@/lib/supabase'
 import { format } from 'date-fns'
 import ProGate from '@/components/ProGate'
+import { Flag, Trophy, Hash, Calendar, Target, TrendingUp } from 'lucide-react'
 
 export default function ProgressPage() {
   const [rounds, setRounds]     = useState<any[]>([])
@@ -35,12 +36,12 @@ export default function ProgressPage() {
   const improvement = firstHdcp && lastHdcp ? (firstHdcp - lastHdcp).toFixed(1) : null
 
   const milestones = [
-    { label: 'First Round',     value: rounds.length > 0 ? format(new Date(rounds[rounds.length-1]?.created_at), 'MMM d, yyyy') : '—', icon: '🏌️' },
-    { label: 'Best Round',      value: rounds.length ? `${Math.min(...rounds.map(r => r.total_score))}` : '—',                          icon: '⭐' },
-    { label: 'Current Handicap',value: profile?.handicap_index?.toFixed(1) ?? '—',                                                         icon: '#️⃣' },
-    { label: 'Total Rounds',    value: `${rounds.length}`,                                                                                  icon: '📅' },
-    { label: 'Total Shots',     value: `${rounds.reduce((a,r) => a + (r.shot_count||0), 0)}`,                                               icon: '🏹' },
-    { label: 'Improvement',     value: improvement ? `${improvement} strokes` : 'Keep playing',                                             icon: '📈' },
+    { label: 'First Round',     value: rounds.length > 0 ? format(new Date(rounds[rounds.length-1]?.created_at), 'MMM d, yyyy') : '—', icon: Flag },
+    { label: 'Best Round',      value: rounds.length ? `${Math.min(...rounds.map(r => r.total_score))}` : '—',                          icon: Trophy },
+    { label: 'Current Handicap',value: profile?.handicap_index?.toFixed(1) ?? '—',                                                         icon: Hash },
+    { label: 'Total Rounds',    value: `${rounds.length}`,                                                                                  icon: Calendar },
+    { label: 'Total Shots',     value: `${rounds.reduce((a,r) => a + (r.shot_count||0), 0)}`,                                               icon: Target },
+    { label: 'Improvement',     value: improvement ? `${improvement} strokes` : 'Keep playing',                                             icon: TrendingUp },
   ]
 
   if (loading) return <div className="p-8 text-gray-500">Loading progress...</div>
@@ -57,7 +58,9 @@ export default function ProgressPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         {milestones.map(m => (
           <div key={m.label} className="card p-5">
-            <div className="text-2xl mb-2">{m.icon}</div>
+            <div className="w-9 h-9 rounded-xl bg-[#FFD700]/10 flex items-center justify-center mb-2.5">
+              <m.icon className="w-4 h-4 text-[#FFD700]" />
+            </div>
             <div className="text-xl font-black text-[#FFD700]">{m.value}</div>
             <div className="stat-label mt-1">{m.label}</div>
           </div>
