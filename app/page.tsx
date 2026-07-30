@@ -413,6 +413,7 @@ export default function HomePage() {
             <div className="space-y-2.5 text-[13px] text-[#666]">
               <Link href="/about" className="block hover:text-black transition-colors">About</Link>
               <Link href="/community" className="block hover:text-black transition-colors">Community</Link>
+              <Link href="/ambassador" className="block hover:text-black transition-colors">Ambassador Program</Link>
               <Link href="/contact" className="block hover:text-black transition-colors">Contact</Link>
             </div>
           </div>

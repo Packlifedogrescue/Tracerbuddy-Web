@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next'
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracerbuddy.app'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ['', '/about', '/contact', '/community', '/privacy', '/terms', '/disclaimer']
+  const routes = ['', '/about', '/contact', '/community', '/ambassador', '/privacy', '/terms', '/disclaimer']
 
   return routes.map((route) => ({
     url: `${siteUrl}${route}`,

@@ -99,6 +99,7 @@ export default function ContactPage() {
               <div className="space-y-2.5">
                 {[
                   { href: '/auth/signup', label: 'Start free — 1 round' },
+                  { href: '/ambassador', label: 'Ambassador Program'      },
                   { href: '/privacy',    label: 'Privacy policy'         },
                   { href: '/terms',      label: 'Terms of service'       },
                   { href: '/about',      label: 'About TracerBuddy'      },
