@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Send, Instagram, Sparkles, Gift, Megaphone, Users } from 'lucide-react'
+import { Send, Sparkles, Gift, Megaphone, Users } from 'lucide-react'
 
 const EMPTY_FORM = {
   name: '', email: '', city: '', handicap: '', social: '', roundsPerMonth: '', why: '',
@@ -192,16 +192,13 @@ export default function AmbassadorPage() {
               <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">
                 Instagram / TikTok / social handle <span className="normal-case font-normal text-gray-300">(optional)</span>
               </label>
-              <div className="relative">
-                <Instagram className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={form.social}
-                  onChange={e => setForm(f => ({ ...f, social: e.target.value }))}
-                  placeholder="@yourhandle"
-                  className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl pl-11 pr-4 py-3 text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#DF9905] text-[14px] transition"
-                />
-              </div>
+              <input
+                type="text"
+                value={form.social}
+                onChange={e => setForm(f => ({ ...f, social: e.target.value }))}
+                placeholder="@yourhandle"
+                className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl px-4 py-3 text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#DF9905] text-[14px] transition"
+              />
             </div>
 
             <div>
