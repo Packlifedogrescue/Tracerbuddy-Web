@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase, fetchClubProfiles } from '@/lib/supabase'
 import { useRealtime } from '@/lib/useRealtime'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Wrench } from 'lucide-react'
 import { track } from '@/lib/analytics'
 
 const BRANDS = [
@@ -237,7 +237,7 @@ export default function ClubsPage() {
       {/* Empty state */}
       {bagClubs.length === 0 && !adding ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
-          <div className="text-5xl mb-4">🏌️</div>
+          <Wrench className="w-12 h-12 mb-4 mx-auto text-gray-300" />
           <p className="text-[14px] font-semibold text-[#111] mb-1">Your bag is empty</p>
           <p className="text-[13px] text-gray-400 mb-6">
             Add your clubs to track average distance, accuracy, and shot patterns.

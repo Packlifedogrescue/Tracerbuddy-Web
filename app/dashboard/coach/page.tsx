@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, fetchRounds, fetchClubProfiles } from '@/lib/supabase'
 import { format } from 'date-fns'
-import { Brain, Sparkles, X, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
+import { Brain, Sparkles, X, ChevronDown, ChevronUp, Loader2, AlertTriangle, ArrowLeftRight, Star } from 'lucide-react'
 
 export default function CoachPage() {
   const [cards,    setCards]    = useState<any[]>([])
@@ -185,10 +185,10 @@ export default function CoachPage() {
                         <div className="text-[10px] font-black text-gray-400 tracking-widest uppercase mb-2">
                           Club Report
                         </div>
-                        <p className="text-[13px] text-[#111] mb-1">⚠️ {card.club_misfiring}</p>
-                        <p className="text-[13px] text-gray-500">↔️ {card.miss_pattern}</p>
+                        <p className="text-[13px] text-[#111] mb-1 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0 text-orange-400" /> {card.club_misfiring}</p>
+                        <p className="text-[13px] text-gray-500 flex items-center gap-1.5"><ArrowLeftRight className="w-3.5 h-3.5 shrink-0" /> {card.miss_pattern}</p>
                         {card.hot_club && (
-                          <p className="text-[13px] text-[#C9A84C] mt-1">⭐ {card.hot_club}</p>
+                          <p className="text-[13px] text-[#C9A84C] mt-1 flex items-center gap-1.5"><Star className="w-3.5 h-3.5 shrink-0" /> {card.hot_club}</p>
                         )}
                       </div>
                       {/* Putting */}

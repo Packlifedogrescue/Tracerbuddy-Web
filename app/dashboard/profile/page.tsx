@@ -190,7 +190,7 @@ export default function ProfilePage() {
                 : 'border-gray-200 text-[#111] hover:bg-gray-50'
             } disabled:opacity-60`}
           >
-            {resetLoading ? 'Sending…' : resetSent ? 'Sent ✓' : 'Reset Password'}
+            {resetLoading ? 'Sending…' : resetSent ? 'Sent' : 'Reset Password'}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase, fetchClubProfiles, fetchUserProfile, fetchRounds } from '@/lib/supabase'
 import { format } from 'date-fns'
 import ProGate from '@/components/ProGate'
+import { Flag, Wrench, Printer, AlertTriangle, CheckCircle2, Ruler, AlertCircle, ClipboardList } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────
 interface ClubData {
@@ -120,7 +121,7 @@ export default function FittingReportPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-screen">
-      <div className="text-center"><div className="text-4xl mb-3 animate-pulse">⛳</div>
+      <div className="text-center"><Flag className="w-9 h-9 mb-3 mx-auto text-[#C9A84C] animate-pulse" />
       <p className="text-gray-500">Generating your fitting report...</p></div>
     </div>
   )
@@ -130,7 +131,7 @@ export default function FittingReportPage() {
     <div className="p-8 max-w-2xl">
       <h1 className="text-3xl font-black text-[#111] mb-4">Club Fitting Report</h1>
       <div className="card p-16 text-center text-gray-600">
-        <div className="text-5xl mb-4">🏌️</div>
+        <Wrench className="w-12 h-12 mb-4 mx-auto text-gray-300" />
         <p className="text-lg">No club data yet.</p>
         <p className="mt-2">Track shots in the TracerBuddy app to build your club profiles. You need at least 5 shots per club for a meaningful report.</p>
       </div>
@@ -149,7 +150,7 @@ export default function FittingReportPage() {
         </div>
         <button onClick={printReport}
           className="flex items-center gap-2 bg-[#FFD700] text-black font-black px-6 py-3 rounded-xl hover:bg-yellow-400 transition-all">
-          <span>🖨️</span> Print / Save PDF
+          <Printer className="w-4 h-4" /> Print / Save PDF
         </button>
       </div>
 
@@ -162,7 +163,7 @@ export default function FittingReportPage() {
           <div className="flex items-start justify-between mb-12 pb-6 border-b-2 border-[#FFD700]">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-4xl">⛳</span>
+                <Flag className="w-9 h-9 text-[#C9A84C]" />
                 <span className="text-2xl font-black text-[#111]">TracerBuddy</span>
               </div>
               <h1 className="text-5xl font-black text-[#111] leading-tight">
@@ -367,9 +368,11 @@ export default function FittingReportPage() {
           <div className="grid grid-cols-2 gap-6 mb-8">
             {/* Gaps to address */}
             <div className="report-card p-5">
-              <div className="report-label text-orange-400 mb-3">⚠️ REDUNDANT CLUBS (Gap &lt; 8y)</div>
+              <div className="report-label text-orange-400 mb-3 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> REDUNDANT CLUBS (Gap &lt; 8y)
+              </div>
               {smallGaps === 0 ? (
-                <p className="text-[#00E578] text-sm">✓ No redundant gaps found — good bag setup</p>
+                <p className="text-[#00E578] text-sm flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> No redundant gaps found — good bag setup</p>
               ) : analyzed.filter(c => c.gapAbove !== null && c.gapAbove < 8).map(c => (
                 <div key={c.club_name} className="mb-3 p-3 bg-orange-400/5 border border-orange-400/20 rounded-lg">
                   <div className="font-bold text-[#111] text-sm">{c.club_name} — only {c.gapAbove}y above previous</div>
@@ -380,9 +383,11 @@ export default function FittingReportPage() {
 
             {/* Missing gaps */}
             <div className="report-card p-5">
-              <div className="report-label text-yellow-400 mb-3">📏 DISTANCE GAPS (&gt; 25y)</div>
+              <div className="report-label text-yellow-400 mb-3 flex items-center gap-1.5">
+                <Ruler className="w-3.5 h-3.5" /> DISTANCE GAPS (&gt; 25y)
+              </div>
               {bigGaps === 0 ? (
-                <p className="text-[#00E578] text-sm">✓ No major gaps — your bag covers distances well</p>
+                <p className="text-[#00E578] text-sm flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> No major gaps — your bag covers distances well</p>
               ) : gapWarnings.map(c => (
                 <div key={c.club_name} className="mb-3 p-3 bg-yellow-400/5 border border-yellow-400/20 rounded-lg">
                   <div className="font-bold text-[#111] text-sm">{c.club_name} — {c.gapAbove}y gap above</div>
@@ -397,7 +402,9 @@ export default function FittingReportPage() {
           {/* Clubs to review */}
           {toReview.length > 0 && (
             <div className="report-card p-5 mb-6">
-              <div className="report-label text-red-400 mb-3">🔴 CLUBS TO REVIEW</div>
+              <div className="report-label text-red-400 mb-3 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" /> CLUBS TO REVIEW
+              </div>
               <div className="space-y-2">
                 {toReview.map(c => (
                   <div key={c.club_name} className="flex items-center gap-4 p-3 bg-red-500/5 border border-red-500/15 rounded-lg">
@@ -412,25 +419,27 @@ export default function FittingReportPage() {
 
           {/* Overall recommendation */}
           <div className="report-card p-6 border border-[#FFD700]/30">
-            <div className="report-label text-[#FFD700] mb-3">📋 OVERALL RECOMMENDATION</div>
+            <div className="report-label text-[#FFD700] mb-3 flex items-center gap-1.5">
+              <ClipboardList className="w-3.5 h-3.5" /> OVERALL RECOMMENDATION
+            </div>
             <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
               <p>
                 Your bag currently scores <strong className="text-[#FFD700]">{bagScore}% confidence</strong> based
                 on {totalShots} tracked shots across {clubs.length} clubs.
               </p>
               {bagScore >= 75 && (
-                <p className="text-[#00E578]">
-                  ✓ Strong bag configuration. Focus on building more shot history with your lower-confidence clubs.
+                <p className="text-[#00E578] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Strong bag configuration. Focus on building more shot history with your lower-confidence clubs.
                 </p>
               )}
               {bagScore < 75 && bagScore >= 50 && (
-                <p className="text-yellow-300">
-                  ⚠ Moderate bag confidence. Address the flagged clubs and continue tracking to build reliable profiles.
+                <p className="text-yellow-300 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Moderate bag confidence. Address the flagged clubs and continue tracking to build reliable profiles.
                 </p>
               )}
               {bagScore < 50 && (
-                <p className="text-orange-400">
-                  ⚠ Low bag confidence overall. This is normal early in your tracking journey — keep logging shots every round.
+                <p className="text-orange-400 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Low bag confidence overall. This is normal early in your tracking journey — keep logging shots every round.
                 </p>
               )}
               <p>
@@ -444,7 +453,7 @@ export default function FittingReportPage() {
           {/* Footer */}
           <div className="mt-10 pt-6 border-t border-[#F0EAE0] flex items-center justify-between text-xs text-gray-600">
             <div className="flex items-center gap-2">
-              <span>⛳</span>
+              <Flag className="w-3.5 h-3.5" />
               <span>TracerBuddy — Real Game Club Fitting Report</span>
             </div>
             <div>{format(new Date(), 'MMMM d, yyyy')} · {profile?.display_name}</div>

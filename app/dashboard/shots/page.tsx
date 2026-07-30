@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import ProGate from '@/components/ProGate'
+import { Wind } from 'lucide-react'
 
 export default function ShotShapesPage() {
   const [shapes, setShapes] = useState<any[]>([])
@@ -61,7 +62,7 @@ export default function ShotShapesPage() {
       {/* Per club breakdown */}
       {Object.keys(byClub).length === 0 ? (
         <div className="card p-16 text-center text-gray-600">
-          <div className="text-5xl mb-4">🏌️</div>
+          <Wind className="w-12 h-12 mb-4 mx-auto text-gray-300" />
           No shot shape data yet. Log shot shapes in the app when tracking shots.
         </div>
       ) : Object.entries(byClub).sort((a, b) => {

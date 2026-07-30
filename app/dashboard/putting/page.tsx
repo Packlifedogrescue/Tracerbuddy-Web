@@ -4,7 +4,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { supabase } from '@/lib/supabase'
 import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
-import { Loader2, Sparkles, X } from 'lucide-react'
+import { Loader2, Sparkles, X, Target } from 'lucide-react'
 
 const DISTANCE_BUCKETS = [
   { label: '0–3 ft',  min: 0,  max: 3  },
@@ -187,7 +187,7 @@ export default function PuttingPage() {
                   <div className="text-[13px] font-black text-[#111]">{drill.name}</div>
                 </div>
                 <p className="text-[12.5px] text-gray-600 mb-2 leading-relaxed">{drill.how}</p>
-                <div className="text-[11px] text-[#22A06B] font-semibold bg-green-50 rounded-lg px-3 py-1.5">🎯 {drill.targets}</div>
+                <div className="text-[11px] text-[#22A06B] font-semibold bg-green-50 rounded-lg px-3 py-1.5 flex items-center gap-1.5"><Target className="w-3 h-3 shrink-0" /> {drill.targets}</div>
               </div>
             ))}
           </div>

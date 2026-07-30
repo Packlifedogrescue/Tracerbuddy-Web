@@ -8,7 +8,7 @@ import {
   Calendar, ChevronRight, MapPin, Trophy, Flag,
   ArrowDown, ArrowUp, TrendingUp, TrendingDown, Watch,
   BarChart2, Clock, ClipboardList, Target, Smartphone,
-  X, Map,
+  X, Map, CloudSun,
 } from 'lucide-react'
 import CourseMapPremium from '@/components/CourseMapPremium'
 import WeatherWidget    from '@/components/WeatherWidget'
@@ -736,7 +736,7 @@ export default function DashboardPage() {
           {weatherPos && (
             <Card className="p-4">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-[13px]">⛳</span>
+                <CloudSun className="w-3.5 h-3.5 text-[#C9A84C]" />
                 <span className="text-[13px] font-bold text-[#111]">Playing Conditions</span>
               </div>
               <WeatherWidget lat={weatherPos.lat} lng={weatherPos.lng} />

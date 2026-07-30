@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { fetchRounds } from '@/lib/supabase'
 import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
-import { SlidersHorizontal } from 'lucide-react'
+import { SlidersHorizontal, Flag } from 'lucide-react'
 
 type SortKey = 'date' | 'score' | 'course'
 type DateFilter = 'all' | 'month' | '3months' | 'year'
@@ -87,7 +87,7 @@ export default function RoundsPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
         {sorted.length === 0 ? (
           <div className="p-16 text-center">
-            <div className="text-4xl mb-4">🏌️</div>
+            <Flag className="w-9 h-9 mb-4 mx-auto text-gray-300" />
             <p className="text-[14px] font-semibold text-[#111] mb-1">
               {rounds.length === 0 ? 'No rounds yet' : 'No rounds in this period'}
             </p>
