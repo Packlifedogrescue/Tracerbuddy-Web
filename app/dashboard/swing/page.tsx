@@ -2,25 +2,30 @@
 import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { Activity, Zap, TrendingUp, PlayCircle } from 'lucide-react'
 import ProGate from '@/components/ProGate'
+import LiveBadge from '@/components/LiveBadge'
 import Link from 'next/link'
 
 export default function SwingPage() {
   const [swings,  setSwings]  = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // swing_data was never a real table — the Watch's swing metrics upload to
-    // club_sessions (see PhoneConnector.swift), with the club name column called
-    // club_name rather than club.
+  // swing_data was never a real table — the Watch's swing metrics upload to
+  // club_sessions (see PhoneConnector.swift), with the club name column called
+  // club_name rather than club.
+  function load() {
     supabase.from('club_sessions')
       .select('*')
       .order('recorded_at', { ascending: false })
       .limit(200)
       .then(({ data }) => { setSwings(data || []); setLoading(false) })
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['club_sessions'], load)
 
   const avgSpeed     = swings.length ? (swings.reduce((a, s) => a + (s.swing_speed || 0), 0) / swings.length).toFixed(1) : '—'
   const maxSpeed     = swings.length ? Math.max(...swings.map(s => s.swing_speed || 0)) : 0
@@ -62,7 +67,10 @@ export default function SwingPage() {
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-[26px] font-black text-[#111] tracking-tight">SwingTrace</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-[26px] font-black text-[#111] tracking-tight">SwingTrace</h1>
+            <LiveBadge live={live} />
+          </div>
           <p className="text-[13.5px] text-gray-400 mt-0.5">Apple Watch swing speed — {swings.length} swings logged</p>
         </div>
         <Link

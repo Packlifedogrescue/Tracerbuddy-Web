@@ -1,8 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase, fetchUserProfile } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { Users, Send, Clock, Check } from 'lucide-react'
 import ProGate from '@/components/ProGate'
+import LiveBadge from '@/components/LiveBadge'
 import { track } from '@/lib/analytics'
 
 export default function BuddiesPage() {
@@ -14,7 +16,7 @@ export default function BuddiesPage() {
   const [sending,     setSending]     = useState(false)
   const [msg,         setMsg]         = useState<{ text: string; ok: boolean } | null>(null)
 
-  useEffect(() => {
+  function load() {
     Promise.all([
       supabase.from('buddy_connections')
         .select('*, buddy:buddy_id(email, display_name)')
@@ -31,7 +33,10 @@ export default function BuddiesPage() {
       setRounds(rds)
       setLoading(false)
     })
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['buddy_connections', 'rounds'], load)
 
   async function sendInvite(e: React.FormEvent) {
     e.preventDefault()
@@ -82,7 +87,10 @@ export default function BuddiesPage() {
     <ProGate feature="Buddy Battles" description="Challenge your golf friends, compare handicaps and stats, and see who has the better game.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-[26px] font-black text-[#111] tracking-tight">Buddy Battles</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-[26px] font-black text-[#111] tracking-tight">Buddy Battles</h1>
+          <LiveBadge live={live} />
+        </div>
         <p className="text-[13.5px] text-gray-400 mt-0.5">Challenge your friends — who has the better game?</p>
       </div>
 

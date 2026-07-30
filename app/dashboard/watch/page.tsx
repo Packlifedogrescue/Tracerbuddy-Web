@@ -2,23 +2,28 @@
 import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format, formatDistanceToNow } from 'date-fns'
 import { Watch, Activity, Zap, Wifi, WifiOff, TrendingUp } from 'lucide-react'
+import LiveBadge from '@/components/LiveBadge'
 
 export default function WatchPage() {
   const [swings,  setSwings]  = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // swing_data was never a real table — the Watch's swing metrics upload to
-    // club_sessions (see PhoneConnector.swift), with the club name column called
-    // club_name rather than club.
+  // swing_data was never a real table — the Watch's swing metrics upload to
+  // club_sessions (see PhoneConnector.swift), with the club name column called
+  // club_name rather than club.
+  function load() {
     supabase.from('club_sessions')
       .select('*')
       .order('recorded_at', { ascending: false })
       .limit(200)
       .then(({ data }) => { setSwings(data || []); setLoading(false) })
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['club_sessions'], load)
 
   const lastSync     = swings[0]?.recorded_at ?? null
   const avgSpeed     = swings.length ? (swings.reduce((a, s) => a + (s.swing_speed || 0), 0) / swings.length).toFixed(1) : '—'
@@ -67,7 +72,10 @@ export default function WatchPage() {
   return (
     <div className="p-5 md:p-6 max-w-4xl space-y-4 pb-10">
       <div>
-        <h1 className="text-[26px] font-black text-[#111] tracking-tight">Apple Watch</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-[26px] font-black text-[#111] tracking-tight">Apple Watch</h1>
+          <LiveBadge live={live} />
+        </div>
         <p className="text-[13.5px] text-gray-400 mt-0.5">Swing speed tracking via Apple Watch motion sensors</p>
       </div>
 

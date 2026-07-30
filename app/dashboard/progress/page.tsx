@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts'
 import { fetchRounds, fetchHandicapHistory, fetchUserProfile } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import ProGate from '@/components/ProGate'
+import LiveBadge from '@/components/LiveBadge'
 import { Flag, Trophy, Hash, Calendar, Target, TrendingUp } from 'lucide-react'
 
 export default function ProgressPage() {
@@ -12,7 +14,7 @@ export default function ProgressPage() {
   const [profile, setProfile]   = useState<any>(null)
   const [loading, setLoading]   = useState(true)
 
-  useEffect(() => {
+  function load() {
     Promise.all([fetchRounds(50), fetchHandicapHistory(), fetchUserProfile()])
       .then(([r, h, p]) => {
         setRounds(r)
@@ -23,7 +25,10 @@ export default function ProgressPage() {
         setProfile(p)
         setLoading(false)
       })
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['rounds'], load)
 
   const scoreData = [...rounds].reverse().map(r => ({
     date:  format(new Date(r.created_at), 'M/d'),
@@ -50,7 +55,10 @@ export default function ProgressPage() {
     <ProGate feature="Golf Journey" description="Your complete handicap history, score trends, best rounds, and milestone tracking — every improvement documented.">
     <div className="p-8 max-w-5xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-[#111]">My Golf Journey</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-black text-[#111]">My Golf Journey</h1>
+          <LiveBadge live={live} />
+        </div>
         <p className="text-gray-500 mt-1">Every round. Every improvement. Your complete golf history.</p>
       </div>
 

@@ -1,9 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { Trophy } from 'lucide-react'
 import ProGate from '@/components/ProGate'
+import LiveBadge from '@/components/LiveBadge'
 
 // "Tournament results" isn't a table the app writes on its own — match play win/loss
 // and Stableford points already live on rounds (match_holes_won/lost/tied) and
@@ -27,7 +29,7 @@ export default function TournamentPage() {
   const [results, setResults] = useState<TournamentRound[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  function load() {
     supabase.from('rounds')
       .select('id, course_name, created_at, round_mode, match_holes_won, match_holes_lost, match_holes_tied')
       .in('round_mode', TOURNAMENT_MODES)
@@ -59,7 +61,10 @@ export default function TournamentPage() {
         setResults(merged)
         setLoading(false)
       })
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['rounds', 'hole_stats'], load)
 
   const matchRounds     = results.filter(r => r.round_mode === 'Match Play')
   const wins            = matchRounds.filter(r => r.result === 'Won').length
@@ -79,7 +84,10 @@ export default function TournamentPage() {
     <ProGate feature="Tournament Results" description="Track your match play, Stableford, and tournament history — wins, losses, and your best performances.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-[26px] font-black text-[#111] tracking-tight">Tournament Results</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-[26px] font-black text-[#111] tracking-tight">Tournament Results</h1>
+          <LiveBadge live={live} />
+        </div>
         <p className="text-[13.5px] text-gray-400 mt-0.5">Match play, Stableford, and competition history</p>
       </div>
 

@@ -5,6 +5,7 @@ import { fetchRounds } from '@/lib/supabase'
 import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { SlidersHorizontal, Flag } from 'lucide-react'
+import LiveBadge from '@/components/LiveBadge'
 
 type SortKey = 'date' | 'score' | 'course'
 type DateFilter = 'all' | 'month' | '3months' | 'year'
@@ -45,9 +46,9 @@ export default function RoundsPage() {
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-[26px] font-black text-[#111] tracking-tight">All Rounds</h1>
-            
+            <LiveBadge live={live} />
           </div>
           <p className="text-[13px] text-gray-400 mt-0.5">{filtered.length} of {rounds.length} rounds</p>
         </div>

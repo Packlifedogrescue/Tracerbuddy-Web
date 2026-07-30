@@ -4,6 +4,7 @@ import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContai
 import { fetchRounds } from '@/lib/supabase'
 import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
+import LiveBadge from '@/components/LiveBadge'
 
 const CHART = {
   grid:       '#EDE8DC',
@@ -64,9 +65,9 @@ export default function StatsPage() {
     <div className="p-5 md:p-6 max-w-4xl space-y-5 pb-10">
 
       <div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <h1 className="text-[26px] font-black text-[#111] tracking-tight">Stats Overview</h1>
-          
+          <LiveBadge live={live} />
         </div>
         <p className="text-[13.5px] text-gray-400 mt-0.5">
           Based on {r.length} round{r.length !== 1 ? 's' : ''} tracked

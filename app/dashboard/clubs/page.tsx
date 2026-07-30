@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase, fetchClubProfiles } from '@/lib/supabase'
 import { useRealtime } from '@/lib/useRealtime'
 import { Plus, Trash2, Wrench } from 'lucide-react'
+import LiveBadge from '@/components/LiveBadge'
 import { track } from '@/lib/analytics'
 
 const BRANDS = [
@@ -152,9 +153,9 @@ export default function ClubsPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-[26px] font-black text-[#111] tracking-tight">My Bag</h1>
-            
+            <LiveBadge live={live} />
           </div>
           <p className="text-[13.5px] text-gray-400 mt-0.5">
             {bagClubs.length > 0

@@ -1,8 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase, fetchRounds, fetchClubProfiles } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { Brain, Sparkles, X, ChevronDown, ChevronUp, Loader2, AlertTriangle, ArrowLeftRight, Star } from 'lucide-react'
+import LiveBadge from '@/components/LiveBadge'
 
 export default function CoachPage() {
   const [cards,    setCards]    = useState<any[]>([])
@@ -14,7 +16,7 @@ export default function CoachPage() {
   const [generating, setGenerating] = useState<string | null>(null)
   const [error,    setError]    = useState<string | null>(null)
 
-  useEffect(() => {
+  function load() {
     Promise.all([
       supabase.from('coach_cards')
         .select('*, rounds(course_name, created_at, total_score, course_par)')
@@ -27,7 +29,10 @@ export default function CoachPage() {
       setRounds(r)
       setClubs(cl)
     }).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['coach_cards', 'rounds'], load)
 
   async function generateAnalysis(round: any) {
     setGenerating(round.id)
@@ -85,7 +90,10 @@ export default function CoachPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-[26px] font-black text-[#111] tracking-tight">AI Coach</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-[26px] font-black text-[#111] tracking-tight">AI Coach</h1>
+            <LiveBadge live={live} />
+          </div>
           <p className="text-[13px] text-gray-400 mt-0.5">
             Claude analyses your round and tells you exactly what to fix
           </p>

@@ -2,21 +2,26 @@
 import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { Target } from 'lucide-react'
 import ProGate from '@/components/ProGate'
+import LiveBadge from '@/components/LiveBadge'
 
 export default function PracticePage() {
   const [sessions, setSessions] = useState<any[]>([])
   const [loading,  setLoading]  = useState(true)
 
-  useEffect(() => {
+  function load() {
     supabase.from('practice_sessions')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(200)
       .then(({ data }) => { setSessions(data || []); setLoading(false) })
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['practice_sessions'], load)
 
   const byClub: Record<string, { shots: number; totalYards: number }> = {}
   sessions.forEach(s => {
@@ -43,7 +48,10 @@ export default function PracticePage() {
     <ProGate feature="Practice Sessions" description="Track your range sessions and see which clubs you're developing — shots hit, avg distances, and weekly activity.">
     <div className="p-6 md:p-8 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-[26px] font-black text-[#111] tracking-tight">Practice</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-[26px] font-black text-[#111] tracking-tight">Practice</h1>
+          <LiveBadge live={live} />
+        </div>
         <p className="text-[13.5px] text-gray-400 mt-0.5">{sessions.length} range shots tracked</p>
       </div>
 

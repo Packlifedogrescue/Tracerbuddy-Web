@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
 import { Loader2, Sparkles, X, Target } from 'lucide-react'
+import LiveBadge from '@/components/LiveBadge'
 
 const DISTANCE_BUCKETS = [
   { label: '0–3 ft',  min: 0,  max: 3  },
@@ -133,9 +134,9 @@ export default function PuttingPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
             <h1 className="text-[26px] font-black text-[#111] tracking-tight">PuttBuddy</h1>
-            
+            <LiveBadge live={live} />
           </div>
           <p className="text-[13px] text-gray-400 mt-0.5">Stop counting putts. Start fixing them.</p>
         </div>
