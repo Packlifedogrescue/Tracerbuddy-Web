@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Search, Home, FileText, Map, Activity, Watch, Wrench,
+  Search, Home, FileText, Activity, Watch, Wrench,
   BarChart2, Settings2, Target, Dumbbell, Brain, Trophy,
   Users, Flag, X, ArrowRight, Clock,
 } from 'lucide-react'
@@ -11,7 +11,6 @@ import { supabase } from '@/lib/supabase'
 const PAGES = [
   { href: '/dashboard',            icon: Home,     label: 'Dashboard',   desc: 'Home overview' },
   { href: '/dashboard/rounds',     icon: FileText,  label: 'Rounds',      desc: 'All your rounds' },
-  { href: '/dashboard/courses',    icon: Map,       label: 'Courses',     desc: 'Course search & maps' },
   { href: '/dashboard/swing',      icon: Activity,  label: 'SwingTrace',  desc: 'Swing speed & tempo' },
   { href: '/dashboard/watch',      icon: Watch,     label: 'Apple Watch', desc: 'Watch data & sync' },
   { href: '/dashboard/putting',    icon: Target,    label: 'Putting',     desc: 'Putt stats & analysis' },

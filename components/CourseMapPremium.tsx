@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { X, MapPin, Search, Flag, Loader2, AlertCircle, ChevronLeft } from 'lucide-react'
+import { X, MapPin, Flag, Loader2, AlertCircle } from 'lucide-react'
 
 const CourseMapkit = dynamic(() => import('@/components/CourseMapkit'), { ssr: false })
 
@@ -188,54 +188,40 @@ function HolePanel({
   )
 }
 
-// ── Search Result ─────────────────────────────────────────────────────────────
-function SearchResult({ course, onSelect }: { course: GolfCourse; onSelect: () => void }) {
-  const name = course.CourseName || course.ClubName
-  const loc  = [course.City, course.StateCode].filter(Boolean).join(', ')
-  return (
-    <button
-      onClick={onSelect}
-      className="w-full text-left px-4 py-3 hover:bg-[#FAF7F2] transition-colors border-b border-[#F8F4EE] last:border-0"
-    >
-      <div className="text-[13px] font-semibold text-[#111] leading-tight">{name}</div>
-      {loc && <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1"><MapPin className="w-2.5 h-2.5" />{loc}</div>}
-    </button>
-  )
-}
-
 // ── Main Modal ────────────────────────────────────────────────────────────────
+// Preview-only: looks up the single course named by `initialName` (a course
+// from the golfer's own round history). No free-text search — that's what
+// let anyone burn through the golf-course API by searching arbitrary names.
 export default function CourseMapPremium({ initialName, onClose }: {
-  initialName?: string
+  initialName: string
   onClose: () => void
 }) {
-  const cleanName   = (initialName ?? '').split(' — ')[0].trim()
-  const [query,     setQuery]     = useState(cleanName)
-  const [results,   setResults]   = useState<GolfCourse[]>([])
-  const [searching, setSearching] = useState(false)
-  const [selected,  setSelected]  = useState<GolfCourse | null>(null)
-  const [detail,    setDetail]    = useState<CourseDetail | null>(null)
-  const [loading,   setLoading]   = useState(false)
-  const [error,     setError]     = useState('')
+  const cleanName    = initialName.split(' — ')[0].trim()
+  const [selected,   setSelected]   = useState<GolfCourse | null>(null)
+  const [detail,     setDetail]     = useState<CourseDetail | null>(null)
+  const [loading,    setLoading]    = useState(true)
+  const [error,      setError]      = useState('')
   const [activeHole, setActiveHole] = useState<number | null>(null)
-  const [mobileTab, setMobileTab] = useState<'map' | 'scorecard'>('map')
+  const [mobileTab,  setMobileTab]  = useState<'map' | 'scorecard'>('map')
 
-  useEffect(() => { if (initialName) search(cleanName) }, [])
+  useEffect(() => { lookup() }, [])
 
-  async function search(q = query) {
-    if (!q.trim()) return
-    setSearching(true); setResults([]); setSelected(null); setDetail(null); setError('')
+  async function lookup() {
+    setLoading(true); setError('')
     try {
-      const res  = await fetch(`/api/golf/search?q=${encodeURIComponent(q.trim())}`)
+      const res  = await fetch(`/api/golf/search?q=${encodeURIComponent(cleanName)}`)
       const data = await res.json()
       const list: GolfCourse[] = data.courses ?? []
-      setResults(list)
-      if (list.length === 1) pickCourse(list[0])
-    } catch { setError('Search failed — please try again.') }
-    finally { setSearching(false) }
+      if (list.length === 0) { setError('Could not find this course.'); setLoading(false); return }
+      await pickCourse(list[0])
+    } catch {
+      setError('Could not load course details.')
+      setLoading(false)
+    }
   }
 
   async function pickCourse(course: GolfCourse) {
-    setSelected(course); setResults([]); setLoading(true); setError('')
+    setSelected(course); setError('')
     try {
       const res  = await fetch(`/api/golf/course/${course.CourseID}`)
       const data: CourseDetail = await res.json()
@@ -268,14 +254,6 @@ export default function CourseMapPremium({ initialName, onClose }: {
       >
         {/* ── Header ── */}
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#F0EAE0] shrink-0 bg-white">
-          {selected && (
-            <button
-              onClick={() => { setSelected(null); setDetail(null); setError(''); setActiveHole(null) }}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#F0EAE0] transition-colors shrink-0"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          )}
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#C9A84C] to-[#A07828] flex items-center justify-center shrink-0 shadow-sm">
             <Flag className="w-4 h-4 text-white" />
           </div>
@@ -288,7 +266,7 @@ export default function CourseMapPremium({ initialName, onClose }: {
                 </div>
               </>
             ) : (
-              <span className="text-[15px] font-black text-[#111]">Course Explorer</span>
+              <span className="text-[15px] font-black text-[#111]">Loading course…</span>
             )}
           </div>
           <button
@@ -299,60 +277,9 @@ export default function CourseMapPremium({ initialName, onClose }: {
           </button>
         </div>
 
-        {/* ── Search bar ── */}
-        <div className="px-4 py-2.5 border-b border-[#F0EAE0] shrink-0 bg-white">
-          <form onSubmit={e => { e.preventDefault(); search() }} className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Search any golf course…"
-                className="w-full bg-[#F8F4EE] border border-[#EDE8DC] rounded-xl pl-9 pr-4 py-2 text-[13px] text-[#111] placeholder-gray-400 focus:outline-none focus:border-[#C9A84C] transition"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={searching}
-              className="bg-[#C9A84C] hover:bg-[#A07828] text-white rounded-xl px-4 py-2 text-[13px] font-semibold transition-colors disabled:opacity-60 shrink-0"
-            >
-              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
-            </button>
-          </form>
-        </div>
-
         {error && (
           <div className="mx-4 mt-3 flex items-center gap-2 text-[12.5px] text-red-500 bg-red-50 rounded-xl px-4 py-3 shrink-0">
             <AlertCircle className="w-4 h-4 shrink-0" />{error}
-          </div>
-        )}
-
-        {/* ── Search results ── */}
-        {results.length > 0 && !selected && (
-          <div className="overflow-auto">
-            <div className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-[#F8F4EE]">
-              {results.length} result{results.length !== 1 ? 's' : ''}
-            </div>
-            {results.map(c => <SearchResult key={c.CourseID} course={c} onSelect={() => pickCourse(c)} />)}
-          </div>
-        )}
-
-        {/* ── No results / empty ── */}
-        {!searching && !selected && results.length === 0 && (
-          <div className="flex-1 flex items-center justify-center text-center py-12 px-6">
-            <div>
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#F5EFE0] to-[#EDE5D0] flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <Flag className="w-7 h-7 text-[#C9A84C]" />
-              </div>
-              <div className="text-[15px] font-black text-[#111] mb-1.5">
-                {query ? 'No courses found' : 'Explore Any Course'}
-              </div>
-              <p className="text-[12.5px] text-gray-400 max-w-[280px] mx-auto leading-relaxed">
-                {query
-                  ? 'Try a different spelling or city name.'
-                  : 'Search for any golf course to see its satellite map, hole layout, and full scorecard.'}
-              </p>
-            </div>
           </div>
         )}
 

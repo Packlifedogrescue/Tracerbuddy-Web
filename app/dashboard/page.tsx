@@ -127,27 +127,6 @@ function GetStarted({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ─── Course Explorer card ─────────────────────────────────────────────────────
-function CourseExplorerCard({ onOpen }: { onOpen: () => void }) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 mb-2.5">
-        <Map className="w-3.5 h-3.5 text-[#C9A84C]" />
-        <span className="text-[13px] font-bold text-[#111]">Explore a Course</span>
-      </div>
-      <p className="text-[11.5px] text-gray-400 mb-3 leading-relaxed">
-        Search any course for a satellite map, hole layout, and scorecard before you play.
-      </p>
-      <button
-        onClick={onOpen}
-        className="w-full bg-[#C9A84C] hover:bg-[#A07828] text-white text-[12.5px] font-semibold py-2.5 rounded-xl transition-colors"
-      >
-        Search Courses
-      </button>
-    </Card>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const router = useRouter()
@@ -393,7 +372,7 @@ export default function DashboardPage() {
       {totalRounds === 0 && !bannerDismissed && <GetStarted onClose={dismissBanner} />}
 
       {/* ── Course map modal ── */}
-      {mapOpen && (
+      {mapOpen && mapInitialName && (
         <CourseMapPremium
           initialName={mapInitialName}
           onClose={() => { setMapOpen(false); setMapInitialName(undefined) }}
@@ -763,9 +742,6 @@ export default function DashboardPage() {
               <WeatherWidget lat={weatherPos.lat} lng={weatherPos.lng} />
             </Card>
           )}
-
-          {/* Course Explorer */}
-          <CourseExplorerCard onOpen={() => { setMapInitialName(undefined); setMapOpen(true) }} />
 
           {/* Apple Watch */}
           <Card className="p-4">
