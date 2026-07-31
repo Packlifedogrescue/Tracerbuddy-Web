@@ -10,7 +10,6 @@ import {
   BarChart2, Clock, ClipboardList, Target, Smartphone,
   X, Map, CloudSun,
 } from 'lucide-react'
-import CourseMapPremium from '@/components/CourseMapPremium'
 import WeatherWidget    from '@/components/WeatherWidget'
 import LiveBadge        from '@/components/LiveBadge'
 import {
@@ -138,8 +137,6 @@ export default function DashboardPage() {
   const [handicapHistory,  setHandicapHistory] = useState<number[]>([])
   const [clubs,            setClubs]           = useState<any[]>([])
   const [bannerDismissed,  setBannerDismissed] = useState(false)
-  const [mapOpen,          setMapOpen]         = useState(false)
-  const [mapInitialName,   setMapInitialName]  = useState<string | undefined>()
   const [weatherPos,       setWeatherPos]      = useState<{ lat: number; lng: number } | null>(null)
   const [loadError,        setLoadError]       = useState(false)
 
@@ -374,14 +371,6 @@ export default function DashboardPage() {
       {/* ── Get Started banner (only when no data and not dismissed) ── */}
       {totalRounds === 0 && !bannerDismissed && <GetStarted onClose={dismissBanner} />}
 
-      {/* ── Course map modal ── */}
-      {mapOpen && mapInitialName && (
-        <CourseMapPremium
-          initialName={mapInitialName}
-          onClose={() => { setMapOpen(false); setMapInitialName(undefined) }}
-        />
-      )}
-
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {statCards.map(c => (
@@ -518,20 +507,13 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={course.name}
-                      onClick={() => { setMapInitialName(course.name); setMapOpen(true) }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={e => e.key === 'Enter' && (setMapInitialName(course.name), setMapOpen(true))}
-                      className="bg-[#F8F4EE] rounded-xl p-4 hover:bg-[#F0E8D8] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer shadow-none hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)]"
+                      className="bg-[#F8F4EE] rounded-xl p-4"
                     >
                       <div className="flex items-start justify-between mb-2.5">
                         <div className="w-8 h-8 rounded-lg shrink-0" style={{ background: courseColor(course.name) }} />
-                        <div className="flex items-center gap-1.5">
-                          <Map className="w-3 h-3 text-gray-300" />
-                          <span className="text-[10.5px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded-full">
-                            {course.count}×
-                          </span>
-                        </div>
+                        <span className="text-[10.5px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded-full">
+                          {course.count}×
+                        </span>
                       </div>
                       <div className="text-[13px] font-bold text-[#111] leading-tight mb-2.5">{course.name}</div>
                       {(best || avg) && (

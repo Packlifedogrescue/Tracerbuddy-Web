@@ -1,13 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { fetchRoundWithShots } from '@/lib/supabase'
 import { format } from 'date-fns'
-import { ArrowLeft, CloudSun, Flag } from 'lucide-react'
-
-const ShotMap = dynamic(() => import('@/components/ShotMap'), { ssr: false })
+import { ArrowLeft, CloudSun } from 'lucide-react'
 
 const PALETTE = ['#2D6A4F','#6B9E5E','#4A7C59','#C9A84C','#8B7355','#5B8A65','#A07340','#607D4A','#3D7A6E','#7A6030']
 function courseColor(name: string) {
@@ -42,7 +39,7 @@ export default function RoundDetailPage() {
     </div>
   )
 
-  const { round, shots, holeStats } = data
+  const { round, holeStats } = data
   if (!round) return <div className="p-8 text-gray-500">Round not found</div>
 
   const par        = holeStats.reduce((a: number, h: any) => a + (h.par || 4), 0)
@@ -103,20 +100,7 @@ export default function RoundDetailPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Shot map */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Shot Map</div>
-          {shots.length > 0 ? (
-            <ShotMap shots={shots} />
-          ) : (
-            <div className="h-64 flex flex-col items-center justify-center text-center">
-              <Flag className="w-8 h-8 text-gray-200 mb-2" />
-              <p className="text-[13px] text-gray-400">No GPS shots logged this round</p>
-            </div>
-          )}
-        </div>
+      <div className="grid grid-cols-1 gap-4">
 
         {/* Scorecard */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
