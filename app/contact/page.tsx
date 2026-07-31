@@ -55,7 +55,7 @@ export default function ContactPage() {
           We'd love to<br />hear from you.
         </h1>
         <p className="text-[16px] text-[#666] leading-[1.7] max-w-[480px]">
-          Questions, feedback, support — whatever you need. We read every message and usually reply within one business day.
+          Questions, feedback, support — whatever you need. We read every message and usually reply within 1–2 business days.
         </p>
       </div>
 
@@ -157,8 +157,9 @@ export default function ContactPage() {
                 {/* Name + email */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Name</label>
+                    <label htmlFor="contact-name" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Name</label>
                     <input
+                      id="contact-name"
                       type="text"
                       required
                       value={form.name}
@@ -168,8 +169,9 @@ export default function ContactPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Email</label>
+                    <label htmlFor="contact-email" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Email</label>
                     <input
+                      id="contact-email"
                       type="email"
                       required
                       value={form.email}
@@ -182,8 +184,9 @@ export default function ContactPage() {
 
                 {/* Message */}
                 <div>
-                  <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Message</label>
+                  <label htmlFor="contact-message" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Message</label>
                   <textarea
+                    id="contact-message"
                     required
                     rows={5}
                     value={form.message}

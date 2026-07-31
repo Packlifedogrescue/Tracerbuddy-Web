@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { timingSafeEqual } from 'crypto'
 
 const ACTIVE_EVENTS   = new Set(['INITIAL_PURCHASE', 'RENEWAL', 'PRODUCT_CHANGE', 'TRANSFER', 'UNCANCELLATION'])
 const INACTIVE_EVENTS = new Set(['EXPIRATION', 'BILLING_ISSUE', 'CANCELLATION'])
+
+// Constant-time string compare that never throws on length mismatch.
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ab.length !== bb.length) return false
+  return timingSafeEqual(ab, bb)
+}
 
 function adminSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -12,13 +21,17 @@ function adminSupabase() {
 }
 
 export async function POST(req: NextRequest) {
-  // Validate webhook secret
+  // Validate webhook secret — FAIL CLOSED. If the secret isn't configured,
+  // reject everything rather than accepting unsigned webhooks (which would let
+  // anyone flip any account to pro/free). Compared in constant time.
   const secret = process.env.REVENUECAT_WEBHOOK_SECRET
-  if (secret) {
-    const auth = req.headers.get('authorization')
-    if (auth !== secret) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!secret) {
+    console.error('RevenueCat webhook rejected: REVENUECAT_WEBHOOK_SECRET is not set')
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 })
+  }
+  const auth = req.headers.get('authorization') ?? ''
+  if (!safeEqual(auth, secret)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   let body: any

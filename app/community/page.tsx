@@ -44,6 +44,7 @@ const FILTERS = [
 ] as const
 
 const REACTIONS = ['🔥', '👍', '🏌️'] as const
+const REACTION_LABELS: Record<string, string> = { '🔥': 'Fire', '👍': 'Like', '🏌️': 'Nice shot' }
 
 function timeAgo(iso: string) {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
@@ -341,13 +342,15 @@ export default function CommunityPage() {
                           <button
                             key={emoji}
                             onClick={() => handleReaction(post.id, emoji)}
+                            aria-label={`React with ${REACTION_LABELS[emoji] ?? emoji}`}
+                            aria-pressed={post.user_reaction === emoji}
                             className={`flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-lg transition-all ${
                               post.user_reaction === emoji
                                 ? 'bg-[#FEF3E8] text-[#E87830] font-bold ring-1 ring-[#E87830]/20'
                                 : 'hover:bg-[#F5EFE0] text-gray-500'
                             }`}
                           >
-                            <span>{emoji}</span>
+                            <span aria-hidden="true">{emoji}</span>
                             {(post.reactions[emoji] ?? 0) > 0 && <span className="font-bold">{post.reactions[emoji]}</span>}
                           </button>
                         ))}

@@ -356,7 +356,7 @@ export default function HomePage() {
               </div>
               <p className="text-[13px] text-[#888] mb-6">Just $6.67/month, billed annually</p>
               <div className="space-y-3 mb-8">
-                {['Everything in Monthly', 'Priority support', 'Early access to new features', '2 months free vs monthly'].map(item => (
+                {['Everything in Monthly', 'Priority support', 'Early access to new features', '4 months free vs monthly'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#DF9905" strokeWidth="2" strokeLinecap="round"/></svg>
                     <span className="text-[13.5px] text-[#ddd]">{item}</span>

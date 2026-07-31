@@ -131,8 +131,9 @@ export default function AmbassadorPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Name</label>
+                <label htmlFor="amb-name" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Name</label>
                 <input
+                  id="amb-name"
                   type="text"
                   required
                   value={form.name}
@@ -142,8 +143,9 @@ export default function AmbassadorPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Email</label>
+                <label htmlFor="amb-email" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Email</label>
                 <input
+                  id="amb-email"
                   type="email"
                   required
                   value={form.email}
@@ -156,8 +158,9 @@ export default function AmbassadorPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">City / State</label>
+                <label htmlFor="amb-city" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">City / State</label>
                 <input
+                  id="amb-city"
                   type="text"
                   required
                   value={form.city}
@@ -167,8 +170,9 @@ export default function AmbassadorPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Handicap</label>
+                <label htmlFor="amb-handicap" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Handicap</label>
                 <input
+                  id="amb-handicap"
                   type="text"
                   value={form.handicap}
                   onChange={e => setForm(f => ({ ...f, handicap: e.target.value }))}
@@ -177,8 +181,9 @@ export default function AmbassadorPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Rounds / month</label>
+                <label htmlFor="amb-rounds" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Rounds / month</label>
                 <input
+                  id="amb-rounds"
                   type="text"
                   value={form.roundsPerMonth}
                   onChange={e => setForm(f => ({ ...f, roundsPerMonth: e.target.value }))}
@@ -189,10 +194,11 @@ export default function AmbassadorPage() {
             </div>
 
             <div>
-              <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">
+              <label htmlFor="amb-social" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">
                 Instagram / TikTok / social handle <span className="normal-case font-normal text-gray-300">(optional)</span>
               </label>
               <input
+                id="amb-social"
                 type="text"
                 value={form.social}
                 onChange={e => setForm(f => ({ ...f, social: e.target.value }))}
@@ -202,8 +208,9 @@ export default function AmbassadorPage() {
             </div>
 
             <div>
-              <label className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Why do you want to be a TracerBuddy Ambassador?</label>
+              <label htmlFor="amb-why" className="text-[12px] font-bold uppercase tracking-widest text-gray-400 block mb-2">Why do you want to be a TracerBuddy Ambassador?</label>
               <textarea
+                id="amb-why"
                 required
                 rows={5}
                 value={form.why}
@@ -236,6 +243,7 @@ export default function AmbassadorPage() {
           <div className="flex items-center gap-6 text-[12px] text-[#888]">
             <Link href="/privacy" className="hover:text-black transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-black transition-colors">Terms</Link>
+            <Link href="/disclaimer" className="hover:text-black transition-colors">Disclaimer</Link>
             <Link href="/about" className="hover:text-black transition-colors">About</Link>
             <Link href="/contact" className="hover:text-black transition-colors">Contact</Link>
           </div>
