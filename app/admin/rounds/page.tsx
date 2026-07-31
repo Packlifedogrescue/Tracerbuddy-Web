@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
+import { adminAuthHeaders } from '@/lib/adminClient'
 
 export default function AdminRounds() {
   const [rounds,  setRounds]  = useState<any[]>([])
@@ -22,7 +23,7 @@ export default function AdminRounds() {
     if (!email) return
     setLoading(true)
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-    const res  = await fetch(`/api/admin/rounds?${params}`, { headers: { 'x-admin-email': email } })
+    const res  = await fetch(`/api/admin/rounds?${params}`, { headers: await adminAuthHeaders() })
     const data = await res.json()
     setRounds(data.rounds ?? [])
     setTotal(data.total ?? 0)
@@ -35,7 +36,7 @@ export default function AdminRounds() {
     if (!confirm(`Delete round at "${course}"? This cannot be undone.`)) return
     await fetch('/api/admin/rounds', {
       method: 'DELETE',
-      headers: { 'x-admin-email': email, 'Content-Type': 'application/json' },
+      headers: { ...(await adminAuthHeaders()), 'Content-Type': 'application/json' },
       body: JSON.stringify({ roundId }),
     })
     load()

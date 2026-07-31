@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
+import { adminAuthHeaders } from '@/lib/adminClient'
 
 type Course = {
   name: string
@@ -31,7 +32,7 @@ export default function AdminCourses() {
     setLoading(true)
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
     if (search) params.set('search', search)
-    const res  = await fetch(`/api/admin/courses?${params}`, { headers: { 'x-admin-email': email } })
+    const res  = await fetch(`/api/admin/courses?${params}`, { headers: await adminAuthHeaders() })
     const data = await res.json()
     setCourses(data.courses ?? [])
     setTotal(data.total ?? 0)

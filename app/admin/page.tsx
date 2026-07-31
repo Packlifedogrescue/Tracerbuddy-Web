@@ -7,9 +7,10 @@ import {
   Star, Zap, BarChart2, Wind, Brain, RefreshCw, DollarSign, AlertTriangle,
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { adminAuthHeaders } from '@/lib/adminClient'
 
-async function adminFetch(path: string, email: string) {
-  const res = await fetch(path, { headers: { 'x-admin-email': email } })
+async function adminFetch(path: string) {
+  const res = await fetch(path, { headers: await adminAuthHeaders() })
   return res.json()
 }
 
@@ -76,7 +77,7 @@ export default function AdminOverview() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user?.email) return
-      adminFetch('/api/admin/stats', user.email).then(d => {
+      adminFetch('/api/admin/stats').then(d => {
         setData(d)
         setLoading(false)
       })

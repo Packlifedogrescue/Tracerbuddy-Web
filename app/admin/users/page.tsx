@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, Trash2, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { format } from 'date-fns'
+import { adminAuthHeaders } from '@/lib/adminClient'
 
 export default function AdminUsers() {
   const [users,   setUsers]   = useState<any[]>([])
@@ -24,7 +25,7 @@ export default function AdminUsers() {
     setLoading(true)
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
     if (search) params.set('search', search)
-    const res  = await fetch(`/api/admin/users?${params}`, { headers: { 'x-admin-email': email } })
+    const res  = await fetch(`/api/admin/users?${params}`, { headers: await adminAuthHeaders() })
     const data = await res.json()
     setUsers(data.users ?? [])
     setTotal(data.total ?? 0)
@@ -37,7 +38,7 @@ export default function AdminUsers() {
     if (!confirm(`Remove personal data for "${name}"? This cannot be undone.`)) return
     await fetch('/api/admin/users', {
       method: 'DELETE',
-      headers: { 'x-admin-email': email, 'Content-Type': 'application/json' },
+      headers: { ...(await adminAuthHeaders()), 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId }),
     })
     load()
@@ -47,7 +48,7 @@ export default function AdminUsers() {
     const next = current === 'pro' ? 'free' : 'pro'
     await fetch('/api/admin/users', {
       method: 'PATCH',
-      headers: { 'x-admin-email': email, 'Content-Type': 'application/json' },
+      headers: { ...(await adminAuthHeaders()), 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, subscription: next }),
     })
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, subscription: next } : u))

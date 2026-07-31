@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-const ADMIN_EMAILS = ['miller.brett88@gmail.com', 'brett@tracerbuddy.com']
+import { verifyAdmin } from '@/lib/adminAuth'
 
 const sb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,8 +13,7 @@ function getName(user: any): string {
 }
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('x-admin-email')
-  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
+  if (!(await verifyAdmin(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
@@ -96,8 +94,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const authHeader = req.headers.get('x-admin-email')
-  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
+  if (!(await verifyAdmin(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
@@ -117,8 +114,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const authHeader = req.headers.get('x-admin-email')
-  if (!authHeader || !ADMIN_EMAILS.includes(authHeader)) {
+  if (!(await verifyAdmin(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
