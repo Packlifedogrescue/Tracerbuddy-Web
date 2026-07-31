@@ -136,9 +136,9 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto relative">
           <div className="hidden md:block absolute top-7 left-[18%] right-[18%] h-px border-t border-dashed border-black/15" />
           {[
-            { num: '01', title: 'Track your round', desc: 'Open the app at the first tee. Shots, clubs, and distances are captured automatically as you play.' },
-            { num: '02', title: 'Review every miss', desc: 'After the round, see exactly where you lost strokes — and the patterns behind them.' },
-            { num: '03', title: 'Improve faster', desc: 'AI coach cards turn raw data into a personalized plan for your next session.' },
+            { num: '01', title: 'Play with confidence', desc: 'Get live yardages, personalized club recommendations, course strategy, and automatic tracking as you play.' },
+            { num: '02', title: 'Understand every round', desc: 'See your shots, distances, misses, strengths, and scoring patterns after the final hole.' },
+            { num: '03', title: 'Improve with purpose', desc: 'Turn your round data into personalized coaching, smarter practice, and better decisions next time.' },
           ].map((step, i) => (
             <Reveal key={step.num} delay={i * 100}>
               <div className="text-center relative">
