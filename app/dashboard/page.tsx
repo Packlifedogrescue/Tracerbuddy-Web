@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import CourseMapPremium from '@/components/CourseMapPremium'
 import WeatherWidget    from '@/components/WeatherWidget'
+import LiveBadge        from '@/components/LiveBadge'
 import {
   supabase,
   fetchRounds,
@@ -183,9 +184,11 @@ export default function DashboardPage() {
     }
   }
 
-  const live = useRealtime(['rounds', 'putt_data', 'club_profiles'], () => {
-    fetchRounds(50).then(r => setRounds(r))
-  })
+  // Refresh the full stat set on any change — not just rounds. Current Handicap
+  // and the handicap trend come from profile/handicapHistory, so a rounds-only
+  // refresh would leave those stale. load() sets loading=false in its finally
+  // (already false here), so there's no spinner flash on live updates.
+  const live = useRealtime(['rounds', 'putt_data', 'club_profiles'], () => { load() })
 
   // ── Computed ──────────────────────────────────────────────────────────────
   const totalRounds = rounds.length
@@ -350,11 +353,11 @@ export default function DashboardPage() {
       {/* ── Welcome ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-[26px] font-black text-[#111] tracking-tight leading-tight">
               Welcome back, {firstName}
             </h1>
-            
+            <LiveBadge live={live} />
           </div>
           <p className="text-[13.5px] text-gray-400 mt-0.5">
             {totalRounds > 0
