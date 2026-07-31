@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'TracerBuddy — Golf Performance Tracking',
-    description: 'Track every shot. Understand every round. The premium golf app for players who want to improve.',
+    description: 'One app. One golf system. Shot tracking, swing data, and round insights for players who want to improve.',
     url: siteUrl,
     siteName: 'TracerBuddy',
     images: [{ url: '/images/og-image.png', width: 1500, height: 788, alt: 'TracerBuddy — Golf shot tracking that actually helps your game' }],
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'TracerBuddy — Golf Performance Tracking',
-    description: 'Track every shot. Understand every round. The premium golf app for players who want to improve.',
+    description: 'One app. One golf system. Shot tracking, swing data, and round insights for players who want to improve.',
     images: ['/images/og-image.png'],
   },
 }

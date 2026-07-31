@@ -33,8 +33,8 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <Reveal className="relative z-10">
             <h1 className="font-serif text-[48px] md:text-[76px] font-medium leading-[1.02] tracking-[-0.025em] mb-7">
-              Track Every Shot.<br />
-              Understand <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>Every Round.</span>
+              One App.<br />
+              <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>One Golf System.</span>
             </h1>
             <p className="text-[17px] text-[#444] leading-[1.7] max-w-[480px] mb-9">
               Most golfers finish a round with no idea where they lost strokes.
