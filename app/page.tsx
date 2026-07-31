@@ -37,9 +37,9 @@ export default function HomePage() {
               <span className="italic text-[#DF9905]" style={{ fontFeatureSettings: '"ss01"' }}>One Golf System.</span>
             </h1>
             <p className="text-[17px] text-[#444] leading-[1.7] max-w-[480px] mb-9">
-              Most golfers finish a round with no idea where they lost strokes.
-              TracerBuddy shows you exactly — hole by hole, shot by shot — so every
-              round makes you a better golfer.
+              Plan every hole, know what club to hit, track your round, and learn
+              from every shot. TracerBuddy brings your caddie, GPS, scoring, stats,
+              and practice tools together in one complete golf system.
             </p>
             <div className="flex flex-wrap gap-3 mb-8">
               <Link href="/auth/signup" className="premium-btn-gold">
