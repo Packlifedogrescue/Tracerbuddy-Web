@@ -1,57 +1,103 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const SEARCH_TTL_DAYS = 7
+const GOLF_BASE     = 'https://golfapi.io/api/v2.3'
+const CACHE_TTL_DAYS = 7
+const CACHE_VERSION  = 3
 
-const sb = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+function normalise(q: string) {
+  return q.toLowerCase().trim().replace(/\s+/g, ' ')
+}
+
+// Normalise API response field names to match frontend interface (PascalCase)
+function normaliseCourse(c: any) {
+  return {
+    CourseID:  c.courseID  ?? c.CourseID  ?? '',
+    ClubName:  c.clubName  ?? c.ClubName  ?? '',
+    CourseName: c.courseName ?? c.CourseName ?? '',
+    City:       c.city      ?? c.City      ?? '',
+    StateCode:  c.state     ?? c.StateCode ?? '',
+    Country:    c.country   ?? c.Country   ?? '',
+    Latitude:   c.latitude  ?? c.Latitude  ?? null,
+    Longitude:  c.longitude ?? c.Longitude ?? null,
+    hasGPS:     c.hasGPS    ?? 0,
+    numHoles:   c.numHoles  ?? 18,
+  }
+}
 
 export async function GET(req: NextRequest) {
-  const raw = req.nextUrl.searchParams.get('q') ?? ''
-  const query = raw.trim().toLowerCase()
-  if (!query) return NextResponse.json([], { status: 200 })
+  const raw   = req.nextUrl.searchParams.get('q')?.trim() ?? ''
+  const state = req.nextUrl.searchParams.get('state')?.trim() ?? ''
+  const city  = req.nextUrl.searchParams.get('city')?.trim() ?? ''
 
-  const db = sb()
+  if (!raw && !state) return NextResponse.json({ courses: [] })
 
-  // Cache check
-  const cutoff = new Date(Date.now() - SEARCH_TTL_DAYS * 86400000).toISOString()
-  const { data: cached } = await db
-    .from('cached_searches')
-    .select('results_json')
-    .eq('query', query)
-    .gte('cached_at', cutoff)
-    .maybeSingle()
+  const cacheKey = `v${CACHE_VERSION}:${normalise([raw, state, city].filter(Boolean).join('|'))}`
+  const GOLF_KEY = process.env.GOLF_API_KEY!
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
 
-  if (cached?.results_json) {
-    return NextResponse.json(cached.results_json)
+  // ── 1. Check Supabase cache ──────────────────────────────────────────────
+  try {
+    const { data: cached } = await sb
+      .from('golf_courses_cache')
+      .select('results, cached_at')
+      .eq('search_query', cacheKey)
+      .maybeSingle()
+
+    if (cached) {
+      const age = (Date.now() - new Date(cached.cached_at).getTime()) / 86_400_000
+      if (age < CACHE_TTL_DAYS) {
+        return NextResponse.json({ courses: cached.results, cached: true })
+      }
+    }
+  } catch {
+    // Cache table may not exist yet — fall through
   }
 
-  // Call Golf API
-  const apiBase = process.env.GOLF_API_BASE_URL!
-  const apiKey  = process.env.GOLF_API_KEY!
-  const encoded = encodeURIComponent(raw.trim())
+  // ── 2. Call GolfAPI.io ───────────────────────────────────────────────────
+  try {
+    const params = new URLSearchParams()
+    if (raw)   params.set('name', raw)
+    if (state) params.set('state', state)
+    if (city)  params.set('city', city)
 
-  const res = await fetch(`${apiBase}/courses?name=${encoded}&key=${apiKey}`, {
-    headers: { 'Accept': 'application/json' },
-    next: { revalidate: 0 },
-  })
-
-  if (!res.ok) {
-    return NextResponse.json({ error: 'Golf API error', status: res.status }, { status: 502 })
-  }
-
-  const data = await res.json()
-
-  // Store in Supabase (upsert so repeated misses don't error)
-  if (Array.isArray(data) && data.length > 0) {
-    await db.from('cached_searches').upsert({
-      query,
-      results_json: data,
-      cached_at: new Date().toISOString(),
+    const res  = await fetch(`${GOLF_BASE}/courses?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${GOLF_KEY}` },  // docs: Bearer token
     })
-  }
+    const data = await res.json()
+    let raw_courses = Array.isArray(data) ? data : (data.courses ?? [])
 
-  return NextResponse.json(data)
+    // Client-side filter for 2-letter US state codes only
+    if (state && state.length === 2 && raw_courses.length > 0) {
+      const stateUp  = state.toUpperCase()
+      const filtered = raw_courses.filter((c: any) =>
+        (c.state ?? c.StateCode ?? '').toUpperCase() === stateUp
+      )
+      if (filtered.length > 0) raw_courses = filtered
+    }
+
+    const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
+    const courses = raw_courses
+      .map(normaliseCourse)
+      .filter((c: any) => {
+        const name = (c.CourseName || c.ClubName || '').trim()
+        return c.CourseID && name.length > 0 && !GENERIC.test(name)
+      })
+
+    // ── 3. Write to cache (best-effort) ──────────────────────────────────
+    try {
+      await sb.from('golf_courses_cache').upsert({
+        search_query: cacheKey,
+        results:      courses,
+        cached_at:    new Date().toISOString(),
+      })
+    } catch { /* ignore */ }
+
+    return NextResponse.json({ courses })
+  } catch (e) {
+    return NextResponse.json({ courses: [], error: String(e) }, { status: 502 })
+  }
 }
