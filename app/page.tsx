@@ -171,7 +171,7 @@ export default function HomePage() {
         <Reveal>
           <div className="flex flex-wrap justify-center gap-2.5 mb-12">
             {[
-              'Digital Scorecards', 'Shot Tracking', 'Satellite Maps', 'Apple Watch',
+              'AI Caddie', 'Digital Scorecards', 'Shot Tracking', 'Satellite Maps', 'Apple Watch',
               'Strokes Gained', 'Club Distances', 'AI Coach Cards', 'Putting Stats',
               'Match Play', 'Stableford', 'Practice Mode', 'Buddy Battles',
             ].map(tag => (
@@ -241,6 +241,49 @@ export default function HomePage() {
             </Reveal>
           ))}
         </div>
+
+        {/* AI Caddie feature highlight */}
+        <Reveal delay={100}>
+          <div className="mt-5 bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-7 md:p-10 grid md:grid-cols-2 gap-8 items-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #DF9905 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+            <div className="relative z-10">
+              <div className="text-[10px] font-bold text-[#DF9905] tracking-[0.25em] mb-3">AI CADDIE</div>
+              <h3 className="font-serif text-[28px] md:text-[36px] font-medium leading-[1.1] tracking-[-0.02em] mb-4">
+                A caddie in your<br />pocket on every hole.
+              </h3>
+              <p className="text-[13.5px] text-[#aaa] leading-[1.65] max-w-[400px] mb-5">
+                Get automatic club recommendations adjusted for wind, elevation, and your real distances — then ask anything, out loud or by text, and get a straight answer grounded in your own game.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['Auto club suggestions', 'Live ask-anything chat', 'Wind & elevation aware', 'Knows your distances'].map(t => (
+                  <span key={t} className="text-[11px] text-[#ccc] bg-white/[0.06] border border-white/[0.08] px-3 py-1 rounded-full">{t}</span>
+                ))}
+              </div>
+            </div>
+            <div className="relative z-10">
+              <div className="bg-[#0f0f0f] border border-white/[0.07] rounded-2xl p-4 space-y-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[9px] font-bold tracking-[0.15em] text-[#DF9905]">✦ CADDIE</span>
+                  <span className="text-[9px] text-[#666]">· Hole 7 · 162 yds</span>
+                </div>
+                {/* automatic club suggestion */}
+                <div className="bg-[#DF9905]/[0.1] border border-[#DF9905]/20 rounded-xl rounded-tl-sm px-3.5 py-2.5">
+                  <div className="text-[12.5px] text-[#F5EFE0] leading-snug">162 to the pin, into a 2-club wind. <span className="text-[#DF9905] font-semibold">Take the 6-iron</span> and swing smooth.</div>
+                </div>
+                {/* live question */}
+                <div className="flex justify-end">
+                  <div className="bg-white/[0.08] rounded-xl rounded-tr-sm px-3.5 py-2.5 max-w-[82%]">
+                    <div className="text-[12.5px] text-[#ddd] leading-snug">What about the bunker short right?</div>
+                  </div>
+                </div>
+                {/* grounded answer */}
+                <div className="bg-[#DF9905]/[0.1] border border-[#DF9905]/20 rounded-xl rounded-tl-sm px-3.5 py-2.5">
+                  <div className="text-[12.5px] text-[#F5EFE0] leading-snug">It's 148 to carry it — your 6i flies 165, so you're well clear. Aim right at the flag.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
 
         {/* Apple Watch feature highlight */}
         <Reveal delay={100}>
