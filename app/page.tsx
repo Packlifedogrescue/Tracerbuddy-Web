@@ -264,11 +264,11 @@ export default function HomePage() {
               <div className="bg-[#0f0f0f] border border-white/[0.07] rounded-2xl p-4 space-y-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="text-[9px] font-bold tracking-[0.15em] text-[#DF9905]">✦ CADDIE</span>
-                  <span className="text-[9px] text-[#666]">· Hole 7 · 162 yds</span>
+                  <span className="text-[9px] text-[#666]">· Hole 7 · 150 yds</span>
                 </div>
                 {/* automatic club suggestion */}
                 <div className="bg-[#DF9905]/[0.1] border border-[#DF9905]/20 rounded-xl rounded-tl-sm px-3.5 py-2.5">
-                  <div className="text-[12.5px] text-[#F5EFE0] leading-snug">162 to the pin, into a 2-club wind. <span className="text-[#DF9905] font-semibold">Take the 6-iron</span> and swing smooth.</div>
+                  <div className="text-[12.5px] text-[#F5EFE0] leading-snug">It's 150 to the pin, but playing 165 into this wind. <span className="text-[#DF9905] font-semibold">Take the 6-iron</span> and swing smooth.</div>
                 </div>
                 {/* live question */}
                 <div className="flex justify-end">
@@ -278,7 +278,7 @@ export default function HomePage() {
                 </div>
                 {/* grounded answer */}
                 <div className="bg-[#DF9905]/[0.1] border border-[#DF9905]/20 rounded-xl rounded-tl-sm px-3.5 py-2.5">
-                  <div className="text-[12.5px] text-[#F5EFE0] leading-snug">It's 148 to carry it — your 6i flies 165, so you're well clear. Aim right at the flag.</div>
+                  <div className="text-[12.5px] text-[#F5EFE0] leading-snug">It's 135 to carry it — you'll fly it easily. Aim right at the flag.</div>
                 </div>
               </div>
             </div>
