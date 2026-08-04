@@ -136,7 +136,7 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto relative">
           <div className="hidden md:block absolute top-7 left-[18%] right-[18%] h-px border-t border-dashed border-black/15" />
           {[
-            { num: '01', title: 'Play with confidence', desc: 'Get live yardages, personalized club recommendations, course strategy, and automatic tracking as you play.' },
+            { num: '01', title: 'Play with confidence', desc: 'Get live yardages, club recommendations, course strategy, and automatic tracking as you play.' },
             { num: '02', title: 'Understand every round', desc: 'See your shots, distances, misses, strengths, and scoring patterns after the final hole.' },
             { num: '03', title: 'Improve with purpose', desc: 'Turn your round data into personalized coaching, smarter practice, and better decisions next time.' },
           ].map((step, i) => (
