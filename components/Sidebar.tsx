@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, FileText, Watch, Wrench,
   BarChart2, Settings2, Star, X,
-  Activity, Brain, TrendingUp, Target,
+  Activity, Brain, TrendingUp, Target, Gauge,
 } from 'lucide-react'
 import { fetchUserProfile } from '@/lib/supabase'
 
@@ -16,6 +16,7 @@ const nav = [
   { href: '/dashboard/stats',     icon: BarChart2,  label: 'Insights'    },
   { href: '/dashboard/progress',  icon: TrendingUp, label: 'Progress'    },
   { href: '/dashboard/swing',     icon: Activity,   label: 'SwingTrace'  },
+  { href: '/dashboard/rangelab',  icon: Gauge,      label: 'Range Lab'   },
   { href: '/dashboard/watch',     icon: Watch,      label: 'Apple Watch' },
   { href: '/dashboard/coach',     icon: Brain,      label: 'AI Coach'    },
   { href: '/dashboard/practice',  icon: Target,     label: 'Practice'    },
