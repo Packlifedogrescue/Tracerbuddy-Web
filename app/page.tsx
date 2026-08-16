@@ -391,15 +391,15 @@ export default function HomePage() {
 
           <Reveal delay={150}>
             <div className="h-full bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-8 relative shadow-[0_20px_60px_rgba(223,153,5,0.18)] border border-[#DF9905]/40">
-              <div className="absolute -top-3 right-6 bg-[#DF9905] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE $40</div>
+              <div className="absolute -top-3 right-6 bg-[#DF9905] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE 78%</div>
               <div className="text-[13px] font-bold text-[#DF9905] mb-3 tracking-wide">YEARLY</div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="font-serif text-[48px] font-medium leading-none">$79.99</span>
+                <span className="font-serif text-[48px] font-medium leading-none">$25.99</span>
                 <span className="text-[14px] text-[#888]">/ year</span>
               </div>
-              <p className="text-[13px] text-[#888] mb-6">Just $6.67/month, billed annually</p>
+              <p className="text-[13px] text-[#888] mb-6">Just $2.17/month, billed annually</p>
               <div className="space-y-3 mb-8">
-                {['Everything in Monthly', 'Priority support', 'Early access to new features', '4 months free vs monthly'].map(item => (
+                {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Save 78% vs paying monthly'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#DF9905" strokeWidth="2" strokeLinecap="round"/></svg>
                     <span className="text-[13.5px] text-[#ddd]">{item}</span>
