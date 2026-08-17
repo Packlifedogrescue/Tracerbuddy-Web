@@ -66,7 +66,7 @@ export default function TermsPage() {
             <p>New accounts receive access to full features for their first round at no charge, without a credit card. After the first round, a paid subscription is required to continue logging rounds.</p>
 
             <h3>4.2 Paid Subscriptions</h3>
-            <p>Subscriptions are offered on a monthly ($9.99/month) or annual ($25.99/year) basis and are processed through Apple's in-app purchase system. By subscribing, you agree to Apple's payment terms.</p>
+            <p>Subscriptions are offered on a monthly ($4.99/month) or annual ($25.99/year) basis and are processed through Apple's in-app purchase system. By subscribing, you agree to Apple's payment terms.</p>
 
             <h3>4.3 Cancellation</h3>
             <p>You may cancel your subscription at any time through iPhone Settings → Apple ID → Subscriptions. Cancellation takes effect at the end of the current billing period. No refunds are provided for unused portions of a subscription period, except where required by applicable law.</p>

@@ -112,7 +112,7 @@ export default function AdminOverview() {
           <StatCard icon={Star}        label="Pro Subscribers"  value={data.proUsers}        color="#DF9905"  sub="active Pro plan" />
           <StatCard icon={Users}       label="Free Users"       value={data.freeUsers}       color="#6B7280"  sub={`${data.conversionRate}% converted to Pro`} />
           <StatCard icon={TrendingUp}  label="Conversion Rate"  value={data.conversionRate}  color="#4ADE80"  suffix="%" sub="free → pro" />
-          <StatCard icon={DollarSign}  label="MRR Estimate"     value={data.mrrEstimate}     color="#34D399"  prefix="$" sub="at $9.99/mo per Pro" />
+          <StatCard icon={DollarSign}  label="MRR Estimate"     value={data.mrrEstimate}     color="#34D399"  prefix="$" sub="at $4.99/mo per Pro" />
         </div>
       </div>
 

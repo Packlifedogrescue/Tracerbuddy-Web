@@ -373,10 +373,10 @@ export default function HomePage() {
             <div className="h-full bg-white border border-black/[0.05] rounded-2xl p-8 hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] transition-shadow">
               <div className="text-[13px] font-bold text-[#1A1A1A] mb-3 tracking-wide">MONTHLY</div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="font-serif text-[48px] font-medium text-[#1A1A1A] leading-none">$9.99</span>
+                <span className="font-serif text-[48px] font-medium text-[#1A1A1A] leading-none">$4.99</span>
                 <span className="text-[14px] text-[#888]">/ month</span>
               </div>
-              <p className="text-[13px] text-[#888] mb-6">First round free, then $9.99/mo</p>
+              <p className="text-[13px] text-[#888] mb-6">First round free, then $4.99/mo</p>
               <div className="space-y-3 mb-8">
                 {['Full app access on iOS + Web', 'Apple Watch SwingTrace', 'AI Coach Cards every round', 'Cancel anytime'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
@@ -391,7 +391,7 @@ export default function HomePage() {
 
           <Reveal delay={150}>
             <div className="h-full bg-[#1A1A1A] text-[#F5EFE0] rounded-2xl p-8 relative shadow-[0_20px_60px_rgba(223,153,5,0.18)] border border-[#DF9905]/40">
-              <div className="absolute -top-3 right-6 bg-[#DF9905] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE 78%</div>
+              <div className="absolute -top-3 right-6 bg-[#DF9905] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-[0.15em]">SAVE 57%</div>
               <div className="text-[13px] font-bold text-[#DF9905] mb-3 tracking-wide">YEARLY</div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="font-serif text-[48px] font-medium leading-none">$25.99</span>
@@ -399,7 +399,7 @@ export default function HomePage() {
               </div>
               <p className="text-[13px] text-[#888] mb-6">Just $2.17/month, billed annually</p>
               <div className="space-y-3 mb-8">
-                {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Save 78% vs paying monthly'].map(item => (
+                {['Everything in Monthly', 'Priority support', 'Early access to new features', 'Save 57% vs paying monthly'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#DF9905" strokeWidth="2" strokeLinecap="round"/></svg>
                     <span className="text-[13.5px] text-[#ddd]">{item}</span>

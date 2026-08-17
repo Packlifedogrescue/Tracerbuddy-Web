@@ -102,7 +102,10 @@ export async function GET(req: NextRequest) {
   // Conversion rate & MRR
   const proCount = proUsers ?? 0
   const conversionRate = totalUsers && totalUsers > 0 ? Math.round((proCount / totalUsers) * 100) : 0
-  const mrrEstimate = (proCount * 9.99).toFixed(2)
+  // Rough estimate: assumes the monthly rate for every Pro. It can't tell
+  // monthly from annual subscribers (the profile only stores subscription:'pro'),
+  // so annual subscribers ($25.99/yr ≈ $2.17/mo) are overstated here.
+  const mrrEstimate = (proCount * 4.99).toFixed(2)
 
   // Recent signups
   let recentSignups: any[] = []
