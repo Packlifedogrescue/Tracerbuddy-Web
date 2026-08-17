@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     <!-- Upgrade nudge -->
     <div style="background:#1A1A1A;border-radius:16px;padding:24px;margin-bottom:20px;text-align:center">
       <div style="color:#C9A84C;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:8px">WANT UNLIMITED ROUNDS?</div>
-      <div style="color:white;font-size:17px;font-weight:700;margin-bottom:6px">Upgrade to Pro — $9.99/mo</div>
+      <div style="color:white;font-size:17px;font-weight:700;margin-bottom:6px">Upgrade to Pro — $4.99/mo or $25.99/yr</div>
       <div style="color:rgba(255,255,255,0.5);font-size:13px;line-height:1.55">Unlimited rounds, full AI coaching, and every feature unlocked. Open the TracerBuddy iOS app and tap <strong style="color:rgba(255,255,255,0.75)">Profile → Upgrade to Pro</strong>.</div>
     </div>
 
