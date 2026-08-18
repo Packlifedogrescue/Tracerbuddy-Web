@@ -1,27 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const GOLF_BASE     = 'https://golfapi.io/api/v2.3'
-const CACHE_TTL_DAYS = 7
-const CACHE_VERSION  = 3
+// Course search backed by golfcourseapi.com (free tier). Output shape is kept
+// identical to the old GolfAPI.io route so the iOS app doesn't need to change
+// how it reads results — only the CourseID format changes (golfcourseapi uses
+// opaque 8-char ids). GPS is not available from this provider; Latitude/
+// Longitude come back null and hasGPS is 0 (the OSM layer fills GPS in later).
+const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
+const CACHE_TTL_DAYS  = 7
+const CACHE_VERSION   = 4  // bumped: results are now golfcourseapi-shaped, not GolfAPI.io
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
-// Normalise API response field names to match frontend interface (PascalCase)
+// golfcourseapi Course → the PascalCase shape the app already expects.
 function normaliseCourse(c: any) {
+  const loc = c.location ?? {}
   return {
-    CourseID:  c.courseID  ?? c.CourseID  ?? '',
-    ClubName:  c.clubName  ?? c.ClubName  ?? '',
-    CourseName: c.courseName ?? c.CourseName ?? '',
-    City:       c.city      ?? c.City      ?? '',
-    StateCode:  c.state     ?? c.StateCode ?? '',
-    Country:    c.country   ?? c.Country   ?? '',
-    Latitude:   c.latitude  ?? c.Latitude  ?? null,
-    Longitude:  c.longitude ?? c.Longitude ?? null,
-    hasGPS:     c.hasGPS    ?? 0,
-    numHoles:   c.numHoles  ?? 18,
+    CourseID:   c.id          ?? '',
+    ClubName:   c.club_name   ?? '',
+    CourseName: c.course_name ?? '',
+    City:       loc.city      ?? '',
+    StateCode:  loc.state     ?? '',
+    Country:    loc.country   ?? '',
+    Latitude:   null,   // golfcourseapi has no coordinates; filled by the OSM layer
+    Longitude:  null,
+    hasGPS:     0,
+    numHoles:   18,
   }
 }
 
@@ -32,8 +38,11 @@ export async function GET(req: NextRequest) {
 
   if (!raw && !state) return NextResponse.json({ courses: [] })
 
+  // golfcourseapi's search takes a single free-text query — fold state/city in.
+  const query = [raw, city, state].filter(Boolean).join(' ')
+
   const cacheKey = `v${CACHE_VERSION}:${normalise([raw, state, city].filter(Boolean).join('|'))}`
-  const GOLF_KEY = process.env.GOLF_API_KEY!
+  const GOLF_KEY = process.env.GOLFCOURSE_API_KEY
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -57,24 +66,26 @@ export async function GET(req: NextRequest) {
     // Cache table may not exist yet — fall through
   }
 
-  // ── 2. Call GolfAPI.io ───────────────────────────────────────────────────
-  try {
-    const params = new URLSearchParams()
-    if (raw)   params.set('name', raw)
-    if (state) params.set('state', state)
-    if (city)  params.set('city', city)
+  if (!GOLF_KEY) {
+    return NextResponse.json(
+      { courses: [], error: 'GOLFCOURSE_API_KEY is not configured' },
+      { status: 500 },
+    )
+  }
 
-    const res  = await fetch(`${GOLF_BASE}/courses?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${GOLF_KEY}` },  // docs: Bearer token
+  // ── 2. Call golfcourseapi.com ────────────────────────────────────────────
+  try {
+    const res  = await fetch(`${GOLFCOURSE_BASE}/search?search_query=${encodeURIComponent(query)}`, {
+      headers: { Authorization: `Bearer ${GOLF_KEY}` },
     })
     const data = await res.json()
     let raw_courses = Array.isArray(data) ? data : (data.courses ?? [])
 
-    // Client-side filter for 2-letter US state codes only
+    // Optional client-side filter for a 2-letter US state code.
     if (state && state.length === 2 && raw_courses.length > 0) {
       const stateUp  = state.toUpperCase()
       const filtered = raw_courses.filter((c: any) =>
-        (c.state ?? c.StateCode ?? '').toUpperCase() === stateUp
+        (c.location?.state ?? '').toUpperCase() === stateUp
       )
       if (filtered.length > 0) raw_courses = filtered
     }
