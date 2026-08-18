@@ -24,7 +24,7 @@ import { geocodeCourse, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 1
+const CACHE_VERSION    = 2  // v2: scope features to the matched golf_course area (resort disambiguation)
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -80,7 +80,12 @@ export async function GET(req: NextRequest) {
     const detailJson = await detailRes.json()
     const course = detailJson.course ?? detailJson
     const loc = course.location ?? {}
-    const name = course.club_name || course.course_name || ''
+    const clubName   = course.club_name || ''
+    const courseName = course.course_name || ''
+    const name       = clubName || courseName
+    // For area matching we want both the facility name AND the course label
+    // (e.g. "Pinehurst Resort" + "No. 2"), so a resort's courses disambiguate.
+    const targetName = [clubName, courseName].filter(Boolean).join(' ')
 
     // ── 3. Geocode → anchor ────────────────────────────────────────────────
     const anchor = await geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? '')
@@ -90,8 +95,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(payload)
     }
 
-    // ── 4. Overpass → green / tee / pin positions ──────────────────────────
-    const osm = await fetchGolfFeatures(anchor)
+    // ── 4. Overpass → green / tee / pin positions (scoped to this course) ──
+    const osm = await fetchGolfFeatures(anchor, targetName)
     const hasGeo = osm.greens.length + osm.tees.length + osm.pins.length + osm.holes.length > 0
 
     const flat: FlatPoi[] = []
@@ -111,6 +116,7 @@ export async function GET(req: NextRequest) {
     const payload = {
       courseID:       courseId,
       source:         hasGeo ? ('osm' as const) : ('none' as const),
+      matchedCourse:  osm.matchedCourse,
       center:         osm.center,
       numCoordinates: flat.length,
       holes:          osm.holes.map(h => ({
