@@ -24,7 +24,7 @@ import { geocodeCourse, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 2  // v2: scope features to the matched golf_course area (resort disambiguation)
+const CACHE_VERSION    = 3  // v3: dedup duplicate hole numbers at interleaved courses
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 

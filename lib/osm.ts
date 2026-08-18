@@ -109,6 +109,15 @@ function nearest(target: LatLng, candidates: LatLng[], maxMeters: number): LatLn
   return bestD <= maxMeters ? best : null
 }
 
+// Plain mean of a point cloud (NOT the polygon centroid above).
+function meanPoint(pts: LatLng[]): LatLng | null {
+  if (!pts.length) return null
+  return {
+    latitude:  pts.reduce((s, p) => s + p.latitude, 0) / pts.length,
+    longitude: pts.reduce((s, p) => s + p.longitude, 0) / pts.length,
+  }
+}
+
 // ── name / number matching (disambiguates courses at a resort) ───────────────
 
 const STOP = new Set([
@@ -297,12 +306,40 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
 
   // Snap the precise green centroid and the exact pin onto each hole's green end
   // (within 60 m) rather than trusting an absent ref. Then sort by hole number.
-  const holes: OsmHole[] = holeWays.map(hw => {
+  let holes: OsmHole[] = holeWays.map(hw => {
     const greenPt = hw.green ? (nearest(hw.green, greens, 60) ?? hw.green) : null
     const pin = greenPt ? nearest(greenPt, pins, 60) : null
     const tee = hw.tee ? (nearest(hw.tee, tees, 60) ?? hw.tee) : null
     return { ref: hw.ref, par: hw.par, tee, green: greenPt, pin }
   })
+
+  // Dedup duplicate hole numbers. At interleaved multi-course sites a stray
+  // hole-way from adjacent land can fall inside this course's boundary and carry
+  // a ref we already have (e.g. two "hole 2"s at Pinehurst). Keep the candidate
+  // nearest the course body — the mean of the unambiguous (single-ref) greens —
+  // and drop the outlier. This is a no-op for a normal course (all refs unique),
+  // so it only activates in the messy case it's meant to fix.
+  const refCounts = new Map<number, number>()
+  for (const h of holes) if (h.ref != null) refCounts.set(h.ref, (refCounts.get(h.ref) ?? 0) + 1)
+  const hasDupes = Array.from(refCounts.values()).some(n => n > 1)
+  if (hasDupes) {
+    const anchorPts = holes
+      .filter(h => h.ref != null && refCounts.get(h.ref) === 1 && h.green)
+      .map(h => h.green!) as LatLng[]
+    const body = meanPoint(anchorPts.length ? anchorPts : holes.filter(h => h.green).map(h => h.green!) as LatLng[])
+    const winner = new Map<number, OsmHole>()
+    const nullRef: OsmHole[] = []
+    for (const h of holes) {
+      if (h.ref == null) { nullRef.push(h); continue }
+      const prev = winner.get(h.ref)
+      if (!prev) { winner.set(h.ref, h); continue }
+      const dNew = h.green && body ? haversine(h.green, body) : Infinity
+      const dOld = prev.green && body ? haversine(prev.green, body) : Infinity
+      if (dNew < dOld) winner.set(h.ref, h)
+    }
+    holes = [...Array.from(winner.values()), ...nullRef]
+  }
+
   holes.sort((a, b) => {
     if (a.ref == null) return 1
     if (b.ref == null) return -1
