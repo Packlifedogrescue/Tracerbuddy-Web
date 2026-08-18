@@ -24,7 +24,7 @@ import { geocodeCourse, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 3  // v3: dedup duplicate hole numbers at interleaved courses
+const CACHE_VERSION    = 4  // v4: include green polygons for front/center/back distances
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -120,11 +120,12 @@ export async function GET(req: NextRequest) {
       center:         osm.center,
       numCoordinates: flat.length,
       holes:          osm.holes.map(h => ({
-        hole:  h.ref,
-        par:   h.par,
-        tee:   h.tee,
-        green: h.green,
-        pin:   h.pin,
+        hole:         h.ref,
+        par:          h.par,
+        tee:          h.tee,
+        green:        h.green,        // centroid
+        greenPolygon: h.greenPolygon, // outline → app computes front/center/back
+        pin:          h.pin,
       })),
       greens:         osm.greens,
       tees:           osm.tees,

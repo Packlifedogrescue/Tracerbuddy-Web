@@ -42,7 +42,8 @@ export interface OsmHole {
   ref: number | null
   par: number | null
   tee: LatLng | null
-  green: LatLng | null
+  green: LatLng | null        // green centroid
+  greenPolygon: LatLng[]      // the green's outline (for app-side front/back); [] if unmapped
   pin: LatLng | null
 }
 export interface OsmResult {
@@ -278,6 +279,9 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
   const greens: LatLng[] = []
   const tees: LatLng[] = []
   const pins: LatLng[] = []
+  // Green polygons kept alongside their centroids so we can hand the app the
+  // green's outline for front/back-of-green distances (computed player-relative).
+  const greenPolys: { center: LatLng; polygon: LatLng[] }[] = []
 
   for (const el of elements) {
     const tags = el.tags ?? {}
@@ -289,7 +293,8 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
     const geom = (el.geometry ?? []).map(g => ({ latitude: g.lat, longitude: g.lon }))
     if (!geom.length) continue
     if (golf === 'green') {
-      const c = centroid(geom); if (c) greens.push(c)
+      const c = centroid(geom)
+      if (c) { greens.push(c); greenPolys.push({ center: c, polygon: geom }) }
     } else if (golf === 'tee') {
       const c = centroid(geom); if (c) tees.push(c)
     } else if (golf === 'hole') {
@@ -307,10 +312,13 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
   // Snap the precise green centroid and the exact pin onto each hole's green end
   // (within 60 m) rather than trusting an absent ref. Then sort by hole number.
   let holes: OsmHole[] = holeWays.map(hw => {
-    const greenPt = hw.green ? (nearest(hw.green, greens, 60) ?? hw.green) : null
+    const snapped = hw.green ? nearest(hw.green, greens, 60) : null
+    const greenPt = snapped ?? hw.green
+    // Attach the polygon of the green we snapped to (by reference identity).
+    const greenPolygon = snapped ? (greenPolys.find(g => g.center === snapped)?.polygon ?? []) : []
     const pin = greenPt ? nearest(greenPt, pins, 60) : null
     const tee = hw.tee ? (nearest(hw.tee, tees, 60) ?? hw.tee) : null
-    return { ref: hw.ref, par: hw.par, tee, green: greenPt, pin }
+    return { ref: hw.ref, par: hw.par, tee, green: greenPt, greenPolygon, pin }
   })
 
   // Dedup duplicate hole numbers. At interleaved multi-course sites a stray
