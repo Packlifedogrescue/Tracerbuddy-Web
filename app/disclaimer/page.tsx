@@ -70,7 +70,7 @@ export default function DisclaimerPage() {
 
           <section>
             <h2>4. Course and Scorecard Data</h2>
-            <p>Course information, hole layouts, par values, handicap indexes, slope ratings, and yardages are sourced from third-party databases (including GolfAPI.io) and may not be current, complete, or accurate for every course. TracerBuddy is not responsible for errors or omissions in course data. Course layouts change — always defer to official course scorecards and signage.</p>
+            <p>Course information, hole layouts, par values, handicap indexes, slope ratings, and yardages are sourced from third-party databases (including golfcourseapi.com and OpenStreetMap) and may not be current, complete, or accurate for every course. TracerBuddy is not responsible for errors or omissions in course data. Course layouts change — always defer to official course scorecards and signage.</p>
           </section>
 
           <section>
@@ -90,7 +90,7 @@ export default function DisclaimerPage() {
 
           <section>
             <h2>8. Third-Party Links and Services</h2>
-            <p>The Service may contain links to or integrations with third-party websites, apps, or services (including Mapbox, GolfAPI, Apple, Anthropic, and others). TracerBuddy is not responsible for the content, accuracy, or practices of any third-party service. Accessing third-party services is at your own risk and subject to those parties' own terms and policies.</p>
+            <p>The Service may contain links to or integrations with third-party websites, apps, or services (including golfcourseapi.com, OpenStreetMap, Apple, Anthropic, and others). TracerBuddy is not responsible for the content, accuracy, or practices of any third-party service. Accessing third-party services is at your own risk and subject to those parties' own terms and policies.</p>
           </section>
 
           <section>
