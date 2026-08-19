@@ -23,6 +23,28 @@ export interface GpsHole {
 // The flag: exact pin when OSM maps one, else the green centroid (its middle).
 function flagPoint(h: GpsHole): GpsCoord | null { return h.pin ?? h.green }
 
+// OSM doesn't record tee color, but tee boxes are ordered back → forward, and
+// courses almost always run their colors that way (championship/back darkest,
+// forward reddest). So we approximate the scorecard colors from that order.
+// This is a sensible guess, not ground truth — a course with an unusual color
+// scheme will differ.
+const TEE_RAMPS: Record<number, string[]> = {
+  1: ['#3B82F6'],
+  2: ['#3B82F6', '#EF4444'],
+  3: ['#3B82F6', '#E5E7EB', '#EF4444'],
+  4: ['#111111', '#3B82F6', '#E5E7EB', '#EF4444'],
+  5: ['#111111', '#3B82F6', '#E5E7EB', '#D4AF37', '#EF4444'],
+  6: ['#111111', '#3B82F6', '#E5E7EB', '#D4AF37', '#22A06B', '#EF4444'],
+}
+function teeColorRamp(n: number): string[] {
+  if (n <= 0) return []
+  if (TEE_RAMPS[n]) return TEE_RAMPS[n]
+  const out = ['#111111', '#3B82F6', '#E5E7EB']   // n > 6: pad the middle with gold
+  while (out.length < n - 1) out.push('#D4AF37')
+  out.push('#EF4444')
+  return out.slice(0, n)
+}
+
 function flagIcon() {
   return L.divIcon({
     className: '',
@@ -133,20 +155,22 @@ export default function CourseMapFree({
       const flag = flagPoint(h)
       const teeBoxes = (h.tees && h.tees.length ? h.tees : (h.tee ? [h.tee] : []))
       if (flag && teeBoxes.length) {
+        const colors = teeColorRamp(teeBoxes.length)   // back → forward
         const lines: L.Polyline[] = []
-        for (const t of teeBoxes) {
+        teeBoxes.forEach((t, i) => {
+          const col = colors[i] ?? '#C9A84C'
           lines.push(L.polyline(
             [[t.latitude, t.longitude], [flag.latitude, flag.longitude]],
-            { color: '#C9A84C', weight: 2, opacity: 0.45, dashArray: '4 6' },
+            { color: col, weight: 2, opacity: 0.5, dashArray: '4 6' },
           ).addTo(map))
-          // Small marker at the tee box itself.
+          // Marker at the tee box itself, colored to match its play line.
           layer.teeDots ??= []
           layer.teeDots.push(
             L.circleMarker([t.latitude, t.longitude],
-              { radius: 3, color: '#20160a', weight: 1, fillColor: '#C9A84C', fillOpacity: 1 })
+              { radius: 4, color: '#0b0b0b', weight: 1.5, fillColor: col, fillOpacity: 1 })
               .addTo(map),
           )
-        }
+        })
         layer.line = lines[0]
         layer.lines = lines
       }
