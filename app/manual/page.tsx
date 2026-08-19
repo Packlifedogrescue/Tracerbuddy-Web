@@ -233,7 +233,7 @@ const MANUAL_BODY = `
 
       <h3 class="feature"><span class="dot"></span>Find a course</h3>
       <ul class="steps">
-        <li>Type a course or city name, or tap <strong>Near Me</strong> for GPS-based search across 42,000+ courses worldwide.</li>
+        <li>Type a course or city name, or tap <strong>Near Me</strong> for GPS-based search across 30,000+ courses worldwide.</li>
         <li>If you're standing on a course TracerBuddy recognizes, an <strong>&ldquo;Are you playing here?&rdquo;</strong> banner appears automatically &mdash; tap Yes to skip search entirely.</li>
         <li>No signal? Recently played courses stay available offline.</li>
       </ul>

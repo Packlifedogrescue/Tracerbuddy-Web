@@ -73,7 +73,7 @@ export default function AboutPage() {
           </div>
           <div className="flex flex-col gap-5">
             <div className="bg-[#F5EFE0] rounded-3xl border border-black/[0.05] p-8 flex-1">
-              <div className="font-serif text-[48px] font-medium text-[#DF9905] leading-none mb-3">42,000<span className="text-[32px]">+</span></div>
+              <div className="font-serif text-[48px] font-medium text-[#DF9905] leading-none mb-3">30,000<span className="text-[32px]">+</span></div>
               <div className="text-[15px] font-bold text-[#1A1A1A] mb-1">Courses worldwide</div>
               <div className="text-[13.5px] text-[#777] leading-[1.6]">GPS satellite maps for every course in 100+ countries. Search your home track and be on the map in seconds.</div>
             </div>

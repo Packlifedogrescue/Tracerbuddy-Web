@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         ${[
           ['1 full round tracked', 'Scorecard, stats, hole breakdown — everything.'],
           ['AI Coach Card', 'Your biggest strokes leak and a custom fix after the round.'],
-          ['Course Map', 'GPS yardages and satellite view for any of 42,000+ courses.'],
+          ['Course Map', 'GPS yardages and satellite view for any of 30,000+ courses.'],
           ['Apple Watch sync', 'Swing speed and motion data automatically captured.'],
         ].map(([title, desc]) => `
         <div style="display:flex;gap:12px;margin-bottom:12px">
