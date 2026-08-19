@@ -19,6 +19,34 @@ export interface GpsHole {
   pin: GpsCoord | null
 }
 
+// Great-circle distance in yards.
+function distYards(a: GpsCoord, b: GpsCoord): number {
+  const R = 6371000
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(b.latitude - a.latitude)
+  const dLng = toRad(b.longitude - a.longitude)
+  const la1 = toRad(a.latitude), la2 = toRad(b.latitude)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2
+  return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(h))) * 1.09361)
+}
+
+// Front / center / back of the green, measured from the hole's tee (there's no
+// live player position on the web map). Front = nearest green edge, back =
+// farthest, center = the centroid. Null when there's no tee to measure from.
+function computeFCB(h: GpsHole): { front: number; center: number; back: number } | null {
+  if (!h.tee) return null
+  const poly = h.greenPolygon ?? []
+  if (poly.length >= 3) {
+    const ds = poly.map(p => distYards(h.tee!, p))
+    const front = Math.min(...ds)
+    const back  = Math.max(...ds)
+    const center = h.green ? distYards(h.tee, h.green) : Math.round((front + back) / 2)
+    return { front, center, back }
+  }
+  if (h.green) { const c = distYards(h.tee, h.green); return { front: c, center: c, back: c } }
+  return null
+}
+
 function holeIcon(num: number, active: boolean) {
   const bg = active ? '#C9A84C' : 'rgba(17,17,17,0.82)'
   const bd = active ? '#ffffff' : 'rgba(201,168,76,0.7)'
@@ -43,15 +71,20 @@ export default function CourseMapFree({
   const elRef   = useRef<HTMLDivElement>(null)
   const mapRef  = useRef<L.Map | null>(null)
   const layers  = useRef<Record<number, HoleLayer>>({})
+  const allBounds = useRef<L.LatLngBounds | null>(null)
   const clickRef = useRef(onHoleClick)
   clickRef.current = onHoleClick
+
+  const selHole = selectedHole != null ? holes.find(h => h.hole === selectedHole) : undefined
+  const fcb = selHole ? computeFCB(selHole) : null
 
   // Build the map once. The page gives this component a key={courseID}, so a new
   // course remounts it with fresh geometry rather than mutating in place.
   useEffect(() => {
     if (!elRef.current || mapRef.current) return
-    const map = L.map(elRef.current, { zoomControl: true, attributionControl: true })
+    const map = L.map(elRef.current, { zoomControl: false, attributionControl: true })
     mapRef.current = map
+    L.control.zoom({ position: 'topright' }).addTo(map)
 
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -92,8 +125,12 @@ export default function CourseMapFree({
       for (const p of h.greenPolygon ?? []) bounds.push([p.latitude, p.longitude])
     }
 
-    if (bounds.length) map.fitBounds(L.latLngBounds(bounds).pad(0.12))
-    else map.setView([center.latitude, center.longitude], 15)
+    if (bounds.length) {
+      allBounds.current = L.latLngBounds(bounds).pad(0.12)
+      map.fitBounds(allBounds.current)
+    } else {
+      map.setView([center.latitude, center.longitude], 15)
+    }
 
     return () => { map.remove(); mapRef.current = null; layers.current = {} }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,7 +150,53 @@ export default function CourseMapFree({
       if (active) layer.marker?.setZIndexOffset(1000)
       else layer.marker?.setZIndexOffset(0)
     }
-  }, [selectedHole])
 
-  return <div ref={elRef} className="w-full h-full" style={{ background: '#0b2114' }} />
+    // Zoom to the selected hole (tee → green), or back to the whole course.
+    const map = mapRef.current
+    if (!map) return
+    if (selHole) {
+      const pts: L.LatLngExpression[] = []
+      if (selHole.tee)   pts.push([selHole.tee.latitude, selHole.tee.longitude])
+      if (selHole.green) pts.push([selHole.green.latitude, selHole.green.longitude])
+      for (const p of selHole.greenPolygon ?? []) pts.push([p.latitude, p.longitude])
+      if (pts.length) map.flyToBounds(L.latLngBounds(pts).pad(0.35), { maxZoom: 17, duration: 0.6 })
+    } else if (allBounds.current) {
+      map.flyToBounds(allBounds.current, { duration: 0.6 })
+    }
+  }, [selectedHole, selHole])
+
+  return (
+    <div className="relative w-full h-full">
+      <div ref={elRef} className="w-full h-full" style={{ background: '#0b2114' }} />
+
+      {/* Front / center / back badge for the selected hole */}
+      {fcb && selHole && (
+        <div className="absolute top-3 left-3 z-[1000] pointer-events-none select-none">
+          <div className="rounded-2xl bg-[#0d0d0d]/92 backdrop-blur-sm border border-[#C9A84C]/30 shadow-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-3.5 pt-2.5 pb-2">
+              <div className="w-5 h-5 rounded-md bg-[#C9A84C] text-[#20160a] text-[10px] font-black flex items-center justify-center leading-none">
+                {selHole.hole}
+              </div>
+              <span className="text-[11px] font-bold text-white/90 tracking-wide">
+                Hole {selHole.hole}{selHole.par ? ` · Par ${selHole.par}` : ''}
+              </span>
+            </div>
+            <div className="flex items-stretch">
+              {([
+                ['Front', fcb.front,  false],
+                ['Center', fcb.center, true],
+                ['Back', fcb.back,   false],
+              ] as const).map(([lab, val, mid]) => (
+                <div key={lab} className={`px-3.5 py-2 text-center ${mid ? 'bg-[#C9A84C]/10' : ''}`}>
+                  <div className="text-[8.5px] font-bold uppercase tracking-[0.15em] text-white/45">{lab}</div>
+                  <div className={`font-black tabular-nums leading-none mt-1 ${mid ? 'text-[26px] text-[#C9A84C]' : 'text-[19px] text-white/90'}`}>{val}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-[8.5px] text-white/40 text-center pb-1.5 tracking-wide">yards from the tee</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
