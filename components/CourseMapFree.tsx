@@ -47,15 +47,17 @@ function teeColorRamp(n: number): string[] {
   return out.slice(0, n)
 }
 
+// Compact flag: short pole so the banner sits right on the green rather than
+// floating above it. Anchored at the pole base (the cup).
 function flagIcon() {
   return L.divIcon({
     className: '',
-    html: `<svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
-      <line x1="1.5" y1="15" x2="1.5" y2="1" stroke="#F3EFE3" stroke-width="1.5"/>
-      <path d="M1.5 1 L10 3.2 L1.5 5.6 Z" fill="#E5484D"/>
+    html: `<svg width="10" height="11" viewBox="0 0 10 11" xmlns="http://www.w3.org/2000/svg">
+      <line x1="1" y1="10.5" x2="1" y2="1" stroke="#ffffff" stroke-width="1.3"/>
+      <path d="M1 1 L7.5 2.6 L1 4.2 Z" fill="#E5484D"/>
     </svg>`,
-    iconSize: [12, 16],
-    iconAnchor: [1.5, 15],
+    iconSize: [10, 11],
+    iconAnchor: [1, 10],
   })
 }
 
@@ -106,6 +108,7 @@ interface HoleLayer {
   lines?: L.Polyline[]
   teeDots?: L.CircleMarker[]
   flag?: L.Marker
+  cup?: L.CircleMarker
 }
 
 export default function CourseMapFree({
@@ -183,8 +186,12 @@ export default function CourseMapFree({
         layer.lines = lines
       }
 
-      // Flag marker at the pin / green center.
+      // Flag at the green center: a cup dot (unmistakably on the green) with a
+      // short flag rising from it.
       if (flag) {
+        layer.cup = L.circleMarker([flag.latitude, flag.longitude],
+          { radius: 2.5, color: '#0b0b0b', weight: 1, fillColor: '#ffffff', fillOpacity: 1, interactive: false })
+          .addTo(map)
         layer.flag = L.marker([flag.latitude, flag.longitude], { icon: flagIcon(), interactive: false }).addTo(map)
       }
 
