@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { format } from 'date-fns'
 import { track } from '@/lib/analytics'
@@ -364,6 +364,8 @@ export default function CoursesPage() {
   const [detail,         setDetail]         = useState<CourseDetail | null>(null)
   const [gps,            setGps]            = useState<GpsData | null>(null)
   const [loadingDetail,  setLoadingDetail]  = useState(false)
+  const [loadingGps,     setLoadingGps]     = useState(false)
+  const reqRef = useRef(0)
   const [error,          setError]          = useState('')
   const [visitedCourses, setVisitedCourses] = useState<VisitedCourse[]>([])
   const [activeTab,      setActiveTab]      = useState<'scorecard' | 'weather' | 'info'>('scorecard')
@@ -408,18 +410,33 @@ export default function CoursesPage() {
   }
 
   async function pickCourse(course: GolfCourse) {
+    const reqId = ++reqRef.current
     setSelected(course); setResults([]); setShowDropdown(false); setDetail(null); setGps(null)
-    setLoadingDetail(true); setError(''); setSelectedHole(undefined); setActiveTab('scorecard')
+    setLoadingDetail(true); setLoadingGps(true); setError(''); setSelectedHole(undefined); setActiveTab('scorecard')
     track('course_viewed', { course_id: course.CourseID, course_name: course.CourseName || course.ClubName, city: course.City, state: course.StateCode })
+
+    // 1) Scorecard/detail — fast, so show it immediately.
     try {
-      const [detailRes, gpsRes] = await Promise.all([
-        fetch(`/api/golf/course?id=${encodeURIComponent(course.CourseID)}`),
-        fetch(`/api/golf/raw-coordinates?id=${encodeURIComponent(course.CourseID)}`),
-      ])
-      setDetail(await detailRes.json())
-      try { setGps(await gpsRes.json()) } catch { setGps(null) }
-    } catch { setError('Could not load course details.') }
-    finally  { setLoadingDetail(false) }
+      const res  = await fetch(`/api/golf/course?id=${encodeURIComponent(course.CourseID)}`)
+      const data: CourseDetail = await res.json()
+      if (reqId === reqRef.current) setDetail(data)
+    } catch {
+      if (reqId === reqRef.current) setError('Could not load course details.')
+    } finally {
+      if (reqId === reqRef.current) setLoadingDetail(false)
+    }
+
+    // 2) GPS/map — can take a while the first time (geocode + OpenStreetMap),
+    //    then it's cached. Loaded separately so it never blocks the scorecard.
+    try {
+      const res  = await fetch(`/api/golf/raw-coordinates?id=${encodeURIComponent(course.CourseID)}`)
+      const data: GpsData = await res.json()
+      if (reqId === reqRef.current) setGps(data)
+    } catch {
+      /* map falls back to the no-GPS placeholder */
+    } finally {
+      if (reqId === reqRef.current) setLoadingGps(false)
+    }
   }
 
   async function searchVisited(name: string) {
@@ -491,7 +508,7 @@ export default function CoursesPage() {
           </div>
           {selected && (
             <button
-              onClick={() => { setSelected(null); setDetail(null); setGps(null); setQuery(''); setRegion(''); setCity(''); setResults([]); setShowDropdown(false) }}
+              onClick={() => { reqRef.current++; setSelected(null); setDetail(null); setGps(null); setLoadingGps(false); setQuery(''); setRegion(''); setCity(''); setResults([]); setShowDropdown(false) }}
               className="flex items-center gap-1.5 text-[12.5px] font-semibold text-gray-400 hover:text-[#111] transition-colors"
             >
               <X className="w-3.5 h-3.5" /> Clear
@@ -681,7 +698,15 @@ export default function CoursesPage() {
 
               {/* Satellite map */}
               <div className="flex-1 relative m-3 rounded-2xl overflow-hidden shadow-2xl">
-                {hasGps && gps?.center ? (
+                {loadingGps ? (
+                  <div className="w-full h-full flex items-center justify-center bg-[#F8F4EE] rounded-2xl">
+                    <div className="text-center px-6">
+                      <Loader2 className="w-7 h-7 text-[#C9A84C] animate-spin mx-auto mb-2" />
+                      <p className="text-[13px] text-gray-400">Loading satellite map…</p>
+                      <p className="text-[11px] text-gray-300 mt-1">First look at a course takes a few seconds</p>
+                    </div>
+                  </div>
+                ) : hasGps && gps?.center ? (
                   <CourseMapFree
                     key={selected.CourseID}
                     center={gps.center}
