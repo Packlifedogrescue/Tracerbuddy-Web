@@ -8,7 +8,7 @@ import { createClient } from '@supabase/supabase-js'
 // for now. The OpenStreetMap layer (phase 2) fills those in.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 30
-const CACHE_VERSION   = 5  // bumped: payload now golfcourseapi-shaped
+const CACHE_VERSION   = 6  // bumped: tees deduped by name (men's + women's no longer double up)
 
 const TEE_COLORS: Record<string, string> = {
   black: '#111111', blue: '#3B82F6', white: '#E5E7EB', gold: '#D4AF37',
@@ -77,10 +77,18 @@ function buildCoursePayload(course: any) {
   const totalPar = scorecardTee.par_total
     ?? (Holes.reduce((a: number, h: any) => a + (h.Par ?? 0), 0) || null)
 
+  // Men's + women's tees, deduped by name. golfcourseapi lists them separately, so a course with a
+  // "Green" tee for both genders would otherwise show "Green" twice. Keep the first (men's) of each.
+  const seenTee = new Set<string>()
   const Tees = [
     ...maleTees.map(t => toAppTee(t, 'men')),
     ...femaleTees.map(t => toAppTee(t, 'women')),
-  ]
+  ].filter(t => {
+    const key = (t.teeName ?? '').toLowerCase().trim()
+    if (!key) return true                 // keep unnamed tees as-is
+    if (seenTee.has(key)) return false
+    seenTee.add(key); return true
+  })
 
   const loc = course.location ?? {}
   return {

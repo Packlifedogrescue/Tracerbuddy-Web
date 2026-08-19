@@ -24,7 +24,7 @@ import { geocodeCourse, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 4  // v4: include green polygons for front/center/back distances
+const CACHE_VERSION    = 5  // v5: town-level center fallback when the course name won't geocode
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -90,7 +90,11 @@ export async function GET(req: NextRequest) {
     // ── 3. Geocode → anchor ────────────────────────────────────────────────
     const anchor = await geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? '')
     if (!anchor) {
-      const payload = emptyPayload(courseId)
+      // The course name didn't geocode (likely not a notable place / not in OSM). Fall back to a
+      // TOWN-level center so the app can at least frame the general area — but do NOT run Overpass
+      // from the town, or we could attach a neighboring course's holes to this one.
+      const areaCenter = await geocodeCourse('', loc.city ?? '', loc.state ?? '', loc.country ?? '')
+      const payload = { ...emptyPayload(courseId), center: areaCenter }
       await writeCache(sb, cacheKey, payload)
       return NextResponse.json(payload)
     }
