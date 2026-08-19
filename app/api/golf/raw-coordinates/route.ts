@@ -60,7 +60,10 @@ export async function GET(req: NextRequest) {
       .select('data, cached_at')
       .eq('course_id', cacheKey)
       .maybeSingle()
-    if (cached) {
+    // Only trust a cached HIT (real GPS). A cached "none" is never served — a
+    // transient OSM hiccup must not blank a course for the whole TTL — so we fall
+    // through and retry the lookup instead.
+    if (cached && cached.data?.source === 'osm') {
       const age = (Date.now() - new Date(cached.cached_at).getTime()) / 86_400_000
       if (age < CACHE_TTL_DAYS) return NextResponse.json({ ...cached.data, cached: true })
     }
@@ -94,9 +97,8 @@ export async function GET(req: NextRequest) {
       // TOWN-level center so the app can at least frame the general area — but do NOT run Overpass
       // from the town, or we could attach a neighboring course's holes to this one.
       const areaCenter = await geocodeCourse('', loc.city ?? '', loc.state ?? '', loc.country ?? '')
-      const payload = { ...emptyPayload(courseId), center: areaCenter }
-      await writeCache(sb, cacheKey, payload)
-      return NextResponse.json(payload)
+      // Don't cache a "none" — retry next time in case geocoding recovers.
+      return NextResponse.json({ ...emptyPayload(courseId), center: areaCenter })
     }
 
     // ── 4. Overpass → green / tee / pin positions (scoped to this course) ──
@@ -138,7 +140,9 @@ export async function GET(req: NextRequest) {
       coordinates:    flat,
     }
 
-    await writeCache(sb, cacheKey, payload)
+    // Cache only real GPS hits — never a "none", so a transient Overpass failure
+    // can't poison a course that actually has data.
+    if (payload.source === 'osm') await writeCache(sb, cacheKey, payload)
     return NextResponse.json(payload)
   } catch (e) {
     // Never hard-fail — the app must be able to fall back to no-GPS.
