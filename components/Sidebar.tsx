@@ -5,13 +5,14 @@ import { usePathname } from 'next/navigation'
 import {
   Home, FileText, Watch, Wrench,
   BarChart2, Settings2, Star, X,
-  Activity, Brain, TrendingUp, Target, Gauge,
+  Activity, Brain, TrendingUp, Target, Gauge, MapPin,
 } from 'lucide-react'
 import { fetchUserProfile } from '@/lib/supabase'
 
 const nav = [
   { href: '/dashboard',           icon: Home,       label: 'Dashboard'   },
   { href: '/dashboard/rounds',    icon: FileText,   label: 'Rounds'      },
+  { href: '/dashboard/courses',   icon: MapPin,     label: 'Courses'     },
   { href: '/dashboard/clubs',     icon: Wrench,     label: 'Clubs'       },
   { href: '/dashboard/stats',     icon: BarChart2,  label: 'Insights'    },
   { href: '/dashboard/progress',  icon: TrendingUp, label: 'Progress'    },
