@@ -20,8 +20,10 @@ export interface GpsHole {
   pin: GpsCoord | null
 }
 
-// The flag: exact pin when OSM maps one, else the green centroid (its middle).
-function flagPoint(h: GpsHole): GpsCoord | null { return h.pin ?? h.green }
+// The flag sits at the green's center (the polygon centroid — always on the
+// green). OSM "pin" nodes exist but are sparse and often misplaced off the
+// green, so we only fall back to one when there's no green geometry at all.
+function flagPoint(h: GpsHole): GpsCoord | null { return h.green ?? h.pin }
 
 // OSM doesn't record tee color, but tee boxes are ordered back → forward, and
 // courses almost always run their colors that way (championship/back darkest,
@@ -107,10 +109,11 @@ interface HoleLayer {
 }
 
 export default function CourseMapFree({
-  center, holes, selectedHole, onHoleClick,
+  center, holes, teeColors, selectedHole, onHoleClick,
 }: {
   center: GpsCoord
   holes: GpsHole[]
+  teeColors?: string[]   // real scorecard tee colors, back → forward
   selectedHole?: number
   onHoleClick?: (n: number) => void
 }) {
@@ -155,7 +158,12 @@ export default function CourseMapFree({
       const flag = flagPoint(h)
       const teeBoxes = (h.tees && h.tees.length ? h.tees : (h.tee ? [h.tee] : []))
       if (flag && teeBoxes.length) {
-        const colors = teeColorRamp(teeBoxes.length)   // back → forward
+        // Real scorecard tee colors (back → forward) when we have them; fall
+        // back to the order-based ramp only for tee boxes without a match.
+        const ramp = teeColorRamp(teeBoxes.length)
+        const colors = (teeColors && teeColors.length)
+          ? teeBoxes.map((_, i) => teeColors[i] ?? ramp[i] ?? '#C9A84C')
+          : ramp
         const lines: L.Polyline[] = []
         teeBoxes.forEach((t, i) => {
           const col = colors[i] ?? '#C9A84C'

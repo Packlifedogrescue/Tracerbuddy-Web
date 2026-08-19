@@ -471,6 +471,22 @@ export default function CoursesPage() {
     }),
   }))
 
+  // Real tee colors from the scorecard, ordered back → forward (longest first),
+  // deduped by tee name so male/female duplicates collapse. Passed to the map so
+  // each play line matches its actual tee color instead of a guessed one.
+  const teeColorsForMap: string[] = (() => {
+    const byName = new Map<string, { color: string; total: number }>()
+    for (const t of detail?.Tees ?? []) {
+      const color = t.teeColor
+      if (!color) continue
+      const total = Array.from({ length: 18 }, (_, i) => Number(t[`length${i + 1}`]) || 0).reduce((a, b) => a + b, 0)
+      const key = (t.teeName ?? '').toLowerCase().trim() || color.toLowerCase()
+      const prev = byName.get(key)
+      if (!prev || prev.total < total) byName.set(key, { color, total })
+    }
+    return Array.from(byName.values()).sort((a, b) => b.total - a.total).map(t => t.color)
+  })()
+
   const selectedHoleData = selectedHole ? holes.find(h => holeNum(h) === selectedHole) : null
 
   const holeYardageRows = (() => {
@@ -711,6 +727,7 @@ export default function CoursesPage() {
                     key={selected.CourseID}
                     center={gps.center}
                     holes={gpsHoles}
+                    teeColors={teeColorsForMap}
                     selectedHole={selectedHole}
                     onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
                   />
