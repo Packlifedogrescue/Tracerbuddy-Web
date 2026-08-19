@@ -24,7 +24,7 @@ import { geocodeCourse, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 5  // v5: town-level center fallback when the course name won't geocode
+const CACHE_VERSION    = 6  // v6: per-hole tee boxes + flag-accurate play lines
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -126,10 +126,11 @@ export async function GET(req: NextRequest) {
       holes:          osm.holes.map(h => ({
         hole:         h.ref,
         par:          h.par,
-        tee:          h.tee,
+        tee:          h.tee,          // primary (back) tee
+        tees:         h.tees,         // every tee box, back → forward
         green:        h.green,        // centroid
         greenPolygon: h.greenPolygon, // outline → app computes front/center/back
-        pin:          h.pin,
+        pin:          h.pin,          // exact flag when mapped (else green centroid)
       })),
       greens:         osm.greens,
       tees:           osm.tees,

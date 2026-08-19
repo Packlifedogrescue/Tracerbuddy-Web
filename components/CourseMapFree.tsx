@@ -14,9 +14,25 @@ export interface GpsHole {
   hole: number | null
   par: number | null
   tee: GpsCoord | null
+  tees?: GpsCoord[]
   green: GpsCoord | null
   greenPolygon: GpsCoord[]
   pin: GpsCoord | null
+}
+
+// The flag: exact pin when OSM maps one, else the green centroid (its middle).
+function flagPoint(h: GpsHole): GpsCoord | null { return h.pin ?? h.green }
+
+function flagIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg">
+      <line x1="1.5" y1="15" x2="1.5" y2="1" stroke="#F3EFE3" stroke-width="1.5"/>
+      <path d="M1.5 1 L10 3.2 L1.5 5.6 Z" fill="#E5484D"/>
+    </svg>`,
+    iconSize: [12, 16],
+    iconAnchor: [1.5, 15],
+  })
 }
 
 // Great-circle distance in yards.
@@ -35,15 +51,16 @@ function distYards(a: GpsCoord, b: GpsCoord): number {
 // farthest, center = the centroid. Null when there's no tee to measure from.
 function computeFCB(h: GpsHole): { front: number; center: number; back: number } | null {
   if (!h.tee) return null
+  const flag = flagPoint(h)
   const poly = h.greenPolygon ?? []
   if (poly.length >= 3) {
     const ds = poly.map(p => distYards(h.tee!, p))
     const front = Math.min(...ds)
     const back  = Math.max(...ds)
-    const center = h.green ? distYards(h.tee, h.green) : Math.round((front + back) / 2)
+    const center = flag ? distYards(h.tee, flag) : Math.round((front + back) / 2)
     return { front, center, back }
   }
-  if (h.green) { const c = distYards(h.tee, h.green); return { front: c, center: c, back: c } }
+  if (flag) { const c = distYards(h.tee, flag); return { front: c, center: c, back: c } }
   return null
 }
 
@@ -58,7 +75,14 @@ function holeIcon(num: number, active: boolean) {
   })
 }
 
-interface HoleLayer { marker?: L.Marker; poly?: L.Polygon; line?: L.Polyline }
+interface HoleLayer {
+  marker?: L.Marker
+  poly?: L.Polygon
+  line?: L.Polyline
+  lines?: L.Polyline[]
+  teeDots?: L.CircleMarker[]
+  flag?: L.Marker
+}
 
 export default function CourseMapFree({
   center, holes, selectedHole, onHoleClick,
@@ -105,13 +129,34 @@ export default function CourseMapFree({
         ).addTo(map)
       }
 
-      if (h.tee && h.green) {
-        layer.line = L.polyline(
-          [[h.tee.latitude, h.tee.longitude], [h.green.latitude, h.green.longitude]],
-          { color: '#C9A84C', weight: 2, opacity: 0.5, dashArray: '4 6' },
-        ).addTo(map)
+      // Play line(s): from each tee box to the flag (exact pin, else green center).
+      const flag = flagPoint(h)
+      const teeBoxes = (h.tees && h.tees.length ? h.tees : (h.tee ? [h.tee] : []))
+      if (flag && teeBoxes.length) {
+        const lines: L.Polyline[] = []
+        for (const t of teeBoxes) {
+          lines.push(L.polyline(
+            [[t.latitude, t.longitude], [flag.latitude, flag.longitude]],
+            { color: '#C9A84C', weight: 2, opacity: 0.45, dashArray: '4 6' },
+          ).addTo(map))
+          // Small marker at the tee box itself.
+          layer.teeDots ??= []
+          layer.teeDots.push(
+            L.circleMarker([t.latitude, t.longitude],
+              { radius: 3, color: '#20160a', weight: 1, fillColor: '#C9A84C', fillOpacity: 1 })
+              .addTo(map),
+          )
+        }
+        layer.line = lines[0]
+        layer.lines = lines
       }
 
+      // Flag marker at the pin / green center.
+      if (flag) {
+        layer.flag = L.marker([flag.latitude, flag.longitude], { icon: flagIcon(), interactive: false }).addTo(map)
+      }
+
+      // Numbered marker at the (back) tee.
       const anchor = h.tee ?? h.green
       if (anchor) {
         layer.marker = L.marker([anchor.latitude, anchor.longitude], { icon: holeIcon(num, false) })
@@ -121,7 +166,7 @@ export default function CourseMapFree({
 
       layers.current[num] = layer
       if (h.green) bounds.push([h.green.latitude, h.green.longitude])
-      if (h.tee)   bounds.push([h.tee.latitude, h.tee.longitude])
+      for (const t of teeBoxes) bounds.push([t.latitude, t.longitude])
       for (const p of h.greenPolygon ?? []) bounds.push([p.latitude, p.longitude])
     }
 
@@ -149,6 +194,7 @@ export default function CourseMapFree({
       layer.marker?.setIcon(holeIcon(num, active))
       if (active) layer.marker?.setZIndexOffset(1000)
       else layer.marker?.setZIndexOffset(0)
+      for (const ln of layer.lines ?? []) ln.setStyle({ opacity: active ? 0.95 : 0.45, weight: active ? 2.5 : 2 })
     }
 
     // Zoom to the selected hole (tee → green), or back to the whole course.
