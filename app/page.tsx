@@ -106,7 +106,7 @@ export default function HomePage() {
           <div className="border-y border-black/[0.06] py-7">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { stat: '42,000+', label: 'Courses',          sub: 'in 100+ countries'      },
+                { stat: '30,000+', label: 'Courses',          sub: 'in 100+ countries'      },
                 { stat: '18',      label: 'Metrics Per Round', sub: 'GIR, putts, SG & more' },
                 { stat: '50+',     label: 'Features',          sub: 'across 6 categories'   },
                 { stat: '1',       label: 'Round Free',        sub: 'no credit card needed'  },
@@ -200,7 +200,7 @@ export default function HomePage() {
               num: '03', label: 'COURSE MAPS',
               title: 'Satellite Course Maps',
               desc: 'Real aerial imagery with live GPS distances, hazards, and weather at your course.',
-              features: ['Satellite aerial imagery', 'Live distance to pin', 'Hazard & layup yardages', 'Wind & weather overlay', '42,000+ courses worldwide'],
+              features: ['Satellite aerial imagery', 'Live distance to pin', 'Hazard & layup yardages', 'Wind & weather overlay', '30,000+ courses worldwide'],
             },
             {
               num: '04', label: 'PERFORMANCE INSIGHTS',
