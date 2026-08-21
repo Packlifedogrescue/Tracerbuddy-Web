@@ -30,7 +30,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 7  // v7: orient hole-ways by green proximity (fix reversed ways)
+const CACHE_VERSION    = 9  // v9: orient hole-ways by routing continuity (green→next-tee)
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 

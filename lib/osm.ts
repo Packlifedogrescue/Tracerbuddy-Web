@@ -338,24 +338,64 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
     }
   }
 
-  const greenDist = (pt: LatLng | null) => {
-    if (!pt || !greens.length) return Infinity
+  const nearestDist = (pt: LatLng | null, arr: LatLng[]) => {
+    if (!pt || !arr.length) return Infinity
     let d = Infinity
-    for (const g of greens) d = Math.min(d, haversine(pt, g))
+    for (const x of arr) d = Math.min(d, haversine(pt, x))
     return d
+  }
+
+  // ── Orient each hole-way (which endpoint is the green) ───────────────────
+  // Hole-ways are digitised tee→green OR green→tee arbitrarily. The robust cue
+  // is ROUTING CONTINUITY: a course is a chain, so hole N's green sits near hole
+  // N+1's tee. We pick the per-hole orientation (o=0: tee=A/green=B, o=1: swap)
+  // that minimises the total green→next-tee gap, via a tiny 2-state DP over holes
+  // in ref order. This needs no green/tee polygons at all.
+  type HW = { tee: LatLng | null; green: LatLng | null }
+  const A = (h: HW) => h.tee
+  const B = (h: HW) => h.green
+  const teeEnd   = (h: HW, o: number) => (o === 0 ? A(h) : B(h))
+  const greenEnd = (h: HW, o: number) => (o === 0 ? B(h) : A(h))
+  const gapd = (p: LatLng | null, q: LatLng | null) => (p && q ? haversine(p, q) : 1e9)
+
+  const order = holeWays
+    .map((h, idx) => ({ h, idx }))
+    .sort((x, y) => ((x.h.ref ?? 999) - (y.h.ref ?? 999)) || (x.idx - y.idx))
+    .map(o => o.h)
+
+  const orient = new Map<HW, number>()
+  const n = order.length
+  if (n === 1) orient.set(order[0], 0)
+  if (n > 1) {
+    let dp = [0, 0]
+    const back: number[][] = []
+    for (let i = 1; i < n; i++) {
+      const nd = [Infinity, Infinity]
+      const bk = [0, 0]
+      for (let o = 0; o < 2; o++) {
+        for (let po = 0; po < 2; po++) {
+          const c = dp[po] + gapd(greenEnd(order[i - 1], po), teeEnd(order[i], o))
+          if (c < nd[o]) { nd[o] = c; bk[o] = po }
+        }
+      }
+      back.push(bk)
+      dp = nd
+    }
+    let o = dp[0] <= dp[1] ? 0 : 1
+    orient.set(order[n - 1], o)
+    for (let i = n - 1; i > 0; i--) { o = back[i - 1][o]; orient.set(order[i - 1], o) }
   }
 
   // Snap the precise green centroid and the exact pin onto each hole's green end
   // (within 60 m) rather than trusting an absent ref. Then sort by hole number.
   let holes: OsmHole[] = holeWays.map(hw => {
-    // Hole-ways are digitised tee→green OR green→tee depending on the mapper, so
-    // don't assume the last vertex is the green. Pick whichever endpoint is
-    // actually closest to a mapped green as the green end; the other is the tee.
-    // Otherwise a reversed way puts the flag on the tee, way off the green.
-    const first = hw.tee, last = hw.green
-    const firstIsGreen = greenDist(first) < greenDist(last)
-    const greenRaw = firstIsGreen ? first : last
-    const teeRaw   = firstIsGreen ? last  : first
+    let o = orient.get(hw) ?? 0
+    // Local override: where a green polygon is actually mapped within 50 m of an
+    // endpoint, trust it over the routing guess.
+    const gA = nearestDist(A(hw), greens), gB = nearestDist(B(hw), greens)
+    if (Math.min(gA, gB) < 50) o = gA < gB ? 1 : 0
+    const greenRaw = greenEnd(hw, o)
+    const teeRaw   = teeEnd(hw, o)
 
     const snapped = greenRaw ? nearest(greenRaw, greens, 60) : null
     const greenPt = snapped ?? greenRaw
