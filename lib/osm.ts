@@ -33,6 +33,8 @@ const NOMINATIM = 'https://nominatim.openstreetmap.org/search'
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ]
 // Nominatim's usage policy requires a real UA identifying the app + contact.
 const USER_AGENT = 'TracerBuddy/1.0 (https://tracerbuddy.app; brett@tracerbuddy.com)'

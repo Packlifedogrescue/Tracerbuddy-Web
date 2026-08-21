@@ -32,6 +32,7 @@ function emptyPayload(courseId: string) {
   return {
     courseID:       courseId,
     source:         'none' as const,
+    centerSource:   null as null | 'course' | 'town',
     center:         null,
     numCoordinates: 0,
     holes:          [],
@@ -98,7 +99,11 @@ export async function GET(req: NextRequest) {
       // from the town, or we could attach a neighboring course's holes to this one.
       const areaCenter = await geocodeCourse('', loc.city ?? '', loc.state ?? '', loc.country ?? '')
       // Don't cache a "none" — retry next time in case geocoding recovers.
-      return NextResponse.json({ ...emptyPayload(courseId), center: areaCenter })
+      return NextResponse.json({
+        ...emptyPayload(courseId),
+        center: areaCenter,
+        centerSource: areaCenter ? ('town' as const) : null,
+      })
     }
 
     // ── 4. Overpass → green / tee / pin positions (scoped to this course) ──
@@ -122,6 +127,9 @@ export async function GET(req: NextRequest) {
     const payload = {
       courseID:       courseId,
       source:         hasGeo ? ('osm' as const) : ('none' as const),
+      // The anchor is the course's own geocode, so the center is course-level
+      // even when no hole geometry was found — enough to frame a satellite view.
+      centerSource:   'course' as const,
       matchedCourse:  osm.matchedCourse,
       center:         osm.center,
       numCoordinates: flat.length,

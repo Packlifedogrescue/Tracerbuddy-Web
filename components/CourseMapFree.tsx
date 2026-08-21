@@ -106,17 +106,23 @@ interface HoleLayer {
   poly?: L.Polygon
   line?: L.Polyline
   lines?: L.Polyline[]
+  lineColors?: string[]
   teeDots?: L.CircleMarker[]
   flag?: L.Marker
   cup?: L.CircleMarker
 }
 
+function sameColor(a?: string, b?: string) {
+  return !!a && !!b && a.toLowerCase() === b.toLowerCase()
+}
+
 export default function CourseMapFree({
-  center, holes, teeColors, selectedHole, onHoleClick,
+  center, holes, teeColors, selectedTeeColor, selectedHole, onHoleClick,
 }: {
   center: GpsCoord
   holes: GpsHole[]
-  teeColors?: string[]   // real scorecard tee colors, back → forward
+  teeColors?: string[]        // real scorecard tee colors, back → forward
+  selectedTeeColor?: string   // the tee chosen in the scorecard panel
   selectedHole?: number
   onHoleClick?: (n: number) => void
 }) {
@@ -126,9 +132,12 @@ export default function CourseMapFree({
   const allBounds = useRef<L.LatLngBounds | null>(null)
   const clickRef = useRef(onHoleClick)
   clickRef.current = onHoleClick
+  const teeColorRef = useRef(selectedTeeColor)
+  teeColorRef.current = selectedTeeColor
 
   const selHole = selectedHole != null ? holes.find(h => h.hole === selectedHole) : undefined
   const fcb = selHole ? computeFCB(selHole) : null
+  const hasOverlays = holes.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
 
   // Build the map once. The page gives this component a key={courseID}, so a new
   // course remounts it with fresh geometry rather than mutating in place.
@@ -167,23 +176,26 @@ export default function CourseMapFree({
         const colors = (teeColors && teeColors.length)
           ? teeBoxes.map((_, i) => teeColors[i] ?? ramp[i] ?? '#C9A84C')
           : ramp
+        const sel = teeColorRef.current   // the tee chosen in the scorecard
         const lines: L.Polyline[] = []
+        const dots: L.CircleMarker[] = []
         teeBoxes.forEach((t, i) => {
           const col = colors[i] ?? '#C9A84C'
+          const on = !sel || sameColor(col, sel)   // selected tee pops, others recede
           lines.push(L.polyline(
             [[t.latitude, t.longitude], [flag.latitude, flag.longitude]],
-            { color: col, weight: 2, opacity: 0.5, dashArray: '4 6' },
+            { color: col, weight: on ? 3 : 1.5, opacity: on ? 0.9 : 0.16, dashArray: '4 6' },
           ).addTo(map))
-          // Marker at the tee box itself, colored to match its play line.
-          layer.teeDots ??= []
-          layer.teeDots.push(
+          dots.push(
             L.circleMarker([t.latitude, t.longitude],
-              { radius: 4, color: '#0b0b0b', weight: 1.5, fillColor: col, fillOpacity: 1 })
+              { radius: on ? 4 : 3, color: '#0b0b0b', weight: 1.5, fillColor: col, fillOpacity: on ? 1 : 0.3 })
               .addTo(map),
           )
         })
         layer.line = lines[0]
         layer.lines = lines
+        layer.lineColors = colors
+        layer.teeDots = dots
       }
 
       // Flag at the green center: a cup dot (unmistakably on the green) with a
@@ -233,7 +245,6 @@ export default function CourseMapFree({
       layer.marker?.setIcon(holeIcon(num, active))
       if (active) layer.marker?.setZIndexOffset(1000)
       else layer.marker?.setZIndexOffset(0)
-      for (const ln of layer.lines ?? []) ln.setStyle({ opacity: active ? 0.95 : 0.45, weight: active ? 2.5 : 2 })
     }
 
     // Zoom to the selected hole (tee → green), or back to the whole course.
@@ -250,9 +261,34 @@ export default function CourseMapFree({
     }
   }, [selectedHole, selHole])
 
+  // Emphasize the tee chosen in the scorecard panel: its play line pops in its
+  // color, the other tees recede. No selection → all tees shown evenly.
+  useEffect(() => {
+    for (const layer of Object.values(layers.current)) {
+      const cols = layer.lineColors ?? []
+      ;(layer.lines ?? []).forEach((ln, i) => {
+        const on = !selectedTeeColor || sameColor(cols[i], selectedTeeColor)
+        ln.setStyle({ opacity: on ? 0.9 : 0.16, weight: on ? 3 : 1.5 })
+      })
+      ;(layer.teeDots ?? []).forEach((dot, i) => {
+        const on = !selectedTeeColor || sameColor(cols[i], selectedTeeColor)
+        dot.setStyle({ radius: on ? 4 : 3, fillOpacity: on ? 1 : 0.3 })
+      })
+    }
+  }, [selectedTeeColor])
+
   return (
     <div className="relative w-full h-full">
       <div ref={elRef} className="w-full h-full" style={{ background: '#0b2114' }} />
+
+      {/* Satellite-only courses: OSM has the location but no mapped holes/greens. */}
+      {!hasOverlays && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
+          <div className="rounded-full bg-[#0d0d0d]/85 backdrop-blur-sm text-white/85 text-[11px] font-medium px-3.5 py-1.5 shadow-lg text-center">
+            Satellite view · hole overlays not mapped for this course yet
+          </div>
+        </div>
+      )}
 
       {/* Front / center / back badge for the selected hole */}
       {fcb && selHole && (

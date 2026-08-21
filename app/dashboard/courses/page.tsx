@@ -91,7 +91,7 @@ interface GpsHole {
   greenPolygon: GpsCoord[]
   pin: GpsCoord | null
 }
-interface GpsData { source: string; center: GpsCoord | null; holes: GpsHole[] }
+interface GpsData { source: string; centerSource?: 'course' | 'town' | null; center: GpsCoord | null; holes: GpsHole[] }
 
 interface TeeData { name: string; color?: string; yardages: (number | null)[] }
 
@@ -128,16 +128,23 @@ function courseColor(name: string) {
 }
 
 // ── Scorecard ─────────────────────────────────────────────────────────────────
-function Scorecard({ holes, tees = [], selectedHole, onHoleClick }: {
+function Scorecard({ holes, tees = [], selectedHole, onHoleClick, onTeeSelect }: {
   holes: GolfHole[]
   tees?: GolfTee[]
   selectedHole?: number
   onHoleClick?: (n: number) => void
+  onTeeSelect?: (color: string | undefined) => void
 }) {
   const [teeIdx, setTeeIdx] = useState(0)
   const [gender, setGender] = useState<'men' | 'women'>('men')
   const activeTee     = tees[teeIdx]
   const hasFemaleData = holes.some(h => h.ParFemale != null)
+
+  // Report the chosen tee's color up so the map can sync to it.
+  const onTeeSelectRef = useRef(onTeeSelect)
+  onTeeSelectRef.current = onTeeSelect
+  const selectedTeeColor = activeTee?.teeColor
+  useEffect(() => { onTeeSelectRef.current?.(selectedTeeColor) }, [selectedTeeColor])
 
   function getYards(hn: number, fallback: GolfHole): number | null {
     if (activeTee) {
@@ -370,6 +377,7 @@ export default function CoursesPage() {
   const [visitedCourses, setVisitedCourses] = useState<VisitedCourse[]>([])
   const [activeTab,      setActiveTab]      = useState<'scorecard' | 'weather' | 'info'>('scorecard')
   const [selectedHole,   setSelectedHole]   = useState<number | undefined>(undefined)
+  const [selectedTeeColor, setSelectedTeeColor] = useState<string | undefined>(undefined)
   const [showDropdown,   setShowDropdown]   = useState(false)
 
   useEffect(() => {
@@ -459,8 +467,10 @@ export default function CoursesPage() {
   const loc     = [detail?.City ?? selected?.City, detail?.StateCode ?? selected?.StateCode].filter(Boolean).join(', ')
 
   const gpsHoles = gps?.holes ?? []
-  const hasGps   = gps?.source === 'osm' && gps.center != null &&
-    gpsHoles.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
+  const hasHoleOverlays = gpsHoles.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
+  // Show the satellite map whenever we have a course-level location — hole
+  // overlays draw on top when OSM has them, otherwise it's imagery of the course.
+  const showMap  = gps?.center != null && (gps.source === 'osm' || gps.centerSource === 'course')
 
   const processedTees: TeeData[] = (detail?.Tees ?? []).map(t => ({
     name:     t.teeName  ?? 'Tee',
@@ -722,12 +732,13 @@ export default function CoursesPage() {
                       <p className="text-[11px] text-gray-300 mt-1">First look at a course takes a few seconds</p>
                     </div>
                   </div>
-                ) : hasGps && gps?.center ? (
+                ) : showMap && gps?.center ? (
                   <CourseMapFree
                     key={selected.CourseID}
                     center={gps.center}
                     holes={gpsHoles}
                     teeColors={teeColorsForMap}
+                    selectedTeeColor={selectedTeeColor}
                     selectedHole={selectedHole}
                     onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
                   />
@@ -775,8 +786,9 @@ export default function CoursesPage() {
 
                 {activeTab === 'scorecard' && (
                   holes.length > 0 ? (
-                    <Scorecard holes={holes} tees={detail?.Tees ?? []} selectedHole={selectedHole}
-                      onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)} />
+                    <Scorecard key={selected.CourseID} holes={holes} tees={detail?.Tees ?? []} selectedHole={selectedHole}
+                      onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
+                      onTeeSelect={setSelectedTeeColor} />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full py-10 px-5 text-center">
                       <Trophy className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
