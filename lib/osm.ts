@@ -338,25 +338,41 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
     }
   }
 
+  const greenDist = (pt: LatLng | null) => {
+    if (!pt || !greens.length) return Infinity
+    let d = Infinity
+    for (const g of greens) d = Math.min(d, haversine(pt, g))
+    return d
+  }
+
   // Snap the precise green centroid and the exact pin onto each hole's green end
   // (within 60 m) rather than trusting an absent ref. Then sort by hole number.
   let holes: OsmHole[] = holeWays.map(hw => {
-    const snapped = hw.green ? nearest(hw.green, greens, 60) : null
-    const greenPt = snapped ?? hw.green
+    // Hole-ways are digitised tee→green OR green→tee depending on the mapper, so
+    // don't assume the last vertex is the green. Pick whichever endpoint is
+    // actually closest to a mapped green as the green end; the other is the tee.
+    // Otherwise a reversed way puts the flag on the tee, way off the green.
+    const first = hw.tee, last = hw.green
+    const firstIsGreen = greenDist(first) < greenDist(last)
+    const greenRaw = firstIsGreen ? first : last
+    const teeRaw   = firstIsGreen ? last  : first
+
+    const snapped = greenRaw ? nearest(greenRaw, greens, 60) : null
+    const greenPt = snapped ?? greenRaw
     // Attach the polygon of the green we snapped to (by reference identity).
     const greenPolygon = snapped ? (greenPolys.find(g => g.center === snapped)?.polygon ?? []) : []
     const pin = greenPt ? nearest(greenPt, pins, 60) : null
 
     // All tee boxes on this hole = golf=tee polygons clustered around the hole's
-    // tee end (within 45 m of the hole-way's first vertex). Order them back →
-    // forward by distance to the green so the play line reads longest-first, and
-    // treat the farthest (back tee) as the primary origin.
-    let teeBoxes = hw.tee ? tees.filter(t => haversine(hw.tee!, t) <= 45) : []
+    // tee end (within 45 m). Order them back → forward by distance to the green
+    // so the play line reads longest-first, and treat the farthest (back tee) as
+    // the primary origin.
+    let teeBoxes = teeRaw ? tees.filter(t => haversine(teeRaw, t) <= 45) : []
     if (greenPt && teeBoxes.length > 1) {
       teeBoxes = [...teeBoxes].sort((a, b) => haversine(b, greenPt) - haversine(a, greenPt))
     }
-    if (!teeBoxes.length && hw.tee) teeBoxes = [hw.tee]   // fall back to the hole-way vertex
-    const tee = teeBoxes[0] ?? hw.tee ?? null
+    if (!teeBoxes.length && teeRaw) teeBoxes = [teeRaw]   // fall back to the hole-way vertex
+    const tee = teeBoxes[0] ?? teeRaw ?? null
 
     return { ref: hw.ref, par: hw.par, tee, tees: teeBoxes, green: greenPt, greenPolygon, pin }
   })
