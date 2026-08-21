@@ -30,6 +30,7 @@
 // trusting an (absent) ref.
 
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search'
+const PHOTON    = 'https://photon.komoot.io/api/'
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -159,24 +160,49 @@ function nameScore(target: string, cand: string): number {
 
 // ── step 1: geocode ──────────────────────────────────────────────────────────
 
+async function fetchWithTimeout(url: string, opts: RequestInit, ms: number): Promise<Response | null> {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), ms)
+  try { return await fetch(url, { ...opts, signal: ctrl.signal }) }
+  catch { return null }
+  finally { clearTimeout(t) }
+}
+
+// Nominatim (strict rate limits, blocks abusers).
+async function geoNominatim(q: string): Promise<LatLng | null> {
+  const url = `${NOMINATIM}?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`
+  const res = await fetchWithTimeout(url, { headers: { 'User-Agent': USER_AGENT, 'Accept-Language': 'en' } }, 8000)
+  if (!res || !res.ok) return null
+  try {
+    const arr = await res.json()
+    if (!Array.isArray(arr) || !arr.length) return null
+    const lat = parseFloat(arr[0].lat), lng = parseFloat(arr[0].lon)
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return null
+    return { latitude: lat, longitude: lng }
+  } catch { return null }
+}
+
+// Photon (Komoot) — OSM-based, far more lenient limits. Our Nominatim fallback.
+async function geoPhoton(q: string): Promise<LatLng | null> {
+  const url = `${PHOTON}?q=${encodeURIComponent(q)}&limit=1`
+  const res = await fetchWithTimeout(url, { headers: { 'User-Agent': USER_AGENT } }, 8000)
+  if (!res || !res.ok) return null
+  try {
+    const json = await res.json()
+    const c = json.features?.[0]?.geometry?.coordinates
+    if (!Array.isArray(c) || c.length < 2) return null
+    const lng = Number(c[0]), lat = Number(c[1])
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return null
+    return { latitude: lat, longitude: lng }
+  } catch { return null }
+}
+
 export async function geocodeCourse(
   name: string, city: string, state: string, country: string,
 ): Promise<LatLng | null> {
   const q = [name, city, state, country].filter(Boolean).join(', ')
   if (!q) return null
-  const url = `${NOMINATIM}?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT, 'Accept-Language': 'en' } })
-    if (!res.ok) return null
-    const arr = await res.json()
-    if (!Array.isArray(arr) || !arr.length) return null
-    const lat = parseFloat(arr[0].lat)
-    const lng = parseFloat(arr[0].lon)
-    if (Number.isNaN(lat) || Number.isNaN(lng)) return null
-    return { latitude: lat, longitude: lng }
-  } catch {
-    return null
-  }
+  return (await geoNominatim(q)) ?? (await geoPhoton(q))
 }
 
 // ── step 2: overpass ─────────────────────────────────────────────────────────
@@ -193,20 +219,20 @@ interface OverpassElement {
 
 async function runOverpass(query: string): Promise<OverpassElement[] | null> {
   for (const endpoint of OVERPASS_ENDPOINTS) {
+    const res = await fetchWithTimeout(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': USER_AGENT,
+      },
+      body: `data=${encodeURIComponent(query)}`,
+    }, 12000)
+    if (!res || !res.ok) continue
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': USER_AGENT,
-        },
-        body: `data=${encodeURIComponent(query)}`,
-      })
-      if (!res.ok) continue
       const json = await res.json()
       if (Array.isArray(json.elements)) return json.elements
     } catch {
-      // try the next mirror
+      // malformed response — try the next mirror
     }
   }
   return null

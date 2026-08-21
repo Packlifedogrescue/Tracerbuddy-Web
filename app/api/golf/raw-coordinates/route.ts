@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { geocodeCourse, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 
+// The OSM lookup (geocode + Overpass, with mirror failover) can take a while on
+// a cold course, so give the function room rather than letting Vercel's short
+// default kill it mid-fetch and blank the map.
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
 // GET /api/golf/raw-coordinates?id=COURSE_ID
 //
 // GPS for the AI caddie, sourced free from OpenStreetMap (phase 2). golfcourseapi
