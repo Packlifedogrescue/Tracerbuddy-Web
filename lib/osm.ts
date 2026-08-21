@@ -390,10 +390,15 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
   // (within 60 m) rather than trusting an absent ref. Then sort by hole number.
   let holes: OsmHole[] = holeWays.map(hw => {
     let o = orient.get(hw) ?? 0
-    // Local override: where a green polygon is actually mapped within 50 m of an
-    // endpoint, trust it over the routing guess.
+    // Local overrides on the routing guess, strongest first:
+    //   • a green polygon within 50 m of an endpoint → that end is the green;
+    //   • else a tee box hugging one endpoint (<25 m) while the other is clearly
+    //     clear of tees (>70 m) → that end is the tee.
     const gA = nearestDist(A(hw), greens), gB = nearestDist(B(hw), greens)
-    if (Math.min(gA, gB) < 50) o = gA < gB ? 1 : 0
+    const tA = nearestDist(A(hw), tees),   tB = nearestDist(B(hw), tees)
+    if (Math.min(gA, gB) < 50)      o = gA < gB ? 1 : 0
+    else if (tA < 25 && tB > 70)    o = 0     // A hugs a tee → tee=A, green=B
+    else if (tB < 25 && tA > 70)    o = 1     // B hugs a tee → tee=B, green=A
     const greenRaw = greenEnd(hw, o)
     const teeRaw   = teeEnd(hw, o)
 
@@ -403,16 +408,19 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
     const greenPolygon = snapped ? (greenPolys.find(g => g.center === snapped)?.polygon ?? []) : []
     const pin = greenPt ? nearest(greenPt, pins, 60) : null
 
-    // All tee boxes on this hole = golf=tee polygons clustered around the hole's
-    // tee end (within 45 m). Order them back → forward by distance to the green
-    // so the play line reads longest-first, and treat the farthest (back tee) as
-    // the primary origin.
-    let teeBoxes = teeRaw ? tees.filter(t => haversine(teeRaw, t) <= 45) : []
+    // Tee boxes on this hole = golf=tee polygons clustered around the hole's own
+    // tee endpoint (within 45 m). Order them back → forward by distance to the
+    // green for the coloured play lines.
+    const teeBoxesNear = teeRaw ? tees.filter(t => haversine(teeRaw, t) <= 45) : []
+    let teeBoxes = teeBoxesNear.length ? [...teeBoxesNear] : (teeRaw ? [teeRaw] : [])
     if (greenPt && teeBoxes.length > 1) {
-      teeBoxes = [...teeBoxes].sort((a, b) => haversine(b, greenPt) - haversine(a, greenPt))
+      teeBoxes = teeBoxes.sort((a, b) => haversine(b, greenPt) - haversine(a, greenPt))
     }
-    if (!teeBoxes.length && teeRaw) teeBoxes = [teeRaw]   // fall back to the hole-way vertex
-    const tee = teeBoxes[0] ?? teeRaw ?? null
+    // Marker anchors to the tee box NEAREST this hole's own tee endpoint, so it
+    // can't jump to an adjacent hole's tee that merely falls in the cluster.
+    const tee = teeBoxesNear.length
+      ? teeBoxesNear.reduce((a, b) => haversine(teeRaw!, b) < haversine(teeRaw!, a) ? b : a)
+      : (teeRaw ?? null)
 
     return { ref: hw.ref, par: hw.par, tee, tees: teeBoxes, green: greenPt, greenPolygon, pin }
   })
