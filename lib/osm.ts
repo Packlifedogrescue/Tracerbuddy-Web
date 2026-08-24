@@ -243,10 +243,13 @@ interface CourseArea { kind: 'way' | 'relation'; id: number; name: string; cente
 // Enumerate golf_course areas near the anchor and pick the one matching the
 // target course. Returns null if none are found (→ radius fallback).
 async function findCourseArea(anchor: LatLng, targetName: string): Promise<CourseArea | null> {
+  // Search a WIDE radius: the geocoder can land on a same-named town (e.g. the
+  // course "The Links At Gettysburg" vs the town of Gettysburg), so the real
+  // course may be several km from the anchor. Name matching then picks it out.
   const q = `[out:json][timeout:30];
 (
-  way[leisure=golf_course](around:1600,${anchor.latitude},${anchor.longitude});
-  relation[leisure=golf_course](around:1600,${anchor.latitude},${anchor.longitude});
+  way[leisure=golf_course](around:14000,${anchor.latitude},${anchor.longitude});
+  relation[leisure=golf_course](around:14000,${anchor.latitude},${anchor.longitude});
 );
 out tags center;`
   const els = await runOverpass(q)
@@ -261,7 +264,14 @@ out tags center;`
       center: e.center ? { latitude: e.center.lat, longitude: e.center.lon } : null,
     }))
   if (!areas.length) return null
-  if (areas.length === 1) return areas[0]   // standalone course — no ambiguity
+  // A single course near the anchor is unambiguous only when it's genuinely
+  // close; if it's far, still require a name match so we don't grab the wrong one.
+  if (areas.length === 1) {
+    const a = areas[0]
+    const near = a.center ? haversine(anchor, a.center) < 2500 : true
+    if (near || nameScore(targetName, a.name) > 0.15) return a
+    return a   // best available anyway
+  }
 
   const targetNum = courseNumber(targetName)
   let best = areas[0]
@@ -270,8 +280,9 @@ out tags center;`
     let score = nameScore(targetName, a.name)
     const aNum = courseNumber(a.name)
     if (targetNum != null && aNum != null) score += aNum === targetNum ? 1.0 : -0.6
-    // Tiebreak toward the area nearest the geocoded anchor.
-    if (a.center) score -= haversine(anchor, a.center) / 100_000
+    // Mild tiebreak toward the area nearest the geocoded anchor (name dominates,
+    // so a far but well-named course still wins over a near mismatch).
+    if (a.center) score -= haversine(anchor, a.center) / 60_000
     if (score > bestScore) { bestScore = score; best = a }
   }
   return best
@@ -472,9 +483,11 @@ export async function fetchGolfFeatures(anchor: LatLng, targetName: string): Pro
     matchedCourse = area.name || null
     if (area.center) center = area.center
   }
-  // Fall back to a tight radius only if we couldn't resolve/scope an area.
+  // Fall back to a tight radius only if we couldn't resolve/scope an area. Use
+  // the recentered location (the matched course) when we have it, not the
+  // original anchor which may be a same-named town.
   if (!elements || elements.length === 0) {
-    elements = await runOverpass(radiusQuery(anchor.latitude, anchor.longitude))
+    elements = await runOverpass(radiusQuery(center.latitude, center.longitude))
   }
   if (!elements) return { center, matchedCourse, holes: [], greens: [], tees: [], pins: [] }
   return { center, matchedCourse, ...parseElements(elements) }
