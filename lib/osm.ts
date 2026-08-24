@@ -218,7 +218,9 @@ interface OverpassElement {
 }
 
 async function runOverpass(query: string): Promise<OverpassElement[] | null> {
-  for (const endpoint of OVERPASS_ENDPOINTS) {
+  // Race all mirrors at once and take the first that answers, so latency is the
+  // fastest server rather than the sum of slow ones timing out in series.
+  const attempts = OVERPASS_ENDPOINTS.map(async (endpoint): Promise<OverpassElement[]> => {
     const res = await fetchWithTimeout(endpoint, {
       method: 'POST',
       headers: {
@@ -227,15 +229,16 @@ async function runOverpass(query: string): Promise<OverpassElement[] | null> {
       },
       body: `data=${encodeURIComponent(query)}`,
     }, 12000)
-    if (!res || !res.ok) continue
-    try {
-      const json = await res.json()
-      if (Array.isArray(json.elements)) return json.elements
-    } catch {
-      // malformed response — try the next mirror
-    }
+    if (!res || !res.ok) throw new Error('overpass mirror failed')
+    const json = await res.json()
+    if (!Array.isArray(json.elements)) throw new Error('overpass: no elements')
+    return json.elements as OverpassElement[]
+  })
+  try {
+    return await Promise.any(attempts)
+  } catch {
+    return null   // every mirror failed
   }
-  return null
 }
 
 interface CourseArea { kind: 'way' | 'relation'; id: number; name: string; center: LatLng | null }
