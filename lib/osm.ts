@@ -170,7 +170,9 @@ async function fetchWithTimeout(url: string, opts: RequestInit, ms: number): Pro
 
 // Nominatim (strict rate limits, blocks abusers).
 async function geoNominatim(q: string): Promise<LatLng | null> {
-  const url = `${NOMINATIM}?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`
+  return geoNominatimUrl(`${NOMINATIM}?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`)
+}
+async function geoNominatimUrl(url: string): Promise<LatLng | null> {
   const res = await fetchWithTimeout(url, { headers: { 'User-Agent': USER_AGENT, 'Accept-Language': 'en' } }, 8000)
   if (!res || !res.ok) return null
   try {
@@ -180,6 +182,20 @@ async function geoNominatim(q: string): Promise<LatLng | null> {
     if (Number.isNaN(lat) || Number.isNaN(lng)) return null
     return { latitude: lat, longitude: lng }
   } catch { return null }
+}
+
+// Region anchor from STRUCTURED fields — Nominatim honours city/state/country
+// strictly, so "Gettysburg, PA" can't resolve to Gettysburg, SD. This is the
+// trusted anchor we search golf courses around.
+export async function geocodeRegion(city: string, state: string, country: string): Promise<LatLng | null> {
+  if (!city && !state) return null
+  const usp = new URLSearchParams({ format: 'jsonv2', limit: '1' })
+  if (city) usp.set('city', city)
+  if (state) usp.set('state', state)
+  if (country) usp.set('country', country)
+  const r = await geoNominatimUrl(`${NOMINATIM}?${usp.toString()}`)
+  if (r) return r
+  return geoPhoton([city, state, country].filter(Boolean).join(', '))
 }
 
 // Photon (Komoot) — OSM-based, far more lenient limits. Our Nominatim fallback.

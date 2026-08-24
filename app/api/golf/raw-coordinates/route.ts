@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { geocodeCourse, fetchGolfFeatures, type LatLng } from '@/lib/osm'
+import { geocodeCourse, geocodeRegion, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 
 // The OSM lookup (geocode + Overpass, with mirror failover) can take a while on
 // a cold course, so give the function room rather than letting Vercel's short
@@ -30,7 +30,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 10  // v10: tee-box orientation override + marker anchors to own tee
+const CACHE_VERSION    = 11  // v11: state-respecting region anchor (fix wrong same-named town/state)
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -98,18 +98,15 @@ export async function GET(req: NextRequest) {
     const targetName = [clubName, courseName].filter(Boolean).join(' ')
 
     // ── 3. Geocode → anchor ────────────────────────────────────────────────
-    const anchor = await geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? '')
+    // Anchor on the STATE-respecting region first, so a course whose name
+    // geocodes to a same-named town in another state (Gettysburg PA vs SD)
+    // can't hijack the location. Only fall back to the free-text name geocode
+    // when the region can't be resolved.
+    const region = await geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? '')
+    const anchor = region ?? await geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? '')
     if (!anchor) {
-      // The course name didn't geocode (likely not a notable place / not in OSM). Fall back to a
-      // TOWN-level center so the app can at least frame the general area — but do NOT run Overpass
-      // from the town, or we could attach a neighboring course's holes to this one.
-      const areaCenter = await geocodeCourse('', loc.city ?? '', loc.state ?? '', loc.country ?? '')
-      // Don't cache a "none" — retry next time in case geocoding recovers.
-      return NextResponse.json({
-        ...emptyPayload(courseId),
-        center: areaCenter,
-        centerSource: areaCenter ? ('town' as const) : null,
-      })
+      // Nothing geocoded — return a null center; don't cache, retry next time.
+      return NextResponse.json({ ...emptyPayload(courseId), center: null, centerSource: null })
     }
 
     // ── 4. Overpass → green / tee / pin positions (scoped to this course) ──
