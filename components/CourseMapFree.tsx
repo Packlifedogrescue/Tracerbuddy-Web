@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
@@ -117,10 +117,12 @@ function sameColor(a?: string, b?: string) {
 }
 
 export default function CourseMapFree({
-  center, holes, teeColors, selectedTeeColor, selectedHole, onHoleClick,
+  center, holes, bunkers, water, teeColors, selectedTeeColor, selectedHole, onHoleClick,
 }: {
   center: GpsCoord
   holes: GpsHole[]
+  bunkers?: GpsCoord[][]      // sand hazard outlines
+  water?: GpsCoord[][]        // water hazard outlines
   teeColors?: string[]        // real scorecard tee colors, back → forward
   selectedTeeColor?: string   // the tee chosen in the scorecard panel
   selectedHole?: number
@@ -134,6 +136,12 @@ export default function CourseMapFree({
   clickRef.current = onHoleClick
   const teeColorRef = useRef(selectedTeeColor)
   teeColorRef.current = selectedTeeColor
+
+  // Measure tool state
+  const [measuring, setMeasuring] = useState(false)
+  const [measureYds, setMeasureYds] = useState<number | null>(null)
+  const measurePts = useRef<L.LatLng[]>([])
+  const measureLayer = useRef<L.LayerGroup | null>(null)
 
   const selHole = selectedHole != null ? holes.find(h => h.hole === selectedHole) : undefined
   const fcb = selHole ? computeFCB(selHole) : null
@@ -151,6 +159,22 @@ export default function CourseMapFree({
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { attribution: 'Imagery &copy; Esri', maxZoom: 19 },
     ).addTo(map)
+
+    // Hazards first, so greens / lines / markers sit on top of them.
+    for (const poly of water ?? []) {
+      if (poly.length >= 3) {
+        L.polygon(poly.map(p => [p.latitude, p.longitude] as [number, number]),
+          { color: '#2E6FB5', weight: 1, fillColor: '#3B82C4', fillOpacity: 0.45, interactive: false }).addTo(map)
+      }
+    }
+    for (const poly of bunkers ?? []) {
+      if (poly.length >= 3) {
+        L.polygon(poly.map(p => [p.latitude, p.longitude] as [number, number]),
+          { color: '#C9B27A', weight: 1, fillColor: '#EAD9A0', fillOpacity: 0.7, interactive: false }).addTo(map)
+      }
+    }
+
+    measureLayer.current = L.layerGroup().addTo(map)
 
     const bounds: L.LatLngExpression[] = []
 
@@ -277,9 +301,62 @@ export default function CourseMapFree({
     }
   }, [selectedTeeColor])
 
+  // Measure tool: while active, each map tap drops a point; the running total
+  // yardage of the chain is shown. Toggling off clears it.
+  useEffect(() => {
+    const map = mapRef.current
+    const lg = measureLayer.current
+    if (!map || !lg) return
+    if (!measuring) {
+      lg.clearLayers()
+      measurePts.current = []
+      setMeasureYds(null)
+      map.getContainer().style.cursor = ''
+      return
+    }
+    map.getContainer().style.cursor = 'crosshair'
+    const redraw = () => {
+      lg.clearLayers()
+      const pts = measurePts.current
+      pts.forEach(p => L.circleMarker(p, { radius: 4, color: '#fff', weight: 2, fillColor: '#C9A84C', fillOpacity: 1 }).addTo(lg))
+      if (pts.length >= 2) {
+        L.polyline(pts, { color: '#C9A84C', weight: 2.5, dashArray: '5 5' }).addTo(lg)
+        let m = 0
+        for (let i = 1; i < pts.length; i++) m += pts[i - 1].distanceTo(pts[i])
+        setMeasureYds(Math.round(m * 1.09361))
+      } else {
+        setMeasureYds(null)
+      }
+    }
+    const onClick = (e: L.LeafletMouseEvent) => { measurePts.current.push(e.latlng); redraw() }
+    map.on('click', onClick)
+    return () => { map.off('click', onClick); map.getContainer().style.cursor = '' }
+  }, [measuring])
+
   return (
     <div className="relative w-full h-full">
       <div ref={elRef} className="w-full h-full" style={{ background: '#0b2114' }} />
+
+      {/* Measure tool button + readout */}
+      <div className="absolute top-3 right-16 z-[1000] flex items-center gap-2">
+        {measuring && measureYds != null && (
+          <div className="rounded-lg bg-[#0d0d0d]/90 text-[#C9A84C] text-[13px] font-black tabular-nums px-2.5 py-1 shadow">
+            {measureYds} <span className="text-white/50 text-[10px] font-bold">yds</span>
+          </div>
+        )}
+        {measuring && (
+          <button onClick={() => { measurePts.current = []; measureLayer.current?.clearLayers(); setMeasureYds(null) }}
+            className="rounded-lg bg-[#0d0d0d]/90 text-white/80 text-[11px] font-bold px-2.5 py-1.5 shadow hover:text-white">
+            Clear
+          </button>
+        )}
+        <button onClick={() => setMeasuring(m => !m)}
+          className={`rounded-lg text-[11px] font-bold px-2.5 py-1.5 shadow transition-colors ${
+            measuring ? 'bg-[#C9A84C] text-[#20160a]' : 'bg-[#0d0d0d]/90 text-white/80 hover:text-white'
+          }`}>
+          {measuring ? 'Done' : 'Measure'}
+        </button>
+      </div>
 
       {/* Satellite-only courses: OSM has the location but no mapped holes/greens. */}
       {!hasOverlays && (

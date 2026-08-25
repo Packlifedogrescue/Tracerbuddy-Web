@@ -30,7 +30,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 11  // v11: state-respecting region anchor (fix wrong same-named town/state)
+const CACHE_VERSION    = 12  // v12: hazards (bunkers + water) added to payload
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -155,6 +155,8 @@ export async function GET(req: NextRequest) {
       greens:         osm.greens,
       tees:           osm.tees,
       pins:           osm.pins,
+      bunkers:        osm.bunkers,   // sand hazard outlines
+      water:          osm.water,     // water hazard outlines
       coordinates:    flat,
     }
 

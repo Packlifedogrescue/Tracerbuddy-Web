@@ -57,6 +57,8 @@ export interface OsmResult {
   greens: LatLng[]
   tees: LatLng[]
   pins: LatLng[]
+  bunkers: LatLng[][]            // sand hazard outlines
+  water: LatLng[][]             // water hazard outlines
 }
 
 // ── geometry helpers ───────────────────────────────────────────────────────
@@ -319,6 +321,10 @@ map_to_area->.ca;
   way(area.ca)[golf=green];
   way(area.ca)[golf=tee];
   node(area.ca)[golf=pin];
+  way(area.ca)[golf=bunker];
+  way(area.ca)[golf=water_hazard];
+  way(area.ca)[golf=lateral_water_hazard];
+  way(area.ca)[natural=water];
 );
 out geom tags;`
   return runOverpass(q)
@@ -331,6 +337,10 @@ function radiusQuery(lat: number, lng: number): string {
   way[golf=green](around:1200,${lat},${lng});
   way[golf=tee](around:1200,${lat},${lng});
   node[golf=pin](around:1200,${lat},${lng});
+  way[golf=bunker](around:1200,${lat},${lng});
+  way[golf=water_hazard](around:1200,${lat},${lng});
+  way[golf=lateral_water_hazard](around:1200,${lat},${lng});
+  way[natural=water](around:1200,${lat},${lng});
 );
 out geom tags;`
 }
@@ -340,6 +350,8 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
   const greens: LatLng[] = []
   const tees: LatLng[] = []
   const pins: LatLng[] = []
+  const bunkers: LatLng[][] = []
+  const water: LatLng[][] = []
   // Green polygons kept alongside their centroids so we can hand the app the
   // green's outline for front/back-of-green distances (computed player-relative).
   const greenPolys: { center: LatLng; polygon: LatLng[] }[] = []
@@ -358,6 +370,10 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
       if (c) { greens.push(c); greenPolys.push({ center: c, polygon: geom }) }
     } else if (golf === 'tee') {
       const c = centroid(geom); if (c) tees.push(c)
+    } else if (golf === 'bunker') {
+      if (geom.length >= 3) bunkers.push(geom)
+    } else if (golf === 'water_hazard' || golf === 'lateral_water_hazard' || tags.natural === 'water') {
+      if (geom.length >= 3) water.push(geom)
     } else if (golf === 'hole') {
       const ref = tags.ref ? parseInt(tags.ref, 10) : NaN
       const par = tags.par ? parseInt(tags.par, 10) : NaN
@@ -490,7 +506,7 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
     return a.ref - b.ref
   })
 
-  return { holes, greens, tees, pins }
+  return { holes, greens, tees, pins, bunkers, water }
 }
 
 export async function fetchGolfFeatures(anchor: LatLng, targetName: string): Promise<OsmResult> {
@@ -510,6 +526,6 @@ export async function fetchGolfFeatures(anchor: LatLng, targetName: string): Pro
   if (!elements || elements.length === 0) {
     elements = await runOverpass(radiusQuery(center.latitude, center.longitude))
   }
-  if (!elements) return { center, matchedCourse, holes: [], greens: [], tees: [], pins: [] }
+  if (!elements) return { center, matchedCourse, holes: [], greens: [], tees: [], pins: [], bunkers: [], water: [] }
   return { center, matchedCourse, ...parseElements(elements) }
 }

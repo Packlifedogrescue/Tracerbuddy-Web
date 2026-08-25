@@ -91,7 +91,7 @@ interface GpsHole {
   greenPolygon: GpsCoord[]
   pin: GpsCoord | null
 }
-interface GpsData { source: string; centerSource?: 'course' | 'town' | null; center: GpsCoord | null; holes: GpsHole[] }
+interface GpsData { source: string; centerSource?: 'course' | 'town' | null; center: GpsCoord | null; holes: GpsHole[]; bunkers?: GpsCoord[][]; water?: GpsCoord[][] }
 
 interface TeeData { name: string; color?: string; yardages: (number | null)[] }
 
@@ -737,6 +737,8 @@ export default function CoursesPage() {
                     key={selected.CourseID}
                     center={gps.center}
                     holes={gpsHoles}
+                    bunkers={gps.bunkers}
+                    water={gps.water}
                     teeColors={teeColorsForMap}
                     selectedTeeColor={selectedTeeColor}
                     selectedHole={selectedHole}
