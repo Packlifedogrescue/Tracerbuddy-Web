@@ -117,13 +117,14 @@ function sameColor(a?: string, b?: string) {
 }
 
 export default function CourseMapFree({
-  center, holes, bunkers, water, teeColors, selectedTeeColor, selectedHole, onHoleClick,
+  center, holes, bunkers, water, matchedCourse, teeColors, selectedTeeColor, selectedHole, onHoleClick,
   wind, holeElevations,
 }: {
   center: GpsCoord
   holes: GpsHole[]
   bunkers?: GpsCoord[][]      // sand hazard outlines
   water?: GpsCoord[][]        // water hazard outlines
+  matchedCourse?: string | null   // OSM course name this map locked onto
   teeColors?: string[]        // real scorecard tee colors, back → forward
   selectedTeeColor?: string   // the tee chosen in the scorecard panel
   selectedHole?: number
@@ -360,6 +361,15 @@ export default function CourseMapFree({
           {measuring ? 'Done' : 'Measure'}
         </button>
       </div>
+
+      {/* Which OSM course this map locked onto (glanceable confidence check). */}
+      {matchedCourse && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[900] pointer-events-none select-none max-w-[70%]">
+          <div className="rounded-full bg-[#0d0d0d]/80 backdrop-blur-sm text-white/80 text-[10.5px] font-semibold px-3 py-1 shadow truncate">
+            ⛳ {matchedCourse}
+          </div>
+        </div>
+      )}
 
       {/* Satellite-only courses: OSM has the location but no mapped holes/greens. */}
       {!hasOverlays && (
