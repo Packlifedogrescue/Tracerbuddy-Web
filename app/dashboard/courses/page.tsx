@@ -378,6 +378,8 @@ export default function CoursesPage() {
   const [activeTab,      setActiveTab]      = useState<'scorecard' | 'weather' | 'info'>('scorecard')
   const [selectedHole,   setSelectedHole]   = useState<number | undefined>(undefined)
   const [selectedTeeColor, setSelectedTeeColor] = useState<string | undefined>(undefined)
+  const [wind,           setWind]           = useState<{ speedMph: number; dirDeg: number } | null>(null)
+  const [holeElev,       setHoleElev]       = useState<Record<number, number>>({})
   const [showDropdown,   setShowDropdown]   = useState(false)
 
   useEffect(() => {
@@ -395,6 +397,44 @@ export default function CoursesPage() {
         setVisitedCourses(Object.values(map).sort((a, b) => b.count - a.count))
       })
   }, [])
+
+  // Wind + per-hole elevation for the loaded course — both free from Open-Meteo
+  // (no key), fetched client-side so they never touch our server or API budget.
+  useEffect(() => {
+    const c = gps?.center
+    if (!c) { setWind(null); setHoleElev({}); return }
+    let cancelled = false
+
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.latitude}&longitude=${c.longitude}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=mph`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled && d?.current) setWind({ speedMph: Math.round(d.current.wind_speed_10m ?? 0), dirDeg: d.current.wind_direction_10m ?? 0 }) })
+      .catch(() => {})
+
+    const marks: { hole: number; kind: 'tee' | 'green' }[] = []
+    const lats: number[] = [], lngs: number[] = []
+    for (const h of gps?.holes ?? []) {
+      if (h.hole == null) continue
+      if (h.tee)   { marks.push({ hole: h.hole, kind: 'tee' });   lats.push(h.tee.latitude);   lngs.push(h.tee.longitude) }
+      if (h.green) { marks.push({ hole: h.hole, kind: 'green' }); lats.push(h.green.latitude); lngs.push(h.green.longitude) }
+    }
+    if (lats.length) {
+      fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats.join(',')}&longitude=${lngs.join(',')}`)
+        .then(r => r.json())
+        .then(d => {
+          if (cancelled || !Array.isArray(d?.elevation)) return
+          const teeE: Record<number, number> = {}, greenE: Record<number, number> = {}
+          marks.forEach((m, i) => { const e = d.elevation[i]; if (typeof e !== 'number') return; if (m.kind === 'tee') teeE[m.hole] = e; else greenE[m.hole] = e })
+          const delta: Record<number, number> = {}
+          for (const k of Object.keys(greenE)) { const h = Number(k); if (teeE[h] != null) delta[h] = Math.round((greenE[h] - teeE[h]) * 3.28084) }
+          if (!cancelled) setHoleElev(delta)
+        })
+        .catch(() => {})
+    } else {
+      setHoleElev({})
+    }
+
+    return () => { cancelled = true }
+  }, [gps])
 
   async function search(overrideQuery?: string, overrideRegion?: string) {
     const q  = (overrideQuery  ?? query).trim()
@@ -739,6 +779,8 @@ export default function CoursesPage() {
                     holes={gpsHoles}
                     bunkers={gps.bunkers}
                     water={gps.water}
+                    wind={wind}
+                    holeElevations={holeElev}
                     teeColors={teeColorsForMap}
                     selectedTeeColor={selectedTeeColor}
                     selectedHole={selectedHole}

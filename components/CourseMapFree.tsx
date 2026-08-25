@@ -118,6 +118,7 @@ function sameColor(a?: string, b?: string) {
 
 export default function CourseMapFree({
   center, holes, bunkers, water, teeColors, selectedTeeColor, selectedHole, onHoleClick,
+  wind, holeElevations,
 }: {
   center: GpsCoord
   holes: GpsHole[]
@@ -127,6 +128,8 @@ export default function CourseMapFree({
   selectedTeeColor?: string   // the tee chosen in the scorecard panel
   selectedHole?: number
   onHoleClick?: (n: number) => void
+  wind?: { speedMph: number; dirDeg: number } | null   // current wind at the course
+  holeElevations?: Record<number, number>              // per hole: green−tee, in feet
 }) {
   const elRef   = useRef<HTMLDivElement>(null)
   const mapRef  = useRef<L.Map | null>(null)
@@ -392,6 +395,34 @@ export default function CourseMapFree({
               ))}
             </div>
             <div className="text-[8.5px] text-white/40 text-center pb-1.5 tracking-wide">yards from the tee</div>
+            {selHole.hole != null && holeElevations?.[selHole.hole] != null && Math.abs(holeElevations[selHole.hole]) >= 3 && (() => {
+              const ft = holeElevations![selHole.hole!]
+              const up = ft > 0
+              const playsLike = fcb.center + Math.round(ft / 3)   // ~1 yd per 3 ft, approximate
+              return (
+                <div className="border-t border-white/10 px-3.5 py-1.5 text-center">
+                  <span className="text-[10px] font-bold text-white/80">
+                    {up ? '↑' : '↓'} {Math.abs(ft)} ft {up ? 'uphill' : 'downhill'}
+                  </span>
+                  <span className="text-[10px] text-white/45"> · plays ~<span className="text-[#C9A84C] font-bold">{playsLike}</span></span>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Wind (current, at the course) */}
+      {wind && (
+        <div className="absolute bottom-8 left-3 z-[1000] pointer-events-none select-none">
+          <div className="flex items-center gap-2 rounded-xl bg-[#0d0d0d]/90 backdrop-blur-sm border border-white/10 px-2.5 py-1.5 shadow-lg">
+            <svg width="22" height="22" viewBox="0 0 22 22" style={{ transform: `rotate(${wind.dirDeg + 180}deg)` }}>
+              <path d="M11 3 L15 15 L11 12 L7 15 Z" fill="#C9A84C" />
+            </svg>
+            <div className="leading-none">
+              <div className="text-[13px] font-black text-white tabular-nums">{wind.speedMph}<span className="text-[9px] font-bold text-white/50"> mph</span></div>
+              <div className="text-[8px] font-bold uppercase tracking-widest text-white/45">Wind</div>
+            </div>
           </div>
         </div>
       )}
