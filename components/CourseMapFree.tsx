@@ -194,8 +194,9 @@ export default function CourseMapFree({
         ).addTo(map)
       }
 
-      // Play line(s): from each tee box to the flag (exact pin, else green center).
-      const flag = flagPoint(h)
+      // Flag only where OSM actually mapped a green polygon, so it can never
+      // float on bare ground (par-3 tees, mis-oriented holes, etc.).
+      const flag = (h.greenPolygon && h.greenPolygon.length >= 3) ? flagPoint(h) : null
       const teeBoxes = (h.tees && h.tees.length ? h.tees : (h.tee ? [h.tee] : []))
       if (flag && teeBoxes.length) {
         // Real scorecard tee colors (back → forward) when we have them; fall
@@ -216,7 +217,7 @@ export default function CourseMapFree({
           ).addTo(map))
           dots.push(
             L.circleMarker([t.latitude, t.longitude],
-              { radius: 3, color: '#0b0b0b', weight: 1.5, fillColor: col, fillOpacity: 0.85 })
+              { radius: 3, color: '#0b0b0b', weight: 1.5, fillColor: col, opacity: 0, fillOpacity: 0 })
               .addTo(map),
           )
         })
@@ -260,7 +261,10 @@ export default function CourseMapFree({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Reflect the selected hole (highlight its green + marker).
+  // Reflect the selected hole: highlight its green + marker, and show its play
+  // line + tee dots ONLY (the whole-course view stays clean — greens, flags,
+  // numbers, hazards, no line web). The shown line is the selected tee's, else
+  // the back tee.
   useEffect(() => {
     for (const [numStr, layer] of Object.entries(layers.current)) {
       const num = Number(numStr)
@@ -271,8 +275,17 @@ export default function CourseMapFree({
         fillOpacity: active ? 0.75 : 0.5,
       })
       layer.marker?.setIcon(holeIcon(num, active))
-      if (active) layer.marker?.setZIndexOffset(1000)
-      else layer.marker?.setZIndexOffset(0)
+      layer.marker?.setZIndexOffset(active ? 1000 : 0)
+
+      const lines = layer.lines ?? []
+      const cols = layer.lineColors ?? []
+      let showIdx = selectedTeeColor ? cols.findIndex(c => sameColor(c, selectedTeeColor)) : -1
+      if (showIdx === -1) showIdx = 0
+      lines.forEach((ln, i) => ln.setStyle({ opacity: active && i === showIdx ? 0.95 : 0 }))
+      ;(layer.teeDots ?? []).forEach((dot, i) => {
+        const on = !selectedTeeColor || sameColor(cols[i], selectedTeeColor)
+        dot.setStyle({ opacity: active ? 1 : 0, fillOpacity: active ? (on ? 1 : 0.4) : 0, radius: on ? 4 : 3 })
+      })
     }
 
     // Zoom to the selected hole (tee → green), or back to the whole course.
@@ -287,25 +300,7 @@ export default function CourseMapFree({
     } else if (allBounds.current) {
       map.flyToBounds(allBounds.current, { duration: 0.6 })
     }
-  }, [selectedHole, selHole])
-
-  // Emphasize the tee chosen in the scorecard panel: its play line pops in its
-  // color, the other tees recede. No selection → all tees shown evenly.
-  useEffect(() => {
-    for (const layer of Object.values(layers.current)) {
-      const lines = layer.lines ?? []
-      const cols = layer.lineColors ?? []
-      // Reveal exactly ONE line per hole: the selected tee's, else the back tee
-      // (index 0, longest). Everything else stays hidden — no crisscross web.
-      let showIdx = selectedTeeColor ? cols.findIndex(c => sameColor(c, selectedTeeColor)) : -1
-      if (showIdx === -1) showIdx = 0
-      lines.forEach((ln, i) => ln.setStyle({ opacity: i === showIdx ? 0.95 : 0 }))
-      ;(layer.teeDots ?? []).forEach((dot, i) => {
-        const on = !selectedTeeColor || sameColor(cols[i], selectedTeeColor)
-        dot.setStyle({ radius: on ? 4 : 3, fillOpacity: on ? 1 : 0.4 })
-      })
-    }
-  }, [selectedTeeColor])
+  }, [selectedHole, selHole, selectedTeeColor])
 
   // Measure tool: while active, each map tap drops a point; the running total
   // yardage of the chain is shown. Toggling off clears it.
