@@ -54,6 +54,14 @@ export async function GET(req: NextRequest) {
   const courseId = req.nextUrl.searchParams.get('id') ?? req.nextUrl.searchParams.get('courseId') ?? ''
   if (!courseId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
+  // Optional OpenGolfAPI id for a golfcourseapi course we matched at search time
+  // (hybrid): lets a gc course pull OGL's /features flags + GPS. Accepts the
+  // ogl_<uuid> form or a bare uuid.
+  const oglParam = req.nextUrl.searchParams.get('ogl') ?? ''
+  const oglId = isOgl(courseId) ? stripOgl(courseId)
+    : oglParam ? (isOgl(oglParam) ? stripOgl(oglParam) : oglParam)
+    : ''
+
   const GOLF_KEY = process.env.GOLFCOURSE_API_KEY
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,7 +69,9 @@ export async function GET(req: NextRequest) {
   )
 
   // ── 1. Cache (OSM geometry is effectively static) ────────────────────────
-  const cacheKey = `v${CACHE_VERSION}:${courseId}`
+  // Key includes the OGL id so an enriched result never collides with a plain
+  // (pre-hybrid) one for the same golfcourseapi course.
+  const cacheKey = `v${CACHE_VERSION}:${courseId}${oglId && !isOgl(courseId) ? `:ogl:${oglId}` : ''}`
   try {
     const { data: cached } = await sb
       .from('golf_osm_cache')
@@ -83,23 +93,27 @@ export async function GET(req: NextRequest) {
     let targetName = ''
     let oglFeatures: OglFeatures | null = null
 
-    if (isOgl(courseId)) {
-      // OpenGolfAPI course: it already carries lat/lng, so skip geocoding
-      // entirely — go straight to the OSM hole geometry at that point. In
-      // parallel, pull its pre-classified /features surfaces (greens, bunkers,
-      // water) to render every green with a flag without depending on the
-      // geocode/area-match resolving.
-      const oid = stripOgl(courseId)
+    if (oglId) {
+      // OpenGolfAPI-backed — either a native ogl_ course, or a golfcourseapi
+      // course we matched to an OGL id at search time. It carries lat/lng, so we
+      // skip geocoding, and pull its pre-classified /features surfaces (greens,
+      // bunkers, water) so every mapped green gets a flag without depending on
+      // the geocode/area-match resolving.
       const [raw, feats] = await Promise.all([
-        getOpenGolfCourseRaw(oid),
-        getOpenGolfFeatures(oid),
+        getOpenGolfCourseRaw(oglId),
+        getOpenGolfFeatures(oglId),
       ])
       oglFeatures = feats
       if (raw?.latitude != null && raw?.longitude != null) {
         anchors = [{ latitude: raw.latitude, longitude: raw.longitude }]
       }
       targetName = raw?.name || raw?.course_name || ''
-    } else {
+    }
+
+    // golfcourseapi geocoding — for a pure gc course, or as a fallback when the
+    // matched OGL record carried no coordinates. Skipped once we already have an
+    // OGL anchor above.
+    if (!anchors.length && !isOgl(courseId)) {
       if (!GOLF_KEY) return NextResponse.json(emptyPayload(courseId))
       const detailRes = await fetch(`${GOLFCOURSE_BASE}/courses/${encodeURIComponent(courseId)}`, {
         headers: { Authorization: `Bearer ${GOLF_KEY}` },

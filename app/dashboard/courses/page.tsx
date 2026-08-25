@@ -29,6 +29,7 @@ interface GolfCourse {
   StateCode?: string
   Latitude?: string | number
   Longitude?: string | number
+  oglId?: string   // matched OpenGolfAPI id (ogl_<uuid>) — unlocks /features flags + GPS
 }
 
 interface GolfHole {
@@ -479,7 +480,10 @@ export default function CoursesPage() {
     // 2) GPS/map — can take a while the first time (geocode + OpenStreetMap),
     //    then it's cached. Loaded separately so it never blocks the scorecard.
     try {
-      const res  = await fetch(`/api/golf/raw-coordinates?id=${encodeURIComponent(course.CourseID)}`)
+      // Pass the matched OpenGolfAPI id when we have one, so a golfcourseapi
+      // course still gets OGL's /features green-flags + GPS (hybrid enrichment).
+      const oglParam = course.oglId ? `&ogl=${encodeURIComponent(course.oglId)}` : ''
+      const res  = await fetch(`/api/golf/raw-coordinates?id=${encodeURIComponent(course.CourseID)}${oglParam}`)
       const data: GpsData = await res.json()
       if (reqId === reqRef.current) setGps(data)
     } catch {

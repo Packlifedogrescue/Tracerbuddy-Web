@@ -9,7 +9,7 @@ import { searchOpenGolf } from '@/lib/opengolf'
 // Longitude come back null and hasGPS is 0 (the OSM layer fills GPS in later).
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 7
-const CACHE_VERSION   = 5  // bumped: results now merge golfcourseapi + OpenGolfAPI
+const CACHE_VERSION   = 6  // bumped: gc results now carry a matched OpenGolfAPI oglId
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -143,6 +143,16 @@ export async function GET(req: NextRequest) {
     `${String(c.CourseName || c.ClubName || '').toLowerCase().trim()}|${String(c.City || '').toLowerCase().trim()}`
 
   // golfcourseapi first (its richer scorecards win ties); OpenGolfAPI fills gaps.
+  // Where a golfcourseapi course also exists in OpenGolfAPI, we keep gc's card but
+  // borrow the OGL id (ogl_<uuid>) onto it — the map route uses that to pull
+  // /features green-flags + free GPS without losing the richer scorecard.
+  const oglByKey = new Map<string, any>()
+  for (const c of ogl) {
+    if (!clean(c)) continue
+    const k = key(c)
+    if (!oglByKey.has(k)) oglByKey.set(k, c)
+  }
+
   const seen = new Set<string>()
   const courses: any[] = []
   for (const c of [...gc, ...ogl]) {
@@ -150,6 +160,11 @@ export async function GET(req: NextRequest) {
     const k = key(c)
     if (seen.has(k)) continue
     seen.add(k)
+    // gc course with an OGL twin → attach its id for hybrid enrichment.
+    if (!c.CourseID?.startsWith('ogl_')) {
+      const twin = oglByKey.get(k)
+      if (twin?.CourseID) c.oglId = twin.CourseID
+    }
     courses.push(c)
   }
 
