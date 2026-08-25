@@ -263,38 +263,44 @@ async function runOverpass(query: string): Promise<OverpassElement[] | null> {
 
 interface CourseArea { kind: 'way' | 'relation'; id: number; name: string; center: LatLng | null }
 
-// Enumerate golf_course areas near the anchor and pick the one matching the
-// target course. Returns null if none are found (→ radius fallback).
-async function findCourseArea(anchor: LatLng, targetName: string): Promise<CourseArea | null> {
-  // Search a WIDE radius: the geocoder can land on a same-named town (e.g. the
-  // course "The Links At Gettysburg" vs the town of Gettysburg), so the real
-  // course may be several km from the anchor. Name matching then picks it out.
+// Enumerate golf_course areas near ANY of the anchors and pick the one matching
+// the target course. Passing both the course-name geocode and the region anchor
+// means the right course is found whichever geocode was accurate — and name
+// matching disambiguates. Returns null if none are found (→ radius fallback).
+async function findCourseArea(anchors: LatLng[], targetName: string): Promise<CourseArea | null> {
+  const pts = anchors.filter(Boolean)
+  if (!pts.length) return null
+  // Wide radius around each anchor: a geocoder can land on a same-named town, so
+  // the real course may be several km away.
+  const clauses = pts.map(a => `
+  way[leisure=golf_course](around:14000,${a.latitude},${a.longitude});
+  relation[leisure=golf_course](around:14000,${a.latitude},${a.longitude});`).join('')
   const q = `[out:json][timeout:30];
-(
-  way[leisure=golf_course](around:14000,${anchor.latitude},${anchor.longitude});
-  relation[leisure=golf_course](around:14000,${anchor.latitude},${anchor.longitude});
+(${clauses}
 );
 out tags center;`
   const els = await runOverpass(q)
   if (!els || !els.length) return null
 
-  const areas: CourseArea[] = els
-    .filter(e => e.type === 'way' || e.type === 'relation')
-    .map(e => ({
-      kind: e.type as 'way' | 'relation',
+  // Dedup by id (an area can be within range of more than one anchor).
+  const seen = new Set<number>()
+  const areas: CourseArea[] = []
+  for (const e of els) {
+    if ((e.type !== 'way' && e.type !== 'relation') || seen.has(e.id)) continue
+    seen.add(e.id)
+    areas.push({
+      kind: e.type,
       id: e.id,
       name: e.tags?.name ?? '',
       center: e.center ? { latitude: e.center.lat, longitude: e.center.lon } : null,
-    }))
-  if (!areas.length) return null
-  // A single course near the anchor is unambiguous only when it's genuinely
-  // close; if it's far, still require a name match so we don't grab the wrong one.
-  if (areas.length === 1) {
-    const a = areas[0]
-    const near = a.center ? haversine(anchor, a.center) < 2500 : true
-    if (near || nameScore(targetName, a.name) > 0.15) return a
-    return a   // best available anyway
+    })
   }
+  if (!areas.length) return null
+
+  const minAnchorDist = (c: LatLng | null) =>
+    c ? Math.min(...pts.map(p => haversine(p, c))) : Infinity
+
+  if (areas.length === 1) return areas[0]   // one course near the anchors
 
   const targetNum = courseNumber(targetName)
   let best = areas[0]
@@ -303,9 +309,8 @@ out tags center;`
     let score = nameScore(targetName, a.name)
     const aNum = courseNumber(a.name)
     if (targetNum != null && aNum != null) score += aNum === targetNum ? 1.0 : -0.6
-    // Mild tiebreak toward the area nearest the geocoded anchor (name dominates,
-    // so a far but well-named course still wins over a near mismatch).
-    if (a.center) score -= haversine(anchor, a.center) / 60_000
+    // Mild tiebreak toward the area nearest ANY anchor (name still dominates).
+    score -= minAnchorDist(a.center) / 60_000
     if (score > bestScore) { bestScore = score; best = a }
   }
   return best
@@ -509,12 +514,12 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
   return { holes, greens, tees, pins, bunkers, water }
 }
 
-export async function fetchGolfFeatures(anchor: LatLng, targetName: string): Promise<OsmResult> {
+export async function fetchGolfFeatures(anchors: LatLng[], targetName: string): Promise<OsmResult> {
   let elements: OverpassElement[] | null = null
   let matchedCourse: string | null = null
-  let center = anchor
+  let center = anchors[0]
 
-  const area = await findCourseArea(anchor, targetName)
+  const area = await findCourseArea(anchors, targetName)
   if (area) {
     elements = await fetchFeaturesInArea(area)
     matchedCourse = area.name || null

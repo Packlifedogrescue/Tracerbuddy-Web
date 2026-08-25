@@ -405,9 +405,11 @@ export default function CoursesPage() {
     if (!c) { setWind(null); setHoleElev({}); return }
     let cancelled = false
 
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.latitude}&longitude=${c.longitude}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=mph`)
+    // Use the SAME source as the Conditions panel (/api/weather) so the wind on
+    // the map matches the wind in the panel.
+    fetch(`/api/weather?lat=${c.latitude}&lng=${c.longitude}`)
       .then(r => r.json())
-      .then(d => { if (!cancelled && d?.current) setWind({ speedMph: Math.round(d.current.wind_speed_10m ?? 0), dirDeg: d.current.wind_direction_10m ?? 0 }) })
+      .then(d => { if (!cancelled && d && typeof d.windSpeed === 'number') setWind({ speedMph: Math.round(d.windSpeed), dirDeg: d.windDeg ?? 0 }) })
       .catch(() => {})
 
     const marks: { hole: number; kind: 'tee' | 'green' }[] = []

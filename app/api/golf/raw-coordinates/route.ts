@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { geocodeCourse, geocodeRegion, fetchGolfFeatures, distanceMeters, type LatLng } from '@/lib/osm'
+import { geocodeCourse, geocodeRegion, fetchGolfFeatures, type LatLng } from '@/lib/osm'
 
 // The OSM lookup (geocode + Overpass, with mirror failover) can take a while on
 // a cold course, so give the function room rather than letting Vercel's short
@@ -98,26 +98,23 @@ export async function GET(req: NextRequest) {
     const targetName = [clubName, courseName].filter(Boolean).join(' ')
 
     // ── 3. Geocode → anchor ────────────────────────────────────────────────
-    // Use the precise course-name geocode, but VALIDATE it against a
-    // state-respecting region anchor. The name geocode is more accurate (often
-    // lands on the course itself) but can drift to a same-named town in another
-    // state (Gettysburg PA vs SD); the region honours the state strictly. So:
-    // take the name geocode when it agrees with the region (within 60 km), else
-    // fall back to the region.
+    // Geocode two ways and search near BOTH: the precise course-name geocode
+    // (usually lands on the course, but can drift to a same-named town in another
+    // state) and the state-respecting region (honours the state, but a town name
+    // like "Fairfield" is itself ambiguous). Searching around both and letting
+    // name matching pick the course is robust to either one being off.
     const [nameAnchor, region] = await Promise.all([
       geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? ''),
       geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? ''),
     ])
-    let anchor: LatLng | null
-    if (nameAnchor && region) anchor = distanceMeters(nameAnchor, region) < 60_000 ? nameAnchor : region
-    else anchor = nameAnchor ?? region
-    if (!anchor) {
+    const anchors = [nameAnchor, region].filter(Boolean) as LatLng[]
+    if (!anchors.length) {
       // Nothing geocoded — return a null center; don't cache, retry next time.
       return NextResponse.json({ ...emptyPayload(courseId), center: null, centerSource: null })
     }
 
     // ── 4. Overpass → green / tee / pin positions (scoped to this course) ──
-    const osm = await fetchGolfFeatures(anchor, targetName)
+    const osm = await fetchGolfFeatures(anchors, targetName)
     const hasGeo = osm.greens.length + osm.tees.length + osm.pins.length + osm.holes.length > 0
 
     const flat: FlatPoi[] = []
