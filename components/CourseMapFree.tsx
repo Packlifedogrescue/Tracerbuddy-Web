@@ -140,11 +140,12 @@ function sameColor(a?: string, b?: string) {
 }
 
 export default function CourseMapFree({
-  center, holes, bunkers, water, matchedCourse, teeColors, selectedTeeColor, selectedHole, onHoleClick,
+  center, holes, greens, bunkers, water, matchedCourse, teeColors, selectedTeeColor, selectedHole, onHoleClick,
   wind, holeElevations,
 }: {
   center: GpsCoord
   holes: GpsHole[]
+  greens?: GpsCoord[]         // every mapped green's centroid (flags drawn here)
   bunkers?: GpsCoord[][]      // sand hazard outlines
   water?: GpsCoord[][]        // water hazard outlines
   matchedCourse?: string | null   // OSM course name this map locked onto
@@ -242,14 +243,8 @@ export default function CourseMapFree({
         layer.teeDots = dots
       }
 
-      // Flag at the green center: a cup dot (unmistakably on the green) with a
-      // short flag rising from it.
-      if (flag) {
-        layer.cup = L.circleMarker([flag.latitude, flag.longitude],
-          { radius: 2.5, color: '#0b0b0b', weight: 1, fillColor: '#ffffff', fillOpacity: 1, interactive: false })
-          .addTo(map)
-        layer.flag = L.marker([flag.latitude, flag.longitude], { icon: flagIcon(), interactive: false }).addTo(map)
-      }
+      // (Flags are drawn from the green polygons directly, below — not per hole —
+      // so they can never depend on fragile hole→green matching.)
 
       // Numbered marker at the (back) tee.
       const anchor = h.tee ?? h.green
@@ -263,6 +258,16 @@ export default function CourseMapFree({
       if (h.green) bounds.push([h.green.latitude, h.green.longitude])
       for (const t of teeBoxes) bounds.push([t.latitude, t.longitude])
       for (const p of h.greenPolygon ?? []) bounds.push([p.latitude, p.longitude])
+    }
+
+    // Flags come straight from the mapped greens — a green's centroid is always
+    // on the green, so a flag here can never land off it (no hole matching).
+    for (const g of greens ?? []) {
+      L.circleMarker([g.latitude, g.longitude],
+        { radius: 2.5, color: '#0b0b0b', weight: 1, fillColor: '#ffffff', fillOpacity: 1, interactive: false })
+        .addTo(map)
+      L.marker([g.latitude, g.longitude], { icon: flagIcon(), interactive: false }).addTo(map)
+      bounds.push([g.latitude, g.longitude])
     }
 
     if (bounds.length) {
