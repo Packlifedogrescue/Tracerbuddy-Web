@@ -204,19 +204,19 @@ export default function CourseMapFree({
         const colors = (teeColors && teeColors.length)
           ? teeBoxes.map((_, i) => teeColors[i] ?? ramp[i] ?? '#C9A84C')
           : ramp
-        const sel = teeColorRef.current   // the tee chosen in the scorecard
+        // Lines start hidden; the tee-selection effect reveals exactly ONE per
+        // hole (the selected tee, else the back tee) so the map stays clean.
         const lines: L.Polyline[] = []
         const dots: L.CircleMarker[] = []
         teeBoxes.forEach((t, i) => {
           const col = colors[i] ?? '#C9A84C'
-          const on = !sel || sameColor(col, sel)   // selected tee pops, others recede
           lines.push(L.polyline(
             [[t.latitude, t.longitude], [flag.latitude, flag.longitude]],
-            { color: col, weight: on ? 3 : 1.5, opacity: on ? 0.9 : 0.16, dashArray: '4 6' },
+            { color: col, weight: 3, opacity: 0, dashArray: '4 6' },
           ).addTo(map))
           dots.push(
             L.circleMarker([t.latitude, t.longitude],
-              { radius: on ? 4 : 3, color: '#0b0b0b', weight: 1.5, fillColor: col, fillOpacity: on ? 1 : 0.3 })
+              { radius: 3, color: '#0b0b0b', weight: 1.5, fillColor: col, fillOpacity: 0.85 })
               .addTo(map),
           )
         })
@@ -293,14 +293,16 @@ export default function CourseMapFree({
   // color, the other tees recede. No selection → all tees shown evenly.
   useEffect(() => {
     for (const layer of Object.values(layers.current)) {
+      const lines = layer.lines ?? []
       const cols = layer.lineColors ?? []
-      ;(layer.lines ?? []).forEach((ln, i) => {
-        const on = !selectedTeeColor || sameColor(cols[i], selectedTeeColor)
-        ln.setStyle({ opacity: on ? 0.9 : 0.16, weight: on ? 3 : 1.5 })
-      })
+      // Reveal exactly ONE line per hole: the selected tee's, else the back tee
+      // (index 0, longest). Everything else stays hidden — no crisscross web.
+      let showIdx = selectedTeeColor ? cols.findIndex(c => sameColor(c, selectedTeeColor)) : -1
+      if (showIdx === -1) showIdx = 0
+      lines.forEach((ln, i) => ln.setStyle({ opacity: i === showIdx ? 0.95 : 0 }))
       ;(layer.teeDots ?? []).forEach((dot, i) => {
         const on = !selectedTeeColor || sameColor(cols[i], selectedTeeColor)
-        dot.setStyle({ radius: on ? 4 : 3, fillOpacity: on ? 1 : 0.3 })
+        dot.setStyle({ radius: on ? 4 : 3, fillOpacity: on ? 1 : 0.4 })
       })
     }
   }, [selectedTeeColor])
