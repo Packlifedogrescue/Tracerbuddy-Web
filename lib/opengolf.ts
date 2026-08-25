@@ -49,6 +49,12 @@ export async function getOpenGolfHoles(id: string): Promise<any[] | null> {
   return Array.isArray(data?.holes) ? data.holes : null
 }
 
+// Tee ratings (course rating + slope, per color and gender).
+export async function getOpenGolfTees(id: string): Promise<any[] | null> {
+  const data = await fetchJson(`${OPENGOLF_BASE}/courses/${encodeURIComponent(id)}/tees`)
+  return Array.isArray(data?.tees) ? data.tees : null
+}
+
 // OpenGolfAPI search → the same PascalCase shape golfcourseapi results use, so
 // the app reads both identically. Latitude/Longitude come populated here.
 export async function searchOpenGolf(query: string) {
@@ -78,8 +84,18 @@ export async function getOpenGolfCourseRaw(id: string): Promise<any | null> {
 // (from /courses/{id}/holes) is supplied it carries par, handicap and per-tee
 // yardages, so we build a full scorecard + tee selector. Without it we fall back
 // to the base course's par-only scorecard.
-export function normOpenGolfDetail(c: any, holesData?: any[] | null) {
+export function normOpenGolfDetail(c: any, holesData?: any[] | null, teesData?: any[] | null) {
   const rich = Array.isArray(holesData) && holesData.length > 0
+
+  // Course rating + slope per tee, split by gender, keyed by color.
+  const teeMeta: Record<string, { crM?: number; slM?: number; crF?: number; slF?: number }> = {}
+  for (const t of teesData ?? []) {
+    const color = String(t.tee_color ?? t.tee_name ?? '').toLowerCase()
+    if (!color) continue
+    const m = (teeMeta[color] ??= {})
+    if (String(t.gender).toLowerCase() === 'female') { m.crF = t.course_rating ?? undefined; m.slF = t.slope ?? undefined }
+    else                                             { m.crM = t.course_rating ?? undefined; m.slM = t.slope ?? undefined }
+  }
   const source = rich
     ? holesData!
     : (Array.isArray(c.scorecard) ? c.scorecard : [])
@@ -124,10 +140,15 @@ export function normOpenGolfDetail(c: any, holesData?: any[] | null) {
 
   // Build a Tee per color, with length1..N per hole (what the app scorecard reads).
   const Tees = teeColors.map((color, i) => {
+    const meta = teeMeta[color.toLowerCase()] ?? {}
     const tee: any = {
       teeID:    `ogl-${color}-${i}`,
       teeName:  cap(color),
       teeColor: OGL_TEE_HEX[color.toLowerCase()] ?? null,
+      courseRatingMen:   meta.crM ?? null,
+      slopeMen:          meta.slM ?? null,
+      courseRatingWomen: meta.crF ?? null,
+      slopeWomen:        meta.slF ?? null,
     }
     for (const h of source) {
       const n = holeNo(h)
@@ -135,6 +156,11 @@ export function normOpenGolfDetail(c: any, holesData?: any[] | null) {
     }
     return tee
   })
+
+  // Header rating/slope: the longest tee's men's figures (fall back to women's).
+  const headTee = teeColors.length ? (teeMeta[teeColors[0].toLowerCase()] ?? {}) : {}
+  const headRating = headTee.crM ?? headTee.crF ?? null
+  const headSlope  = headTee.slM ?? headTee.slF ?? null
 
   const totalPar = c.par ?? (Holes.reduce((a: number, h: any) => a + (h.Par ?? 0), 0) || null)
   return {
@@ -149,8 +175,8 @@ export function normOpenGolfDetail(c: any, holesData?: any[] | null) {
     Latitude:   c.latitude ?? null,
     Longitude:  c.longitude ?? null,
     Par:        totalPar || null,
-    Rating:     null,
-    Slope:      null,
+    Rating:     headRating,
+    Slope:      headSlope,
     hasGPS:     (c.latitude != null && c.longitude != null) ? 1 : 0,
     CourseType: c.type ?? null,
     NumHoles:   c.holes ?? Holes.length ?? null,
