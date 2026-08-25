@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const state = req.nextUrl.searchParams.get('state')?.trim() ?? ''
   const city  = req.nextUrl.searchParams.get('city')?.trim() ?? ''
 
-  if (!raw && !state) return NextResponse.json({ courses: [] })
+  if (!raw && !state && !city) return NextResponse.json({ courses: [] })
 
   // golfcourseapi's search takes a single free-text query — fold state/city in.
   const query = [raw, city, state].filter(Boolean).join(' ')
