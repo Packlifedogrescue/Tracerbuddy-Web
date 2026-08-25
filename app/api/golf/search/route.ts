@@ -14,6 +14,34 @@ function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
+// 2-letter code → full name, so a region typed either way (or a country) can be
+// matched against golfcourseapi's location fields.
+const STATE_BY_CODE: Record<string, string> = {
+  al:'alabama', ak:'alaska', az:'arizona', ar:'arkansas', ca:'california', co:'colorado',
+  ct:'connecticut', de:'delaware', fl:'florida', ga:'georgia', hi:'hawaii', id:'idaho',
+  il:'illinois', in:'indiana', ia:'iowa', ks:'kansas', ky:'kentucky', la:'louisiana',
+  me:'maine', md:'maryland', ma:'massachusetts', mi:'michigan', mn:'minnesota', ms:'mississippi',
+  mo:'missouri', mt:'montana', ne:'nebraska', nv:'nevada', nh:'new hampshire', nj:'new jersey',
+  nm:'new mexico', ny:'new york', nc:'north carolina', nd:'north dakota', oh:'ohio', ok:'oklahoma',
+  or:'oregon', pa:'pennsylvania', ri:'rhode island', sc:'south carolina', sd:'south dakota',
+  tn:'tennessee', tx:'texas', ut:'utah', vt:'vermont', va:'virginia', wa:'washington',
+  wv:'west virginia', wi:'wisconsin', wy:'wyoming', dc:'district of columbia',
+}
+// Does a course sit in the region the user typed (a state code, state name, or country)?
+function regionMatches(course: any, region: string): boolean {
+  const r = region.trim().toLowerCase()
+  if (!r) return true
+  const st = String(course.location?.state ?? '').toLowerCase()
+  const co = String(course.location?.country ?? '').toLowerCase()
+  if (st === r || co === r) return true
+  const stName = STATE_BY_CODE[st] ?? st          // course state as full name
+  const rName  = STATE_BY_CODE[r]  ?? r           // typed region as full name (if a code)
+  if (stName && (stName === rName || stName === r)) return true
+  if (st && STATE_BY_CODE[r] === st) return true  // typed a full name, course has the code
+  if (co && (co.includes(r) || r.includes(co))) return true
+  return false
+}
+
 // golfcourseapi Course → the PascalCase shape the app already expects.
 function normaliseCourse(c: any) {
   const loc = c.location ?? {}
@@ -38,8 +66,10 @@ export async function GET(req: NextRequest) {
 
   if (!raw && !state && !city) return NextResponse.json({ courses: [] })
 
-  // golfcourseapi's search takes a single free-text query — fold state/city in.
-  const query = [raw, city, state].filter(Boolean).join(' ')
+  // golfcourseapi search is NAME-based, so search on the name/city text and use
+  // state/country only as a post-filter. If only a region was given, search it as
+  // text as a best effort (the free API can't list a whole state on its own).
+  const query = [raw, city].filter(Boolean).join(' ') || state
 
   const cacheKey = `v${CACHE_VERSION}:${normalise([raw, state, city].filter(Boolean).join('|'))}`
   const GOLF_KEY = process.env.GOLFCOURSE_API_KEY
@@ -81,12 +111,9 @@ export async function GET(req: NextRequest) {
     const data = await res.json()
     let raw_courses = Array.isArray(data) ? data : (data.courses ?? [])
 
-    // Optional client-side filter for a 2-letter US state code.
-    if (state && state.length === 2 && raw_courses.length > 0) {
-      const stateUp  = state.toUpperCase()
-      const filtered = raw_courses.filter((c: any) =>
-        (c.location?.state ?? '').toUpperCase() === stateUp
-      )
+    // Filter by the region field (state code, state name, or country) when given.
+    if (state && raw_courses.length > 0) {
+      const filtered = raw_courses.filter((c: any) => regionMatches(c, state))
       if (filtered.length > 0) raw_courses = filtered
     }
 
