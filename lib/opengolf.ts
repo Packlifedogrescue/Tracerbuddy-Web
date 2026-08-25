@@ -7,7 +7,13 @@
 // Its course IDs are UUIDs; we prefix them with "ogl_" so the golf routes can
 // tell which provider a course came from and fetch detail/GPS from the right one.
 
+import type { LatLng } from './osm'
+
 const OPENGOLF_BASE = 'https://api.opengolfapi.org/v1'
+// The features endpoint lives under a different path prefix (/api/v1) and is
+// queried by course UUID: it returns pre-classified OSM surfaces (greens,
+// bunkers, water, fairways…) already scoped to the course.
+const OPENGOLF_FEATURES = 'https://api.opengolfapi.org/api/v1/features'
 export const OGL_PREFIX = 'ogl_'
 
 export const isOgl = (id: string) => id.startsWith(OGL_PREFIX)
@@ -53,6 +59,85 @@ export async function getOpenGolfHoles(id: string): Promise<any[] | null> {
 export async function getOpenGolfTees(id: string): Promise<any[] | null> {
   const data = await fetchJson(`${OPENGOLF_BASE}/courses/${encodeURIComponent(id)}/tees`)
   return Array.isArray(data?.tees) ? data.tees : null
+}
+
+// ── /features: pre-classified course surfaces (for RENDERING only) ───────────
+// Same underlying OSM data as Overpass (source:"osm", ODbL), but typed by
+// feature_type and already scoped to the course UUID — so it needs no geocode,
+// area-match or tag-matching to render. We use it to give every mapped green a
+// flag; per-hole flags/distances still come from the Overpass golf=hole pipeline
+// (this endpoint carries hole_number:null on every feature).
+
+// GeoJSON ring ([[lng,lat], …]) → the app's LatLng[].
+function ringToLatLng(ring: unknown): LatLng[] {
+  if (!Array.isArray(ring)) return []
+  const out: LatLng[] = []
+  for (const p of ring) {
+    if (!Array.isArray(p) || p.length < 2) continue
+    const lat = Number(p[1]), lng = Number(p[0])
+    if (Number.isFinite(lat) && Number.isFinite(lng)) out.push({ latitude: lat, longitude: lng })
+  }
+  return out
+}
+
+// Outer rings of a Polygon / MultiPolygon geometry.
+function outerRings(geom: any): LatLng[][] {
+  if (!geom) return []
+  if (geom.type === 'Polygon') {
+    const r = ringToLatLng(geom.coordinates?.[0])
+    return r.length ? [r] : []
+  }
+  if (geom.type === 'MultiPolygon') {
+    return (geom.coordinates ?? [])
+      .map((poly: any) => ringToLatLng(poly?.[0]))
+      .filter((r: LatLng[]) => r.length)
+  }
+  return []
+}
+
+// Plain vertex mean — a good-enough flag anchor when a feature has no `center`.
+function ringMean(pts: LatLng[]): LatLng | null {
+  if (!pts.length) return null
+  return {
+    latitude:  pts.reduce((s, p) => s + p.latitude, 0) / pts.length,
+    longitude: pts.reduce((s, p) => s + p.longitude, 0) / pts.length,
+  }
+}
+
+export interface OglFeatures {
+  greens: LatLng[]       // green centroids — one flag drawn per entry
+  bunkers: LatLng[][]    // sand hazard outlines
+  water: LatLng[][]      // water hazard outlines
+}
+
+// GET /features?course=<uuid> → typed surfaces. Returns null on any failure so
+// the caller falls back to the Overpass result unchanged.
+export async function getOpenGolfFeatures(id: string): Promise<OglFeatures | null> {
+  const data = await fetchJson(`${OPENGOLF_FEATURES}?course=${encodeURIComponent(id)}`)
+  const feats = Array.isArray(data?.features) ? data.features : null
+  if (!feats) return null
+
+  const greens: LatLng[] = []
+  const bunkers: LatLng[][] = []
+  const water: LatLng[][] = []
+  for (const f of feats) {
+    const type = f?.feature_type
+    if (type === 'green') {
+      const c = f?.center
+      const lat = Number(c?.lat), lng = Number(c?.lng)
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        greens.push({ latitude: lat, longitude: lng })
+      } else {
+        const ct = ringMean(outerRings(f?.geometry)[0] ?? [])
+        if (ct) greens.push(ct)
+      }
+    } else if (type === 'bunker') {
+      for (const r of outerRings(f?.geometry)) if (r.length >= 3) bunkers.push(r)
+    } else if (type === 'water_hazard' || type === 'lateral_water_hazard' || type === 'creek') {
+      for (const r of outerRings(f?.geometry)) if (r.length >= 3) water.push(r)
+    }
+  }
+  return { greens, bunkers, water }
 }
 
 // OpenGolfAPI search → the same PascalCase shape golfcourseapi results use, so

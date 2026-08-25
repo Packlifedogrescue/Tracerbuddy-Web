@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { geocodeCourse, geocodeRegion, fetchGolfFeatures, type LatLng } from '@/lib/osm'
-import { isOgl, stripOgl, getOpenGolfCourseRaw } from '@/lib/opengolf'
+import { isOgl, stripOgl, getOpenGolfCourseRaw, getOpenGolfFeatures, type OglFeatures } from '@/lib/opengolf'
 
 // The OSM lookup (geocode + Overpass, with mirror failover) can take a while on
 // a cold course, so give the function room rather than letting Vercel's short
@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 12  // v12: hazards (bunkers + water) added to payload
+const CACHE_VERSION    = 13  // v13: OGL courses enrich greens/hazards from /features
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -54,6 +54,14 @@ export async function GET(req: NextRequest) {
   const courseId = req.nextUrl.searchParams.get('id') ?? req.nextUrl.searchParams.get('courseId') ?? ''
   if (!courseId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
+  // Optional OpenGolfAPI id for a golfcourseapi course we matched at search time
+  // (hybrid): lets a gc course pull OGL's /features flags + GPS. Accepts the
+  // ogl_<uuid> form or a bare uuid.
+  const oglParam = req.nextUrl.searchParams.get('ogl') ?? ''
+  const oglId = isOgl(courseId) ? stripOgl(courseId)
+    : oglParam ? (isOgl(oglParam) ? stripOgl(oglParam) : oglParam)
+    : ''
+
   const GOLF_KEY = process.env.GOLFCOURSE_API_KEY
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,7 +69,9 @@ export async function GET(req: NextRequest) {
   )
 
   // ── 1. Cache (OSM geometry is effectively static) ────────────────────────
-  const cacheKey = `v${CACHE_VERSION}:${courseId}`
+  // Key includes the OGL id so an enriched result never collides with a plain
+  // (pre-hybrid) one for the same golfcourseapi course.
+  const cacheKey = `v${CACHE_VERSION}:${courseId}${oglId && !isOgl(courseId) ? `:ogl:${oglId}` : ''}`
   try {
     const { data: cached } = await sb
       .from('golf_osm_cache')
@@ -81,16 +91,29 @@ export async function GET(req: NextRequest) {
     // ── 2. Learn the course's location + name, then build search anchors ────
     let anchors: LatLng[] = []
     let targetName = ''
+    let oglFeatures: OglFeatures | null = null
 
-    if (isOgl(courseId)) {
-      // OpenGolfAPI course: it already carries lat/lng, so skip geocoding
-      // entirely — go straight to the OSM hole geometry at that point.
-      const raw = await getOpenGolfCourseRaw(stripOgl(courseId))
+    if (oglId) {
+      // OpenGolfAPI-backed — either a native ogl_ course, or a golfcourseapi
+      // course we matched to an OGL id at search time. It carries lat/lng, so we
+      // skip geocoding, and pull its pre-classified /features surfaces (greens,
+      // bunkers, water) so every mapped green gets a flag without depending on
+      // the geocode/area-match resolving.
+      const [raw, feats] = await Promise.all([
+        getOpenGolfCourseRaw(oglId),
+        getOpenGolfFeatures(oglId),
+      ])
+      oglFeatures = feats
       if (raw?.latitude != null && raw?.longitude != null) {
         anchors = [{ latitude: raw.latitude, longitude: raw.longitude }]
       }
       targetName = raw?.name || raw?.course_name || ''
-    } else {
+    }
+
+    // golfcourseapi geocoding — for a pure gc course, or as a fallback when the
+    // matched OGL record carried no coordinates. Skipped once we already have an
+    // OGL anchor above.
+    if (!anchors.length && !isOgl(courseId)) {
       if (!GOLF_KEY) return NextResponse.json(emptyPayload(courseId))
       const detailRes = await fetch(`${GOLFCOURSE_BASE}/courses/${encodeURIComponent(courseId)}`, {
         headers: { Authorization: `Bearer ${GOLF_KEY}` },
@@ -121,7 +144,21 @@ export async function GET(req: NextRequest) {
 
     // ── 3. Overpass → green / tee / pin positions (scoped to this course) ──
     const osm = await fetchGolfFeatures(anchors, targetName)
-    const hasGeo = osm.greens.length + osm.tees.length + osm.pins.length + osm.holes.length > 0
+
+    // OGL enrichment: union OpenGolfAPI's typed green centroids into the flat
+    // greens list (so a green either source found gets a flag, deduped by
+    // proximity) and prefer its bunker/water outlines when present. Per-hole
+    // geometry (osm.holes) is untouched — flags/distances stay Overpass-driven.
+    let greens = osm.greens
+    let bunkers = osm.bunkers
+    let water = osm.water
+    if (oglFeatures) {
+      greens = unionPoints(osm.greens, oglFeatures.greens)
+      if (oglFeatures.bunkers.length) bunkers = oglFeatures.bunkers
+      if (oglFeatures.water.length)   water = oglFeatures.water
+    }
+
+    const hasGeo = greens.length + osm.tees.length + osm.pins.length + osm.holes.length > 0
 
     const flat: FlatPoi[] = []
     // Prefer per-hole points where OSM mapped hole numbers…
@@ -134,7 +171,7 @@ export async function GET(req: NextRequest) {
     const seen = (list: LatLng[], p: LatLng) => list.some(q => near(q, p))
     const holeGreens = osm.holes.map(h => h.green).filter(Boolean) as LatLng[]
     const holePins   = osm.holes.map(h => h.pin).filter(Boolean) as LatLng[]
-    for (const g of osm.greens) if (!seen(holeGreens, g)) flat.push({ type: 'green', hole: null, latitude: g.latitude, longitude: g.longitude })
+    for (const g of greens) if (!seen(holeGreens, g)) flat.push({ type: 'green', hole: null, latitude: g.latitude, longitude: g.longitude })
     for (const p of osm.pins)   if (!seen(holePins, p))   flat.push({ type: 'pin',   hole: null, latitude: p.latitude,  longitude: p.longitude })
 
     const payload = {
@@ -155,11 +192,11 @@ export async function GET(req: NextRequest) {
         greenPolygon: h.greenPolygon, // outline → app computes front/center/back
         pin:          h.pin,          // exact flag when mapped (else green centroid)
       })),
-      greens:         osm.greens,
+      greens:         greens,        // Overpass ∪ OpenGolfAPI (flags drawn here)
       tees:           osm.tees,
       pins:           osm.pins,
-      bunkers:        osm.bunkers,   // sand hazard outlines
-      water:          osm.water,     // water hazard outlines
+      bunkers:        bunkers,       // sand hazard outlines
+      water:          water,         // water hazard outlines
       coordinates:    flat,
     }
 
@@ -175,6 +212,14 @@ export async function GET(req: NextRequest) {
 
 function near(a: LatLng, b: LatLng): boolean {
   return Math.abs(a.latitude - b.latitude) < 1e-4 && Math.abs(a.longitude - b.longitude) < 1e-4
+}
+
+// Append b's points to a, skipping any that coincide (~11 m) with one already
+// present — so unioning two OSM-derived green sets doesn't double a flag.
+function unionPoints(a: LatLng[], b: LatLng[]): LatLng[] {
+  const out = [...a]
+  for (const p of b) if (!out.some(q => near(q, p))) out.push(p)
+  return out
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
