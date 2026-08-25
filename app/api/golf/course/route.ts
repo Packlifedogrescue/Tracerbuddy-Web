@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { isOgl, stripOgl, getOpenGolfCourseRaw, normOpenGolfDetail } from '@/lib/opengolf'
+import { isOgl, stripOgl, getOpenGolfCourseRaw, getOpenGolfHoles, normOpenGolfDetail } from '@/lib/opengolf'
 
 // Course detail backed by golfcourseapi.com (free tier). The output payload is
 // kept identical to the old GolfAPI.io route so the iOS app reads it unchanged.
@@ -9,7 +9,7 @@ import { isOgl, stripOgl, getOpenGolfCourseRaw, normOpenGolfDetail } from '@/lib
 // for now. The OpenStreetMap layer (phase 2) fills those in.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 30
-const CACHE_VERSION   = 6  // bumped: tees deduped by name (men's + women's no longer double up)
+const CACHE_VERSION   = 7  // bumped: OpenGolfAPI courses now carry full scorecards (per-tee yardages)
 
 const TEE_COLORS: Record<string, string> = {
   black: '#111111', blue: '#3B82F6', white: '#E5E7EB', gold: '#D4AF37',
@@ -150,11 +150,12 @@ export async function GET(req: NextRequest) {
     }
   } catch { /* fall through */ }
 
-  // ── OpenGolfAPI course (id prefixed "ogl_") — par-only scorecard, no key ──
+  // ── OpenGolfAPI course (id prefixed "ogl_") — full scorecard from /holes ──
   if (isOgl(courseId)) {
-    const raw = await getOpenGolfCourseRaw(stripOgl(courseId))
+    const oid = stripOgl(courseId)
+    const [raw, holes] = await Promise.all([getOpenGolfCourseRaw(oid), getOpenGolfHoles(oid)])
     if (!raw) return NextResponse.json({ error: 'Failed to fetch course' }, { status: 502 })
-    const payload = normOpenGolfDetail(raw)
+    const payload = normOpenGolfDetail(raw, holes)
     try {
       await sb.from('golf_course_details_cache').upsert({
         course_id: cacheKey, data: payload, cached_at: new Date().toISOString(),

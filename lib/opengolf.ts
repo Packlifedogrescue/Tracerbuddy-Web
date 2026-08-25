@@ -13,11 +13,27 @@ export const OGL_PREFIX = 'ogl_'
 export const isOgl = (id: string) => id.startsWith(OGL_PREFIX)
 export const stripOgl = (id: string) => id.slice(OGL_PREFIX.length)
 
+// The core course endpoints are free (no key). The key only lifts rate limits /
+// unlocks premium endpoints — send it when present. Accept the user's env name
+// (GOLFCOURSE_API_KEY1) as well as the tidy one.
+const OPENGOLF_KEY = process.env.OPENGOLF_API_KEY || process.env.GOLFCOURSE_API_KEY1 || ''
+
+// tee color name → swatch hex (matches the course route's palette)
+const OGL_TEE_HEX: Record<string, string> = {
+  black: '#111111', blue: '#3B82F6', white: '#E5E7EB', gold: '#D4AF37',
+  yellow: '#FBBF24', red: '#EF4444', green: '#22A06B', silver: '#C0C0C0',
+  gray: '#9CA3AF', grey: '#9CA3AF', orange: '#F97316', purple: '#A855F7',
+  championship: '#111111', combo: '#8B7355', black_blue: '#1E3A8A',
+}
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
 async function fetchJson(url: string, ms = 8000): Promise<any | null> {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), ms)
   try {
-    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } })
+    const headers: Record<string, string> = { Accept: 'application/json' }
+    if (OPENGOLF_KEY) headers.Authorization = `Bearer ${OPENGOLF_KEY}`
+    const res = await fetch(url, { signal: ctrl.signal, headers })
     if (!res.ok) return null
     return await res.json()
   } catch {
@@ -25,6 +41,12 @@ async function fetchJson(url: string, ms = 8000): Promise<any | null> {
   } finally {
     clearTimeout(t)
   }
+}
+
+// Per-hole detail (par, handicap, per-tee yardages) — the rich scorecard source.
+export async function getOpenGolfHoles(id: string): Promise<any[] | null> {
+  const data = await fetchJson(`${OPENGOLF_BASE}/courses/${encodeURIComponent(id)}/holes`)
+  return Array.isArray(data?.holes) ? data.holes : null
 }
 
 // OpenGolfAPI search → the same PascalCase shape golfcourseapi results use, so
@@ -52,17 +74,45 @@ export async function getOpenGolfCourseRaw(id: string): Promise<any | null> {
   return fetchJson(`${OPENGOLF_BASE}/courses/${encodeURIComponent(id)}`)
 }
 
-// OpenGolfAPI course → the app's CourseDetail shape. Par-per-hole only (no
-// yardages/tees without an OpenGolf ID), so those fields come back null and the
-// scorecard shows par with blank yardages.
-export function normOpenGolfDetail(c: any) {
-  const scorecard = Array.isArray(c.scorecard) ? c.scorecard : []
-  const Holes = scorecard.map((h: any) => ({
-    HoleNo:         h.hole,
+// OpenGolfAPI course → the app's CourseDetail shape. When the per-hole detail
+// (from /courses/{id}/holes) is supplied it carries par, handicap and per-tee
+// yardages, so we build a full scorecard + tee selector. Without it we fall back
+// to the base course's par-only scorecard.
+export function normOpenGolfDetail(c: any, holesData?: any[] | null) {
+  const rich = Array.isArray(holesData) && holesData.length > 0
+  const source = rich
+    ? holesData!
+    : (Array.isArray(c.scorecard) ? c.scorecard : [])
+
+  const holeNo = (h: any) => h.number ?? h.hole
+  const yardsOf = (h: any, color: string) => {
+    const v = h.yardages?.[color]
+    return v != null && Number(v) > 0 ? Number(v) : null
+  }
+
+  // Collect every tee color that appears in the yardages, ordered back → forward
+  // by total length so the tee selector reads longest-first.
+  const teeColors: string[] = []
+  if (rich) {
+    const totals: Record<string, number> = {}
+    for (const h of source) {
+      for (const color of Object.keys(h.yardages ?? {})) {
+        totals[color] = (totals[color] ?? 0) + (yardsOf(h, color) ?? 0)
+      }
+    }
+    teeColors.push(...Object.keys(totals).sort((a, b) => totals[b] - totals[a]))
+  }
+
+  // A representative yardage per hole for the hole-level Yardage field (white,
+  // else the longest tee) — a fallback the scorecard uses when no tee is picked.
+  const mainColor = teeColors.includes('white') ? 'white' : teeColors[0]
+
+  const Holes = source.map((h: any) => ({
+    HoleNo:         holeNo(h),
     Par:            h.par ?? null,
     ParFemale:      null,
-    Yardage:        null,
-    Handicap:       null,
+    Yardage:        mainColor ? yardsOf(h, mainColor) : null,
+    Handicap:       h.handicap_index ?? h.handicap ?? null,
     HandicapFemale: null,
     TeeLatitude: null, TeeLongitude: null,
     GreenLatitude: null, GreenLongitude: null,
@@ -71,6 +121,21 @@ export function normOpenGolfDetail(c: any) {
     Marker100: null, Marker150: null, Marker200: null,
     Waypoints: [], LayupSpots: [],
   }))
+
+  // Build a Tee per color, with length1..N per hole (what the app scorecard reads).
+  const Tees = teeColors.map((color, i) => {
+    const tee: any = {
+      teeID:    `ogl-${color}-${i}`,
+      teeName:  cap(color),
+      teeColor: OGL_TEE_HEX[color.toLowerCase()] ?? null,
+    }
+    for (const h of source) {
+      const n = holeNo(h)
+      if (n != null) tee[`length${n}`] = yardsOf(h, color)
+    }
+    return tee
+  })
+
   const totalPar = c.par ?? (Holes.reduce((a: number, h: any) => a + (h.Par ?? 0), 0) || null)
   return {
     CourseID:   OGL_PREFIX + c.id,
@@ -94,7 +159,7 @@ export function normOpenGolfDetail(c: any) {
     PriceRange: null,
     Holes,
     holes:      Holes,
-    Tees:       [],
+    Tees,
     polygons:   [],
     website:    c.website ?? null,
     telephone:  c.phone ?? null,
