@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isOgl, stripOgl, getOpenGolfCourseRaw, normOpenGolfDetail } from '@/lib/opengolf'
 
 // Course detail backed by golfcourseapi.com (free tier). The output payload is
 // kept identical to the old GolfAPI.io route so the iOS app reads it unchanged.
@@ -148,6 +149,19 @@ export async function GET(req: NextRequest) {
       }
     }
   } catch { /* fall through */ }
+
+  // ── OpenGolfAPI course (id prefixed "ogl_") — par-only scorecard, no key ──
+  if (isOgl(courseId)) {
+    const raw = await getOpenGolfCourseRaw(stripOgl(courseId))
+    if (!raw) return NextResponse.json({ error: 'Failed to fetch course' }, { status: 502 })
+    const payload = normOpenGolfDetail(raw)
+    try {
+      await sb.from('golf_course_details_cache').upsert({
+        course_id: cacheKey, data: payload, cached_at: new Date().toISOString(),
+      })
+    } catch { /* ignore */ }
+    return NextResponse.json(payload)
+  }
 
   if (!GOLF_KEY) {
     return NextResponse.json({ error: 'GOLFCOURSE_API_KEY is not configured' }, { status: 500 })

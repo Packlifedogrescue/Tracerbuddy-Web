@@ -161,7 +161,7 @@ export default function CourseMapFree({
 
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Imagery &copy; Esri', maxZoom: 19 },
+      { attribution: 'Imagery &copy; Esri · Golf data &copy; OpenStreetMap', maxZoom: 19 },
     ).addTo(map)
 
     // Hazards first, so greens / lines / markers sit on top of them.

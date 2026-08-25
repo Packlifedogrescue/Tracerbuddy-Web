@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { searchOpenGolf } from '@/lib/opengolf'
 
 // Course search backed by golfcourseapi.com (free tier). Output shape is kept
 // identical to the old GolfAPI.io route so the iOS app doesn't need to change
@@ -8,7 +9,7 @@ import { createClient } from '@supabase/supabase-js'
 // Longitude come back null and hasGPS is 0 (the OSM layer fills GPS in later).
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 7
-const CACHE_VERSION   = 4  // bumped: results are now golfcourseapi-shaped, not GolfAPI.io
+const CACHE_VERSION   = 5  // bumped: results now merge golfcourseapi + OpenGolfAPI
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -27,6 +28,11 @@ const STATE_BY_CODE: Record<string, string> = {
   tn:'tennessee', tx:'texas', ut:'utah', vt:'vermont', va:'virginia', wa:'washington',
   wv:'west virginia', wi:'wisconsin', wy:'wyoming', dc:'district of columbia',
 }
+// Same check for our already-normalised (PascalCase) results.
+function regionMatchesNorm(c: any, region: string): boolean {
+  return regionMatches({ location: { state: c.StateCode, country: c.Country } }, region)
+}
+
 // Does a course sit in the region the user typed (a state code, state name, or country)?
 function regionMatches(course: any, region: string): boolean {
   const r = region.trim().toLowerCase()
@@ -96,46 +102,65 @@ export async function GET(req: NextRequest) {
     // Cache table may not exist yet — fall through
   }
 
-  if (!GOLF_KEY) {
-    return NextResponse.json(
-      { courses: [], error: 'GOLFCOURSE_API_KEY is not configured' },
-      { status: 500 },
-    )
-  }
-
-  // ── 2. Call golfcourseapi.com ────────────────────────────────────────────
-  try {
-    const res  = await fetch(`${GOLFCOURSE_BASE}/search?search_query=${encodeURIComponent(query)}`, {
-      headers: { Authorization: `Bearer ${GOLF_KEY}` },
-    })
-    const data = await res.json()
-    let raw_courses = Array.isArray(data) ? data : (data.courses ?? [])
-
-    // Filter by the region field (state code, state name, or country) when given.
-    if (state && raw_courses.length > 0) {
-      const filtered = raw_courses.filter((c: any) => regionMatches(c, state))
-      if (filtered.length > 0) raw_courses = filtered
-    }
-
-    const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
-    const courses = raw_courses
-      .map(normaliseCourse)
-      .filter((c: any) => {
-        const name = (c.CourseName || c.ClubName || '').trim()
-        return c.CourseID && name.length > 0 && !GENERIC.test(name)
-      })
-
-    // ── 3. Write to cache (best-effort) ──────────────────────────────────
+  // ── 2. Query golfcourseapi + OpenGolfAPI in parallel, then merge ──────────
+  // golfcourseapi brings richer per-tee scorecards; OpenGolfAPI (OpenStreetMap)
+  // brings broad coverage + GPS. Either can fail without sinking the search.
+  const gcPromise = (async (): Promise<any[]> => {
+    if (!GOLF_KEY) return []
     try {
-      await sb.from('golf_courses_cache').upsert({
-        search_query: cacheKey,
-        results:      courses,
-        cached_at:    new Date().toISOString(),
+      const res  = await fetch(`${GOLFCOURSE_BASE}/search?search_query=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${GOLF_KEY}` },
       })
-    } catch { /* ignore */ }
+      const data = await res.json()
+      let raw = Array.isArray(data) ? data : (data.courses ?? [])
+      if (state && raw.length > 0) {
+        const f = raw.filter((c: any) => regionMatches(c, state))
+        if (f.length > 0) raw = f
+      }
+      return raw.map(normaliseCourse)
+    } catch { return [] }
+  })()
 
-    return NextResponse.json({ courses })
-  } catch (e) {
-    return NextResponse.json({ courses: [], error: String(e) }, { status: 502 })
+  const oglPromise = (async (): Promise<any[]> => {
+    try {
+      let list = await searchOpenGolf(query)
+      if (state) {
+        const f = list.filter((c: any) => regionMatchesNorm(c, state))
+        if (f.length > 0) list = f
+      }
+      return list
+    } catch { return [] }
+  })()
+
+  const [gc, ogl] = await Promise.all([gcPromise, oglPromise])
+
+  const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
+  const clean = (c: any) => {
+    const name = (c.CourseName || c.ClubName || '').trim()
+    return c.CourseID && name.length > 0 && !GENERIC.test(name)
   }
+  const key = (c: any) =>
+    `${String(c.CourseName || c.ClubName || '').toLowerCase().trim()}|${String(c.City || '').toLowerCase().trim()}`
+
+  // golfcourseapi first (its richer scorecards win ties); OpenGolfAPI fills gaps.
+  const seen = new Set<string>()
+  const courses: any[] = []
+  for (const c of [...gc, ...ogl]) {
+    if (!clean(c)) continue
+    const k = key(c)
+    if (seen.has(k)) continue
+    seen.add(k)
+    courses.push(c)
+  }
+
+  // ── 3. Write to cache (best-effort) ──────────────────────────────────────
+  try {
+    await sb.from('golf_courses_cache').upsert({
+      search_query: cacheKey,
+      results:      courses,
+      cached_at:    new Date().toISOString(),
+    })
+  } catch { /* ignore */ }
+
+  return NextResponse.json({ courses })
 }

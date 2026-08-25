@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { geocodeCourse, geocodeRegion, fetchGolfFeatures, type LatLng } from '@/lib/osm'
+import { isOgl, stripOgl, getOpenGolfCourseRaw } from '@/lib/opengolf'
 
 // The OSM lookup (geocode + Overpass, with mirror failover) can take a while on
 // a cold course, so give the function room rather than letting Vercel's short
@@ -76,44 +77,49 @@ export async function GET(req: NextRequest) {
     }
   } catch { /* table may not exist yet — fall through */ }
 
-  if (!GOLF_KEY) {
-    // Without the scorecard we can't learn the course name to geocode.
-    return NextResponse.json(emptyPayload(courseId))
-  }
-
   try {
-    // ── 2. Learn the course's name/location from golfcourseapi ─────────────
-    const detailRes = await fetch(`${GOLFCOURSE_BASE}/courses/${encodeURIComponent(courseId)}`, {
-      headers: { Authorization: `Bearer ${GOLF_KEY}` },
-    })
-    if (!detailRes.ok) return NextResponse.json(emptyPayload(courseId))
-    const detailJson = await detailRes.json()
-    const course = detailJson.course ?? detailJson
-    const loc = course.location ?? {}
-    const clubName   = course.club_name || ''
-    const courseName = course.course_name || ''
-    const name       = clubName || courseName
-    // For area matching we want both the facility name AND the course label
-    // (e.g. "Pinehurst Resort" + "No. 2"), so a resort's courses disambiguate.
-    const targetName = [clubName, courseName].filter(Boolean).join(' ')
+    // ── 2. Learn the course's location + name, then build search anchors ────
+    let anchors: LatLng[] = []
+    let targetName = ''
 
-    // ── 3. Geocode → anchor ────────────────────────────────────────────────
-    // Geocode two ways and search near BOTH: the precise course-name geocode
-    // (usually lands on the course, but can drift to a same-named town in another
-    // state) and the state-respecting region (honours the state, but a town name
-    // like "Fairfield" is itself ambiguous). Searching around both and letting
-    // name matching pick the course is robust to either one being off.
-    const [nameAnchor, region] = await Promise.all([
-      geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? ''),
-      geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? ''),
-    ])
-    const anchors = [nameAnchor, region].filter(Boolean) as LatLng[]
+    if (isOgl(courseId)) {
+      // OpenGolfAPI course: it already carries lat/lng, so skip geocoding
+      // entirely — go straight to the OSM hole geometry at that point.
+      const raw = await getOpenGolfCourseRaw(stripOgl(courseId))
+      if (raw?.latitude != null && raw?.longitude != null) {
+        anchors = [{ latitude: raw.latitude, longitude: raw.longitude }]
+      }
+      targetName = raw?.name || raw?.course_name || ''
+    } else {
+      if (!GOLF_KEY) return NextResponse.json(emptyPayload(courseId))
+      const detailRes = await fetch(`${GOLFCOURSE_BASE}/courses/${encodeURIComponent(courseId)}`, {
+        headers: { Authorization: `Bearer ${GOLF_KEY}` },
+      })
+      if (!detailRes.ok) return NextResponse.json(emptyPayload(courseId))
+      const detailJson = await detailRes.json()
+      const course = detailJson.course ?? detailJson
+      const loc = course.location ?? {}
+      const clubName   = course.club_name || ''
+      const courseName = course.course_name || ''
+      const name       = clubName || courseName
+      targetName = [clubName, courseName].filter(Boolean).join(' ')
+      // Geocode two ways and search near BOTH: the precise course-name geocode
+      // (can drift to a same-named town in another state) and the state-respecting
+      // region (a town name like "Fairfield" is itself ambiguous). Name matching
+      // then picks the course, robust to either geocode being off.
+      const [nameAnchor, region] = await Promise.all([
+        geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? ''),
+        geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? ''),
+      ])
+      anchors = [nameAnchor, region].filter(Boolean) as LatLng[]
+    }
+
     if (!anchors.length) {
-      // Nothing geocoded — return a null center; don't cache, retry next time.
+      // Nothing to anchor on — return a null center; don't cache, retry next time.
       return NextResponse.json({ ...emptyPayload(courseId), center: null, centerSource: null })
     }
 
-    // ── 4. Overpass → green / tee / pin positions (scoped to this course) ──
+    // ── 3. Overpass → green / tee / pin positions (scoped to this course) ──
     const osm = await fetchGolfFeatures(anchors, targetName)
     const hasGeo = osm.greens.length + osm.tees.length + osm.pins.length + osm.holes.length > 0
 
