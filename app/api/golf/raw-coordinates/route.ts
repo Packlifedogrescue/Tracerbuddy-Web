@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { geocodeCourse, geocodeRegion, fetchGolfFeatures, type LatLng } from '@/lib/osm'
+import { geocodeCourse, geocodeRegion, fetchGolfFeatures, distanceMeters, type LatLng } from '@/lib/osm'
 
 // The OSM lookup (geocode + Overpass, with mirror failover) can take a while on
 // a cold course, so give the function room rather than letting Vercel's short
@@ -98,12 +98,19 @@ export async function GET(req: NextRequest) {
     const targetName = [clubName, courseName].filter(Boolean).join(' ')
 
     // ── 3. Geocode → anchor ────────────────────────────────────────────────
-    // Anchor on the STATE-respecting region first, so a course whose name
-    // geocodes to a same-named town in another state (Gettysburg PA vs SD)
-    // can't hijack the location. Only fall back to the free-text name geocode
-    // when the region can't be resolved.
-    const region = await geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? '')
-    const anchor = region ?? await geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? '')
+    // Use the precise course-name geocode, but VALIDATE it against a
+    // state-respecting region anchor. The name geocode is more accurate (often
+    // lands on the course itself) but can drift to a same-named town in another
+    // state (Gettysburg PA vs SD); the region honours the state strictly. So:
+    // take the name geocode when it agrees with the region (within 60 km), else
+    // fall back to the region.
+    const [nameAnchor, region] = await Promise.all([
+      geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? ''),
+      geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? ''),
+    ])
+    let anchor: LatLng | null
+    if (nameAnchor && region) anchor = distanceMeters(nameAnchor, region) < 60_000 ? nameAnchor : region
+    else anchor = nameAnchor ?? region
     if (!anchor) {
       // Nothing geocoded — return a null center; don't cache, retry next time.
       return NextResponse.json({ ...emptyPayload(courseId), center: null, centerSource: null })

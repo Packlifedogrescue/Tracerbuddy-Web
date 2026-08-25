@@ -61,6 +61,8 @@ export interface OsmResult {
 
 // ── geometry helpers ───────────────────────────────────────────────────────
 
+export function distanceMeters(a: LatLng, b: LatLng): number { return haversine(a, b) }
+
 function haversine(a: LatLng, b: LatLng): number {
   const R = 6371000
   const toRad = (d: number) => (d * Math.PI) / 180
