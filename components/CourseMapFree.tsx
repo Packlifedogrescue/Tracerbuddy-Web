@@ -20,10 +20,33 @@ export interface GpsHole {
   pin: GpsCoord | null
 }
 
-// The flag sits at the green's center (the polygon centroid — always on the
-// green). OSM "pin" nodes exist but are sparse and often misplaced off the
-// green, so we only fall back to one when there's no green geometry at all.
-function flagPoint(h: GpsHole): GpsCoord | null { return h.green ?? h.pin }
+// Area-weighted centroid of a polygon (falls back to the vertex mean).
+function polygonCentroid(pts: GpsCoord[]): GpsCoord | null {
+  if (!pts.length) return null
+  const mean = () => ({
+    latitude:  pts.reduce((s, p) => s + p.latitude, 0) / pts.length,
+    longitude: pts.reduce((s, p) => s + p.longitude, 0) / pts.length,
+  })
+  if (pts.length < 3) return mean()
+  let twiceArea = 0, cx = 0, cy = 0
+  for (let i = 0; i < pts.length; i++) {
+    const p0 = pts[i], p1 = pts[(i + 1) % pts.length]
+    const cross = p0.longitude * p1.latitude - p1.longitude * p0.latitude
+    twiceArea += cross
+    cx += (p0.longitude + p1.longitude) * cross
+    cy += (p0.latitude + p1.latitude) * cross
+  }
+  if (Math.abs(twiceArea) < 1e-12) return mean()
+  return { latitude: cy / (3 * twiceArea), longitude: cx / (3 * twiceArea) }
+}
+
+// The flag sits at the true center of the green POLYGON we draw — so it's always
+// on the ring, and front/center/back stay consistent (all from the same shape).
+// Only where no green polygon exists do we fall back to a pin.
+function flagPoint(h: GpsHole): GpsCoord | null {
+  if (h.greenPolygon && h.greenPolygon.length >= 3) return polygonCentroid(h.greenPolygon)
+  return h.pin ?? null
+}
 
 // OSM doesn't record tee color, but tee boxes are ordered back → forward, and
 // courses almost always run their colors that way (championship/back darkest,
