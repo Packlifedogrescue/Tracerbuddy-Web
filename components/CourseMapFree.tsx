@@ -164,19 +164,8 @@ export default function CourseMapFree({
       { attribution: 'Imagery &copy; Esri · Golf data &copy; OpenStreetMap', maxZoom: 19 },
     ).addTo(map)
 
-    // Hazards first, so greens / lines / markers sit on top of them.
-    for (const poly of water ?? []) {
-      if (poly.length >= 3) {
-        L.polygon(poly.map(p => [p.latitude, p.longitude] as [number, number]),
-          { color: '#2E6FB5', weight: 1, fillColor: '#3B82C4', fillOpacity: 0.45, interactive: false }).addTo(map)
-      }
-    }
-    for (const poly of bunkers ?? []) {
-      if (poly.length >= 3) {
-        L.polygon(poly.map(p => [p.latitude, p.longitude] as [number, number]),
-          { color: '#C9B27A', weight: 1, fillColor: '#EAD9A0', fillOpacity: 0.7, interactive: false }).addTo(map)
-      }
-    }
+    // NB: we deliberately do NOT paint fills over water/bunkers — the satellite
+    // already shows them far better than a flat color would.
 
     measureLayer.current = L.layerGroup().addTo(map)
 
@@ -187,10 +176,13 @@ export default function CourseMapFree({
       const num = h.hole
       const layer: HoleLayer = {}
 
+      // The green outline is invisible by default (the satellite shows the green);
+      // the selected-hole effect reveals a thin gold ring so you can see the
+      // target green when a hole is focused. No fill over the imagery.
       if (h.greenPolygon && h.greenPolygon.length >= 3) {
         layer.poly = L.polygon(
           h.greenPolygon.map(p => [p.latitude, p.longitude] as [number, number]),
-          { color: '#2FBE77', weight: 1.5, fillColor: '#2f7d52', fillOpacity: 0.5 },
+          { color: '#C9A84C', weight: 2, opacity: 0, fillOpacity: 0, interactive: false },
         ).addTo(map)
       }
 
@@ -269,11 +261,7 @@ export default function CourseMapFree({
     for (const [numStr, layer] of Object.entries(layers.current)) {
       const num = Number(numStr)
       const active = num === selectedHole
-      layer.poly?.setStyle({
-        color: active ? '#C9A84C' : '#2FBE77',
-        weight: active ? 2.5 : 1.5,
-        fillOpacity: active ? 0.75 : 0.5,
-      })
+      layer.poly?.setStyle({ opacity: active ? 0.95 : 0, weight: 2, fillOpacity: 0 })
       layer.marker?.setIcon(holeIcon(num, active))
       layer.marker?.setZIndexOffset(active ? 1000 : 0)
 
