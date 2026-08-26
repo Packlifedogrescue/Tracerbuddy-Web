@@ -165,6 +165,39 @@ export async function getOpenGolfCourseRaw(id: string): Promise<any | null> {
   return fetchJson(`${OPENGOLF_BASE}/courses/${encodeURIComponent(id)}`)
 }
 
+// Significant tokens for name matching (drop generic golf words + short bits).
+const MATCH_STOP = new Set(['the', 'golf', 'course', 'club', 'at', 'of', 'and', 'cc', 'gc', 'country'])
+function matchTokens(s: string): string[] {
+  return (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+    .filter(t => t.length > 1 && !MATCH_STOP.has(t))
+}
+
+// Loose name+location match against OpenGolfAPI's catalog, for a course we only
+// have a scorecard for (couldn't pair at search time). Returns the OGL course id
+// (no prefix) when a confident match exists, so its /features can supply greens
+// our Overpass query missed. Conservative — requires a real name overlap AND the
+// city or state to line up — since it's used only to fill an otherwise-empty map.
+export async function findOpenGolfMatch(name: string, city: string, state: string): Promise<string | null> {
+  const list = await searchOpenGolf(name || [city, state].filter(Boolean).join(' '))
+  const want = new Set(matchTokens(name))
+  if (!list.length || !want.size) return null
+
+  let best: { id: string; score: number } | null = null
+  for (const c of list) {
+    const cand = matchTokens(`${c.ClubName ?? ''} ${c.CourseName ?? ''}`)
+    if (!cand.length) continue
+    let hit = 0
+    for (const t of cand) if (want.has(t)) hit++
+    const overlap = hit / Math.max(want.size, cand.length)
+    const cityOk  = !!city  && String(c.City ?? '').toLowerCase().trim()      === city.toLowerCase().trim()
+    const stateOk = !!state && String(c.StateCode ?? '').toLowerCase().trim() === state.toLowerCase().trim()
+    if (overlap < 0.5 || !(cityOk || stateOk)) continue
+    const score = overlap + (cityOk ? 0.4 : 0) + (stateOk ? 0.2 : 0)
+    if (!best || score > best.score) best = { id: c.CourseID, score }
+  }
+  return best ? stripOgl(best.id) : null
+}
+
 // OpenGolfAPI course → the app's CourseDetail shape. When the per-hole detail
 // (from /courses/{id}/holes) is supplied it carries par, handicap and per-tee
 // yardages, so we build a full scorecard + tee selector. Without it we fall back
