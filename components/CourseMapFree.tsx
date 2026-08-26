@@ -48,6 +48,18 @@ function flagPoint(h: GpsHole): GpsCoord | null {
   return h.pin ?? null
 }
 
+// Nearest point in `list` to `target`, within maxYds (else null). Used to snap a
+// hole's play line onto the flag actually drawn on its green, so the line and the
+// pin line up.
+function nearestPoint(target: GpsCoord, list: GpsCoord[], maxYds: number): GpsCoord | null {
+  let best: GpsCoord | null = null, bestD = Infinity
+  for (const c of list) {
+    const d = distYards(target, c)
+    if (d < bestD) { bestD = d; best = c }
+  }
+  return best && bestD <= maxYds ? best : null
+}
+
 // OSM doesn't record tee color, but tee boxes are ordered back → forward, and
 // courses almost always run their colors that way (championship/back darkest,
 // forward reddest). So we approximate the scorecard colors from that order.
@@ -210,9 +222,15 @@ export default function CourseMapFree({
         ).addTo(map)
       }
 
-      // Flag only where OSM actually mapped a green polygon, so it can never
-      // float on bare ground (par-3 tees, mis-oriented holes, etc.).
-      const flag = (h.greenPolygon && h.greenPolygon.length >= 3) ? flagPoint(h) : null
+      // The play line must END at the flag the map actually draws (flags come from
+      // `greens` — the green centroids — see below), so the line lines up with the
+      // pin. Snap to the drawn flag nearest this hole's green; fall back to the
+      // green-polygon centroid only when no drawn flag is near, so a course without
+      // the flat green list still gets a line and it never floats on bare ground.
+      const greenRef = flagPoint(h) ?? h.green
+      const flag =
+        (greenRef ? nearestPoint(greenRef, greens ?? [], 80) : null)
+        ?? ((h.greenPolygon && h.greenPolygon.length >= 3) ? flagPoint(h) : null)
       const teeBoxes = (h.tees && h.tees.length ? h.tees : (h.tee ? [h.tee] : []))
       if (flag && teeBoxes.length) {
         // Real scorecard tee colors (back → forward) when we have them; fall
