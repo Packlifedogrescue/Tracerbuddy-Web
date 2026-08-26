@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 16  // v16: restore Overpass ∪ OpenGolfAPI green centroids for flags (PR #12 behavior)
+const CACHE_VERSION    = 17  // v17: prefer OpenGolfAPI greens for flags, Overpass only as fallback
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -145,17 +145,18 @@ export async function GET(req: NextRequest) {
     // ── 3. Overpass → green / tee / pin positions (scoped to this course) ──
     const osm = await fetchGolfFeatures(anchors, targetName)
 
-    // Flags: union the Overpass greens with OpenGolfAPI's green centroids. Overpass
-    // alone is empty for some courses (Cumberland included) — their greens come
-    // from /features — so both sources are needed. Deduped by proximity (~11 m) so
-    // a single green never gets two flags. Each OGL centroid is the green's own
-    // center, so a flag here lands on the green.
+    // Flags: prefer OpenGolfAPI's course-scoped green centroids when it has them
+    // (clean and on-green), and fall back to the Overpass greens only for courses
+    // /features doesn't cover. Overpass grabs greens by area, so it can pull in
+    // mis-tagged or neighbouring-course shapes that flag off in the rough; using
+    // OGL as the source drops those strays. No size/shape filtering — just source
+    // preference — so a real green is never dropped for being an odd shape.
     let greens = osm.greens
     let bunkers = osm.bunkers
     let water = osm.water
     if (oglFeatures) {
       if (oglFeatures.greens.length) {
-        greens = unionGreens(osm.greens, oglFeatures.greens.map(g => g.center))
+        greens = oglFeatures.greens.map(g => g.center)
       }
       if (oglFeatures.bunkers.length) bunkers = oglFeatures.bunkers
       if (oglFeatures.water.length)   water = oglFeatures.water
@@ -215,14 +216,6 @@ export async function GET(req: NextRequest) {
 
 function near(a: LatLng, b: LatLng): boolean {
   return Math.abs(a.latitude - b.latitude) < 1e-4 && Math.abs(a.longitude - b.longitude) < 1e-4
-}
-
-// Union two green-centroid lists, dropping any within ~11 m of one already kept
-// so a single green never gets two flags.
-function unionGreens(a: LatLng[], b: LatLng[]): LatLng[] {
-  const out = [...a]
-  for (const p of b) if (!out.some(q => near(q, p))) out.push(p)
-  return out
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
