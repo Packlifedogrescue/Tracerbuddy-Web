@@ -313,12 +313,27 @@ export default function CourseMapFree({
 
       const lines = layer.lines ?? []
       const cols = layer.lineColors ?? []
-      let showIdx = selectedTeeColor ? cols.findIndex(c => sameColor(c, selectedTeeColor)) : -1
-      if (showIdx === -1) showIdx = 0
-      lines.forEach((ln, i) => ln.setStyle({ opacity: active && i === showIdx ? 0.95 : 0 }))
+      // Show exactly one line for the selected hole, PAINTED the selected tee's
+      // color. Prefer the tee box whose own color matches; otherwise map by the
+      // tee's position in the scorecard order (clamped to the boxes we have) so a
+      // mismatch in OSM tee-box count doesn't lock the line to the back tee.
+      let showIdx = 0
+      if (selectedTeeColor) {
+        const exact = cols.findIndex(c => sameColor(c, selectedTeeColor))
+        if (exact !== -1) showIdx = exact
+        else {
+          const scIdx = (teeColors ?? []).findIndex(c => sameColor(c, selectedTeeColor))
+          if (scIdx !== -1 && lines.length) showIdx = Math.min(scIdx, lines.length - 1)
+        }
+      }
+      lines.forEach((ln, i) => {
+        const shown = active && i === showIdx
+        ln.setStyle({ opacity: shown ? 0.95 : 0, color: shown && selectedTeeColor ? selectedTeeColor : (cols[i] ?? '#C9A84C') })
+      })
       ;(layer.teeDots ?? []).forEach((dot, i) => {
-        const on = !selectedTeeColor || sameColor(cols[i], selectedTeeColor)
-        dot.setStyle({ opacity: active ? 1 : 0, fillOpacity: active ? (on ? 1 : 0.4) : 0, radius: on ? 4 : 3 })
+        const on = i === showIdx
+        dot.setStyle({ opacity: active ? 1 : 0, fillOpacity: active ? (on ? 1 : 0.4) : 0, radius: on ? 4 : 3,
+          fillColor: on && selectedTeeColor ? selectedTeeColor : (cols[i] ?? '#C9A84C') })
       })
     }
 
@@ -334,7 +349,7 @@ export default function CourseMapFree({
     } else if (allBounds.current) {
       map.flyToBounds(allBounds.current, { duration: 0.6 })
     }
-  }, [selectedHole, selHole, selectedTeeColor])
+  }, [selectedHole, selHole, selectedTeeColor, teeColors])
 
   // Measure tool: while active, each map tap drops a point; the running total
   // yardage of the chain is shown. Toggling off clears it.
