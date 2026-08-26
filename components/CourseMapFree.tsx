@@ -492,7 +492,9 @@ export default function CourseMapFree({
       {wind && (
         <div className="absolute bottom-8 left-3 z-[1000] pointer-events-none select-none">
           <div className="flex items-center gap-2 rounded-xl bg-[#0d0d0d]/90 backdrop-blur-sm border border-white/10 px-2.5 py-1.5 shadow-lg">
-            <svg width="22" height="22" viewBox="0 0 22 22" style={{ transform: `rotate(${wind.dirDeg + 180}deg)` }}>
+            {/* Arrow points to where the wind comes FROM, matching the Conditions
+                panel (WeatherWidget) which rotates by the same dirDeg with no offset. */}
+            <svg width="22" height="22" viewBox="0 0 22 22" style={{ transform: `rotate(${wind.dirDeg}deg)` }}>
               <path d="M11 3 L15 15 L11 12 L7 15 Z" fill="#C9A84C" />
             </svg>
             <div className="leading-none">
