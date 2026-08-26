@@ -96,6 +96,19 @@ function flagIcon() {
   })
 }
 
+// Editable draft flag (gold, tap-to-remove) shown while placing greens.
+function flagIconEdit() {
+  return L.divIcon({
+    className: '',
+    html: `<svg width="12" height="13" viewBox="0 0 12 13" xmlns="http://www.w3.org/2000/svg">
+      <line x1="1.5" y1="12.5" x2="1.5" y2="1" stroke="#ffffff" stroke-width="1.4"/>
+      <path d="M1.5 1 L9 2.8 L1.5 4.6 Z" fill="#C9A84C"/>
+    </svg>`,
+    iconSize: [12, 13],
+    iconAnchor: [1.5, 12],
+  })
+}
+
 // Great-circle distance in yards.
 function distYards(a: GpsCoord, b: GpsCoord): number {
   const R = 6371000
@@ -156,7 +169,7 @@ function sameColor(a?: string, b?: string) {
 
 export default function CourseMapFree({
   center, holes, greens, bunkers, water, matchedCourse, teeColors, selectedTeeColor, selectedHole, onHoleClick,
-  wind, holeElevations, teeYardages,
+  wind, holeElevations, teeYardages, editable, customGreens, onSaveGreens,
 }: {
   center: GpsCoord
   holes: GpsHole[]
@@ -171,6 +184,9 @@ export default function CourseMapFree({
   wind?: { speedMph: number; dirDeg: number } | null   // current wind at the course
   holeElevations?: Record<number, number>              // per hole: green−tee, in feet
   teeYardages?: Record<string, (number | null)[]>      // scorecard yards per tee color (hex, lc) → 18 holes
+  editable?: boolean          // admin: show the "Place greens" tool
+  customGreens?: GpsCoord[]   // manually-placed greens (shown to everyone as flags)
+  onSaveGreens?: (greens: GpsCoord[]) => Promise<void>   // persist the placed greens
 }) {
   const elRef   = useRef<HTMLDivElement>(null)
   const mapRef  = useRef<L.Map | null>(null)
@@ -186,6 +202,12 @@ export default function CourseMapFree({
   const [measureYds, setMeasureYds] = useState<number | null>(null)
   const measurePts = useRef<L.LatLng[]>([])
   const measureLayer = useRef<L.LayerGroup | null>(null)
+
+  // Green-placement tool (admin): drop flags on courses OSM hasn't mapped.
+  const [editingGreens, setEditingGreens] = useState(false)
+  const [draftGreens, setDraftGreens] = useState<GpsCoord[]>([])
+  const [savingGreens, setSavingGreens] = useState(false)
+  const customLayer = useRef<L.LayerGroup | null>(null)
 
   const selHole = selectedHole != null ? holes.find(h => h.hole === selectedHole) : undefined
   // Front/center/back from the back-tee geometry, then shifted to the selected
@@ -205,7 +227,7 @@ export default function CourseMapFree({
     const d = selY - backY
     return { front: base.front + d, center: base.center + d, back: base.back + d }
   })()
-  const hasOverlays = (greens?.length ?? 0) > 0
+  const hasOverlays = (greens?.length ?? 0) > 0 || (customGreens?.length ?? 0) > 0
     || holes.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
 
   // Build the map once. The page gives this component a key={courseID}, so a new
@@ -225,6 +247,7 @@ export default function CourseMapFree({
     // already shows them far better than a flat color would.
 
     measureLayer.current = L.layerGroup().addTo(map)
+    customLayer.current = L.layerGroup().addTo(map)
 
     const bounds: L.LatLngExpression[] = []
 
@@ -404,6 +427,51 @@ export default function CourseMapFree({
     return () => { map.off('click', onClick); map.getContainer().style.cursor = '' }
   }, [measuring])
 
+  // Render the custom (manually-placed) greens: saved ones as normal flags for
+  // everyone; while editing, the draft as gold tap-to-remove flags.
+  useEffect(() => {
+    const map = mapRef.current
+    const lg = customLayer.current
+    if (!map || !lg) return
+    lg.clearLayers()
+    const pts = editingGreens ? draftGreens : (customGreens ?? [])
+    pts.forEach((g, i) => {
+      if (editingGreens) {
+        const remove = (e: L.LeafletMouseEvent) => { L.DomEvent.stop(e); setDraftGreens(d => d.filter((_, j) => j !== i)) }
+        L.circleMarker([g.latitude, g.longitude],
+          { radius: 6, color: '#20160a', weight: 1.5, fillColor: '#C9A84C', fillOpacity: 0.9 })
+          .addTo(lg).on('click', remove)
+        L.marker([g.latitude, g.longitude], { icon: flagIconEdit() }).addTo(lg).on('click', remove)
+      } else {
+        L.circleMarker([g.latitude, g.longitude],
+          { radius: 2.5, color: '#0b0b0b', weight: 1, fillColor: '#ffffff', fillOpacity: 1, interactive: false }).addTo(lg)
+        L.marker([g.latitude, g.longitude], { icon: flagIcon(), interactive: false }).addTo(lg)
+      }
+    })
+  }, [editingGreens, draftGreens, customGreens])
+
+  // While placing greens, each map tap drops a new draft green.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (!editingGreens) { map.getContainer().style.cursor = ''; return }
+    map.getContainer().style.cursor = 'crosshair'
+    const onClick = (e: L.LeafletMouseEvent) => {
+      setDraftGreens(d => [...d, { latitude: e.latlng.lat, longitude: e.latlng.lng }])
+    }
+    map.on('click', onClick)
+    return () => { map.off('click', onClick); map.getContainer().style.cursor = '' }
+  }, [editingGreens])
+
+  const startPlacingGreens = () => { setMeasuring(false); setDraftGreens(customGreens ?? []); setEditingGreens(true) }
+  const savePlacedGreens = async () => {
+    if (!onSaveGreens) { setEditingGreens(false); return }
+    setSavingGreens(true)
+    try { await onSaveGreens(draftGreens); setEditingGreens(false) }
+    catch { /* keep the draft open so work isn't lost */ }
+    finally { setSavingGreens(false) }
+  }
+
   return (
     <div className="relative w-full h-full">
       <div ref={elRef} className="w-full h-full" style={{ background: '#0b2114' }} />
@@ -428,6 +496,41 @@ export default function CourseMapFree({
           {measuring ? 'Done' : 'Measure'}
         </button>
       </div>
+
+      {/* Admin: place greens on courses OSM hasn't mapped. */}
+      {editable && (
+        <div className="absolute top-14 right-16 z-[1000] flex items-center gap-2">
+          {editingGreens && (
+            <>
+              <div className="rounded-lg bg-[#0d0d0d]/90 text-white/70 text-[10.5px] font-semibold px-2.5 py-1.5 shadow">
+                Tap the map to drop a flag · tap a flag to remove · <span className="text-[#C9A84C]">{draftGreens.length}</span> placed
+              </div>
+              <button onClick={() => setDraftGreens(d => d.slice(0, -1))} disabled={!draftGreens.length}
+                className="rounded-lg bg-[#0d0d0d]/90 text-white/80 text-[11px] font-bold px-2.5 py-1.5 shadow hover:text-white disabled:opacity-40">
+                Undo
+              </button>
+              <button onClick={() => setDraftGreens([])} disabled={!draftGreens.length}
+                className="rounded-lg bg-[#0d0d0d]/90 text-white/80 text-[11px] font-bold px-2.5 py-1.5 shadow hover:text-white disabled:opacity-40">
+                Clear
+              </button>
+              <button onClick={() => setEditingGreens(false)}
+                className="rounded-lg bg-[#0d0d0d]/90 text-white/80 text-[11px] font-bold px-2.5 py-1.5 shadow hover:text-white">
+                Cancel
+              </button>
+              <button onClick={savePlacedGreens} disabled={savingGreens}
+                className="rounded-lg bg-[#22A06B] text-white text-[11px] font-bold px-2.5 py-1.5 shadow hover:bg-[#1c8b5b] disabled:opacity-50">
+                {savingGreens ? 'Saving…' : 'Save'}
+              </button>
+            </>
+          )}
+          {!editingGreens && (
+            <button onClick={startPlacingGreens}
+              className="rounded-lg bg-[#0d0d0d]/90 text-white/80 text-[11px] font-bold px-2.5 py-1.5 shadow hover:text-white">
+              {(customGreens?.length ?? 0) > 0 ? 'Edit greens' : 'Place greens'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Which OSM course this map locked onto (glanceable confidence check). */}
       {matchedCourse && (

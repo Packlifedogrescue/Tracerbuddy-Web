@@ -382,6 +382,29 @@ export default function CoursesPage() {
   const [wind,           setWind]           = useState<{ speedMph: number; dirDeg: number } | null>(null)
   const [holeElev,       setHoleElev]       = useState<Record<number, number>>({})
   const [showDropdown,   setShowDropdown]   = useState(false)
+  const [isAdmin,        setIsAdmin]        = useState(false)
+  const [customGreens,   setCustomGreens]   = useState<GpsCoord[]>([])
+
+  // Admin gate for the "Place greens" map tool.
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const email = user?.email?.toLowerCase()
+      setIsAdmin(!!email && ['miller.brett88@gmail.com', 'brett@tracerbuddy.com'].includes(email))
+    }).catch(() => {})
+  }, [])
+
+  // Manually-placed greens for the selected course (admin overrides for courses
+  // OSM hasn't mapped) — shown as flags to everyone.
+  useEffect(() => {
+    const id = selected?.CourseID
+    if (!id) { setCustomGreens([]); return }
+    let cancelled = false
+    fetch(`/api/golf/course-greens?id=${encodeURIComponent(id)}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setCustomGreens(Array.isArray(d?.greens) ? d.greens : []) })
+      .catch(() => { if (!cancelled) setCustomGreens([]) })
+    return () => { cancelled = true }
+  }, [selected?.CourseID])
 
   useEffect(() => {
     supabase.from('rounds').select('course_name, total_score, created_at').order('created_at', { ascending: false }).limit(100)
@@ -491,6 +514,23 @@ export default function CoursesPage() {
     } finally {
       if (reqId === reqRef.current) setLoadingGps(false)
     }
+  }
+
+  // Persist admin-placed greens for the selected course (JWT sent for the
+  // server-side admin check), then reflect them locally.
+  async function saveCourseGreens(greens: GpsCoord[]) {
+    const id = selected?.CourseID
+    if (!id) return
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    const res = await fetch('/api/golf/course-greens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ courseId: id, greens }),
+    })
+    if (!res.ok) throw new Error('save failed')
+    const d = await res.json()
+    setCustomGreens(Array.isArray(d?.greens) ? d.greens : greens)
   }
 
   async function searchVisited(name: string) {
@@ -800,6 +840,9 @@ export default function CoursesPage() {
                     holeElevations={holeElev}
                     teeColors={teeColorsForMap}
                     teeYardages={teeYardagesForMap}
+                    editable={isAdmin}
+                    customGreens={customGreens}
+                    onSaveGreens={saveCourseGreens}
                     selectedTeeColor={selectedTeeColor}
                     selectedHole={selectedHole}
                     onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
