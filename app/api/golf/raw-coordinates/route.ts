@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { geocodeCourse, geocodeRegion, fetchGolfFeatures, type LatLng } from '@/lib/osm'
-import { isOgl, stripOgl, getOpenGolfCourseRaw, getOpenGolfFeatures, type OglFeatures } from '@/lib/opengolf'
+import { isOgl, stripOgl, getOpenGolfCourseRaw, getOpenGolfFeatures, findOpenGolfMatch, type OglFeatures } from '@/lib/opengolf'
 
 // The OSM lookup (geocode + Overpass, with mirror failover) can take a while on
 // a cold course, so give the function room rather than letting Vercel's short
@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 17  // v17: prefer OpenGolfAPI greens for flags, Overpass only as fallback
+const CACHE_VERSION    = 18  // v18: fallback OpenGolfAPI /features lookup for unpaired scorecard courses
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -91,6 +91,8 @@ export async function GET(req: NextRequest) {
     // ── 2. Learn the course's location + name, then build search anchors ────
     let anchors: LatLng[] = []
     let targetName = ''
+    let gcCity = ''
+    let gcState = ''
     let oglFeatures: OglFeatures | null = null
 
     if (oglId) {
@@ -126,6 +128,8 @@ export async function GET(req: NextRequest) {
       const courseName = course.course_name || ''
       const name       = clubName || courseName
       targetName = [clubName, courseName].filter(Boolean).join(' ')
+      gcCity  = loc.city  ?? ''
+      gcState = loc.state ?? ''
       // Geocode two ways and search near BOTH: the precise course-name geocode
       // (can drift to a same-named town in another state) and the state-respecting
       // region (a town name like "Fairfield" is itself ambiguous). Name matching
@@ -144,6 +148,16 @@ export async function GET(req: NextRequest) {
 
     // ── 3. Overpass → green / tee / pin positions (scoped to this course) ──
     const osm = await fetchGolfFeatures(anchors, targetName)
+
+    // Fallback: a scorecard-only course we couldn't pair at search time, whose
+    // Overpass query found no greens. Resolve it to an OpenGolfAPI course by
+    // name + location and use its /features greens — they catch greens our
+    // area-scoped query misses. Only when we'd otherwise show nothing, so it can
+    // never regress a course that already works.
+    if (!oglFeatures && osm.greens.length === 0 && !isOgl(courseId) && targetName) {
+      const matchId = await findOpenGolfMatch(targetName, gcCity, gcState)
+      if (matchId) oglFeatures = await getOpenGolfFeatures(matchId)
+    }
 
     // Flags: prefer OpenGolfAPI's course-scoped green centroids when it has them
     // (clean and on-green), and fall back to the Overpass greens only for courses

@@ -205,7 +205,8 @@ export default function CourseMapFree({
     const d = selY - backY
     return { front: base.front + d, center: base.center + d, back: base.back + d }
   })()
-  const hasOverlays = holes.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
+  const hasOverlays = (greens?.length ?? 0) > 0
+    || holes.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
 
   // Build the map once. The page gives this component a key={courseID}, so a new
   // course remounts it with fresh geometry rather than mutating in place.
