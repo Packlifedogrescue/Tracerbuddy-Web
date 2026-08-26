@@ -55,6 +55,7 @@ export interface OsmResult {
   matchedCourse: string | null   // OSM area name we scoped to (for debugging)
   holes: OsmHole[]
   greens: LatLng[]
+  greenPolys: LatLng[][]         // every green's outline (for on-green flag placement)
   tees: LatLng[]
   pins: LatLng[]
   bunkers: LatLng[][]            // sand hazard outlines
@@ -511,7 +512,7 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
     return a.ref - b.ref
   })
 
-  return { holes, greens, tees, pins, bunkers, water }
+  return { holes, greens, greenPolys: greenPolys.map(g => g.polygon), tees, pins, bunkers, water }
 }
 
 export async function fetchGolfFeatures(anchors: LatLng[], targetName: string): Promise<OsmResult> {
@@ -531,6 +532,6 @@ export async function fetchGolfFeatures(anchors: LatLng[], targetName: string): 
   if (!elements || elements.length === 0) {
     elements = await runOverpass(radiusQuery(center.latitude, center.longitude))
   }
-  if (!elements) return { center, matchedCourse, holes: [], greens: [], tees: [], pins: [], bunkers: [], water: [] }
+  if (!elements) return { center, matchedCourse, holes: [], greens: [], greenPolys: [], tees: [], pins: [], bunkers: [], water: [] }
   return { center, matchedCourse, ...parseElements(elements) }
 }

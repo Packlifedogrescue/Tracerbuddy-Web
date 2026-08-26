@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 13  // v13: OGL courses enrich greens/hazards from /features
+const CACHE_VERSION    = 14  // v14: flags placed on green polygons (sized, deduped, single-source)
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -145,15 +145,23 @@ export async function GET(req: NextRequest) {
     // ── 3. Overpass → green / tee / pin positions (scoped to this course) ──
     const osm = await fetchGolfFeatures(anchors, targetName)
 
-    // OGL enrichment: union OpenGolfAPI's typed green centroids into the flat
-    // greens list (so a green either source found gets a flag, deduped by
-    // proximity) and prefer its bunker/water outlines when present. Per-hole
-    // geometry (osm.holes) is untouched — flags/distances stay Overpass-driven.
-    let greens = osm.greens
+    // Flags are drawn once per green, ON the green. Pick the cleaner single
+    // source — OpenGolfAPI's typed, course-scoped greens when we have them, else
+    // Overpass — keep only plausibly-green-sized polygons, place the flag at the
+    // polygon centroid, and merge near-duplicates. (Unioning the two sources
+    // doubled flags and let stray/mis-tagged polygons land off the greens.)
+    const greenPolys: LatLng[][] = (oglFeatures?.greens.length
+      ? oglFeatures.greens.map(g => g.polygon)
+      : osm.greenPolys
+    ).filter(p => p && p.length >= 3)
+    let greens = cleanGreens(greenPolys)
+    // Safety net: never let filtering strip a course of all its flags.
+    if (!greens.length) {
+      greens = oglFeatures?.greens.length ? oglFeatures.greens.map(g => g.center) : osm.greens
+    }
     let bunkers = osm.bunkers
     let water = osm.water
     if (oglFeatures) {
-      greens = unionPoints(osm.greens, oglFeatures.greens)
       if (oglFeatures.bunkers.length) bunkers = oglFeatures.bunkers
       if (oglFeatures.water.length)   water = oglFeatures.water
     }
@@ -214,12 +222,66 @@ function near(a: LatLng, b: LatLng): boolean {
   return Math.abs(a.latitude - b.latitude) < 1e-4 && Math.abs(a.longitude - b.longitude) < 1e-4
 }
 
-// Append b's points to a, skipping any that coincide (~11 m) with one already
-// present — so unioning two OSM-derived green sets doesn't double a flag.
-function unionPoints(a: LatLng[], b: LatLng[]): LatLng[] {
-  const out = [...a]
-  for (const p of b) if (!out.some(q => near(q, p))) out.push(p)
-  return out
+// A golf green is ~200–1000 m²; allow a generous band so odd-but-real greens
+// pass while a mis-tagged fairway/practice area (too big) or a stray scrap (too
+// small) is dropped. Greens whose flags fall within GREEN_MERGE_M are one green.
+const GREEN_MIN_M2 = 60
+const GREEN_MAX_M2 = 4000
+const GREEN_MERGE_M = 25
+
+function distM(a: LatLng, b: LatLng): number {
+  const R = 6371000, toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(b.latitude - a.latitude), dLng = toRad(b.longitude - a.longitude)
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
+// Planar polygon area in m² (equirectangular about the ring — fine at green scale).
+function polyAreaM2(pts: LatLng[]): number {
+  if (pts.length < 3) return 0
+  const lat0 = (pts.reduce((s, p) => s + p.latitude, 0) / pts.length) * Math.PI / 180
+  const mLat = 111_320, mLng = 111_320 * Math.cos(lat0)
+  let a = 0
+  for (let i = 0; i < pts.length; i++) {
+    const p0 = pts[i], p1 = pts[(i + 1) % pts.length]
+    a += (p0.longitude * mLng) * (p1.latitude * mLat) - (p1.longitude * mLng) * (p0.latitude * mLat)
+  }
+  return Math.abs(a) / 2
+}
+
+// Area-weighted polygon centroid (on the green for a convex-ish ring).
+function polyCentroid(pts: LatLng[]): LatLng | null {
+  if (pts.length < 3) return null
+  let twiceArea = 0, cx = 0, cy = 0
+  for (let i = 0; i < pts.length; i++) {
+    const p0 = pts[i], p1 = pts[(i + 1) % pts.length]
+    const cross = p0.longitude * p1.latitude - p1.longitude * p0.latitude
+    twiceArea += cross
+    cx += (p0.longitude + p1.longitude) * cross
+    cy += (p0.latitude + p1.latitude) * cross
+  }
+  if (Math.abs(twiceArea) < 1e-12) {
+    return { latitude:  pts.reduce((s, p) => s + p.latitude, 0) / pts.length,
+             longitude: pts.reduce((s, p) => s + p.longitude, 0) / pts.length }
+  }
+  return { latitude: cy / (3 * twiceArea), longitude: cx / (3 * twiceArea) }
+}
+
+// Green outlines → one on-green flag point each: drop implausible sizes, place the
+// flag at the centroid, and merge points closer than GREEN_MERGE_M.
+function cleanGreens(polys: LatLng[][]): LatLng[] {
+  const kept: LatLng[] = []
+  for (const poly of polys) {
+    if (poly.length < 3) continue
+    const area = polyAreaM2(poly)
+    if (area < GREEN_MIN_M2 || area > GREEN_MAX_M2) continue
+    const c = polyCentroid(poly)
+    if (!c) continue
+    if (kept.some(k => distM(k, c) < GREEN_MERGE_M)) continue
+    kept.push(c)
+  }
+  return kept
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

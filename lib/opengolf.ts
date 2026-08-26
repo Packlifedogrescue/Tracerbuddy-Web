@@ -104,8 +104,9 @@ function ringMean(pts: LatLng[]): LatLng | null {
   }
 }
 
+export interface OglGreen { center: LatLng; polygon: LatLng[] }  // polygon [] if point-only
 export interface OglFeatures {
-  greens: LatLng[]       // green centroids — one flag drawn per entry
+  greens: OglGreen[]     // green outline + centroid — one flag per entry
   bunkers: LatLng[][]    // sand hazard outlines
   water: LatLng[][]      // water hazard outlines
 }
@@ -117,20 +118,19 @@ export async function getOpenGolfFeatures(id: string): Promise<OglFeatures | nul
   const feats = Array.isArray(data?.features) ? data.features : null
   if (!feats) return null
 
-  const greens: LatLng[] = []
+  const greens: OglGreen[] = []
   const bunkers: LatLng[][] = []
   const water: LatLng[][] = []
   for (const f of feats) {
     const type = f?.feature_type
     if (type === 'green') {
+      const polygon = outerRings(f?.geometry)[0] ?? []
       const c = f?.center
       const lat = Number(c?.lat), lng = Number(c?.lng)
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        greens.push({ latitude: lat, longitude: lng })
-      } else {
-        const ct = ringMean(outerRings(f?.geometry)[0] ?? [])
-        if (ct) greens.push(ct)
-      }
+      const center = (Number.isFinite(lat) && Number.isFinite(lng))
+        ? { latitude: lat, longitude: lng }
+        : ringMean(polygon)
+      if (center) greens.push({ center, polygon })
     } else if (type === 'bunker') {
       for (const r of outerRings(f?.geometry)) if (r.length >= 3) bunkers.push(r)
     } else if (type === 'water_hazard' || type === 'lateral_water_hazard' || type === 'creek') {
