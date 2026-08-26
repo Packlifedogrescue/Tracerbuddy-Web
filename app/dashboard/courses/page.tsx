@@ -543,6 +543,15 @@ export default function CoursesPage() {
     return Array.from(byName.values()).sort((a, b) => b.total - a.total).map(t => t.color)
   })()
 
+  // Per-tee scorecard yardages keyed by tee color (hex, lowercased) → 18 holes.
+  // The map uses these to shift front/center/back to the selected tee, since OSM
+  // often maps only one tee box per hole.
+  const teeYardagesForMap: Record<string, (number | null)[]> = (() => {
+    const out: Record<string, (number | null)[]> = {}
+    for (const t of processedTees) if (t.color) out[t.color.toLowerCase()] = t.yardages
+    return out
+  })()
+
   const selectedHoleData = selectedHole ? holes.find(h => holeNum(h) === selectedHole) : null
 
   const holeYardageRows = (() => {
@@ -790,6 +799,7 @@ export default function CoursesPage() {
                     wind={wind}
                     holeElevations={holeElev}
                     teeColors={teeColorsForMap}
+                    teeYardages={teeYardagesForMap}
                     selectedTeeColor={selectedTeeColor}
                     selectedHole={selectedHole}
                     onHoleClick={n => setSelectedHole(prev => prev === n ? undefined : n)}
