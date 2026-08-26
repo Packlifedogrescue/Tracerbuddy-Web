@@ -127,18 +127,6 @@ function computeFCB(h: GpsHole, teePt: GpsCoord | null): { front: number; center
   return null
 }
 
-// The tee box to measure/aim from for the selected tee color: exact color match
-// among the hole's tee boxes (ordered back→forward, same as teeColors), else the
-// tee's position in the scorecard order clamped to the boxes we have, else the
-// back tee. Kept in step with the play line's tee-box pick so both agree.
-function teeForColor(h: GpsHole, teeColors: string[] | undefined, selectedTeeColor: string | undefined): GpsCoord | null {
-  const boxes = (h.tees && h.tees.length) ? h.tees : (h.tee ? [h.tee] : [])
-  if (!boxes.length) return h.tee ?? null
-  if (!selectedTeeColor || !teeColors?.length) return h.tee ?? boxes[0]
-  const idx = teeColors.findIndex(c => sameColor(c, selectedTeeColor))
-  if (idx === -1) return h.tee ?? boxes[0]
-  return boxes[Math.min(idx, boxes.length - 1)]
-}
 
 function holeIcon(num: number, active: boolean) {
   const bg = active ? '#C9A84C' : 'rgba(17,17,17,0.82)'
@@ -168,7 +156,7 @@ function sameColor(a?: string, b?: string) {
 
 export default function CourseMapFree({
   center, holes, greens, bunkers, water, matchedCourse, teeColors, selectedTeeColor, selectedHole, onHoleClick,
-  wind, holeElevations,
+  wind, holeElevations, teeYardages,
 }: {
   center: GpsCoord
   holes: GpsHole[]
@@ -182,6 +170,7 @@ export default function CourseMapFree({
   onHoleClick?: (n: number) => void
   wind?: { speedMph: number; dirDeg: number } | null   // current wind at the course
   holeElevations?: Record<number, number>              // per hole: green−tee, in feet
+  teeYardages?: Record<string, (number | null)[]>      // scorecard yards per tee color (hex, lc) → 18 holes
 }) {
   const elRef   = useRef<HTMLDivElement>(null)
   const mapRef  = useRef<L.Map | null>(null)
@@ -199,7 +188,23 @@ export default function CourseMapFree({
   const measureLayer = useRef<L.LayerGroup | null>(null)
 
   const selHole = selectedHole != null ? holes.find(h => h.hole === selectedHole) : undefined
-  const fcb = selHole ? computeFCB(selHole, teeForColor(selHole, teeColors, selectedTeeColor)) : null
+  // Front/center/back from the back-tee geometry, then shifted to the selected
+  // tee using the scorecard's per-tee yardages. OSM often maps only one tee box
+  // per hole, so distances can't otherwise differ by tee — the scorecard delta
+  // (selected tee − back tee) moves all three by the real amount.
+  const fcb = (() => {
+    const base = selHole ? computeFCB(selHole, selHole.tee ?? null) : null
+    if (!base || !selHole || selHole.hole == null || !selectedTeeColor || !teeColors?.length) return base
+    const idx = selHole.hole - 1
+    const yd = (color?: string) => {
+      const v = color ? teeYardages?.[color.toLowerCase()]?.[idx] : null
+      return v != null && v > 0 ? v : null
+    }
+    const selY = yd(selectedTeeColor), backY = yd(teeColors[0])
+    if (selY == null || backY == null) return base
+    const d = selY - backY
+    return { front: base.front + d, center: base.center + d, back: base.back + d }
+  })()
   const hasOverlays = holes.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
 
   // Build the map once. The page gives this component a key={courseID}, so a new
