@@ -107,22 +107,37 @@ function distYards(a: GpsCoord, b: GpsCoord): number {
   return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(h))) * 1.09361)
 }
 
-// Front / center / back of the green, measured from the hole's tee (there's no
-// live player position on the web map). Front = nearest green edge, back =
-// farthest, center = the centroid. Null when there's no tee to measure from.
-function computeFCB(h: GpsHole): { front: number; center: number; back: number } | null {
-  if (!h.tee) return null
+// Front / center / back of the green, measured from a given tee box — the
+// selected tee, else the hole's back tee (there's no live player position on the
+// web map). Front = nearest green edge, back = farthest, center = the flag. Null
+// when there's no tee to measure from.
+function computeFCB(h: GpsHole, teePt: GpsCoord | null): { front: number; center: number; back: number } | null {
+  const tee = teePt ?? h.tee
+  if (!tee) return null
   const flag = flagPoint(h)
   const poly = h.greenPolygon ?? []
   if (poly.length >= 3) {
-    const ds = poly.map(p => distYards(h.tee!, p))
+    const ds = poly.map(p => distYards(tee, p))
     const front = Math.min(...ds)
     const back  = Math.max(...ds)
-    const center = flag ? distYards(h.tee, flag) : Math.round((front + back) / 2)
+    const center = flag ? distYards(tee, flag) : Math.round((front + back) / 2)
     return { front, center, back }
   }
-  if (flag) { const c = distYards(h.tee, flag); return { front: c, center: c, back: c } }
+  if (flag) { const c = distYards(tee, flag); return { front: c, center: c, back: c } }
   return null
+}
+
+// The tee box to measure/aim from for the selected tee color: exact color match
+// among the hole's tee boxes (ordered back→forward, same as teeColors), else the
+// tee's position in the scorecard order clamped to the boxes we have, else the
+// back tee. Kept in step with the play line's tee-box pick so both agree.
+function teeForColor(h: GpsHole, teeColors: string[] | undefined, selectedTeeColor: string | undefined): GpsCoord | null {
+  const boxes = (h.tees && h.tees.length) ? h.tees : (h.tee ? [h.tee] : [])
+  if (!boxes.length) return h.tee ?? null
+  if (!selectedTeeColor || !teeColors?.length) return h.tee ?? boxes[0]
+  const idx = teeColors.findIndex(c => sameColor(c, selectedTeeColor))
+  if (idx === -1) return h.tee ?? boxes[0]
+  return boxes[Math.min(idx, boxes.length - 1)]
 }
 
 function holeIcon(num: number, active: boolean) {
@@ -184,7 +199,7 @@ export default function CourseMapFree({
   const measureLayer = useRef<L.LayerGroup | null>(null)
 
   const selHole = selectedHole != null ? holes.find(h => h.hole === selectedHole) : undefined
-  const fcb = selHole ? computeFCB(selHole) : null
+  const fcb = selHole ? computeFCB(selHole, teeForColor(selHole, teeColors, selectedTeeColor)) : null
   const hasOverlays = holes.some(h => h.hole != null && (h.green != null || (h.greenPolygon?.length ?? 0) > 0))
 
   // Build the map once. The page gives this component a key={courseID}, so a new
