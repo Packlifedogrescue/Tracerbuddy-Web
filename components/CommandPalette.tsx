@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 const PAGES = [
   { href: '/dashboard',            icon: Home,     label: 'Dashboard',   desc: 'Home overview' },
   { href: '/dashboard/rounds',     icon: FileText,  label: 'Rounds',      desc: 'All your rounds' },
-  { href: '/dashboard/swing',      icon: Activity,  label: 'SwingTrace',  desc: 'Swing speed & tempo' },
+  { href: '/dashboard/swing',      icon: Activity,  label: 'Swing Tuner', desc: 'Swing DNA, video & watch speed' },
   { href: '/dashboard/watch',      icon: Watch,     label: 'Apple Watch', desc: 'Watch data & sync' },
   { href: '/dashboard/putting',    icon: Target,    label: 'Putting',     desc: 'Putt stats & analysis' },
   { href: '/dashboard/clubs',      icon: Wrench,    label: 'My Bag',      desc: 'Club distances & fitting' },

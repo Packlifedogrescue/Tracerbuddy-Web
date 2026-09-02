@@ -378,7 +378,7 @@ export default function HomePage() {
               </div>
               <p className="text-[13px] text-[#888] mb-6">First round free, then $4.99/mo</p>
               <div className="space-y-3 mb-8">
-                {['Full app access on iOS + Web', 'Apple Watch SwingTrace', 'AI Coach Cards every round', 'Cancel anytime'].map(item => (
+                {['Full app access on iOS + Web', 'Swing Tuner: video + watch analysis', 'AI Coach Cards every round', 'Cancel anytime'].map(item => (
                   <div key={item} className="flex items-start gap-2.5">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-1 flex-shrink-0"><path d="M3 7L5.5 9.5L10 4" stroke="#0A8F4F" strokeWidth="2" strokeLinecap="round"/></svg>
                     <span className="text-[13.5px] text-[#333]">{item}</span>

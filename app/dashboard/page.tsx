@@ -744,7 +744,7 @@ export default function DashboardPage() {
                 href="/dashboard/swing"
                 className="flex-1 text-center text-[12px] font-semibold bg-[#F8F4EE] hover:bg-[#F0E8D8] text-[#111] py-2 rounded-xl transition-colors"
               >
-                SwingTrace
+                Swing Tuner
               </Link>
               <Link
                 href="/dashboard/watch"
