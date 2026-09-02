@@ -253,7 +253,7 @@ export default function SwingReplayPage() {
       <Activity className="w-10 h-10" style={{ color: 'rgba(255,255,255,0.15)' }} />
       <p className="text-[14px] font-semibold" style={{ color: '#fff' }}>No swing data yet</p>
       <p className="text-[13px] text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>Wear your Apple Watch during a round to capture a swing to replay.</p>
-      <Link href="/dashboard/swing" className="text-[13px] font-bold mt-2" style={{ color: '#C9A84C' }}>Back to SwingTrace</Link>
+      <Link href="/dashboard/swing" className="text-[13px] font-bold mt-2" style={{ color: '#C9A84C' }}>Back to Swing Tuner</Link>
     </div>
   )
 
@@ -335,7 +335,7 @@ export default function SwingReplayPage() {
             <div className="flex items-center gap-1.5">
               <span className="font-black text-[15px]" style={{ color: '#C9A84C' }}>TB</span>
               <span className="text-[13px] font-light" style={{ color: 'rgba(255,255,255,0.35)' }}>·</span>
-              <span className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>SwingTrace</span>
+              <span className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>Swing Tuner</span>
             </div>
           </div>
 

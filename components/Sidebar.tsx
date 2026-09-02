@@ -16,7 +16,7 @@ const nav = [
   { href: '/dashboard/clubs',     icon: Wrench,     label: 'Clubs'       },
   { href: '/dashboard/stats',     icon: BarChart2,  label: 'Insights'    },
   { href: '/dashboard/progress',  icon: TrendingUp, label: 'Progress'    },
-  { href: '/dashboard/swing',     icon: Activity,   label: 'SwingTrace'  },
+  { href: '/dashboard/swing',     icon: Activity,   label: 'Swing Tuner' },
   { href: '/dashboard/rangelab',  icon: Gauge,      label: 'Range Lab'   },
   { href: '/dashboard/watch',     icon: Watch,      label: 'Apple Watch' },
   { href: '/dashboard/coach',     icon: Brain,      label: 'AI Coach'    },
