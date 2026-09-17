@@ -9,7 +9,7 @@ import { isOgl, stripOgl, getOpenGolfCourseRaw, getOpenGolfHoles, getOpenGolfTee
 // for now. The OpenStreetMap layer (phase 2) fills those in.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 30
-const CACHE_VERSION   = 8  // bumped: OpenGolfAPI tees now carry course rating + slope
+const CACHE_VERSION   = 9  // bumped: golfcourseapi v1.1 lat/lng now surfaced in course detail
 
 const TEE_COLORS: Record<string, string> = {
   black: '#111111', blue: '#3B82F6', white: '#E5E7EB', gold: '#D4AF37',
@@ -92,6 +92,8 @@ function buildCoursePayload(course: any) {
   })
 
   const loc = course.location ?? {}
+  const lat = loc.latitude, lng = loc.longitude
+  const hasCoords = lat != null && lng != null
   return {
     CourseID:   course.id          ?? '',
     ClubName:   course.club_name   ?? '',
@@ -103,12 +105,12 @@ function buildCoursePayload(course: any) {
     Country:    loc.country        ?? '',
     Telephone:  null,
     Email:      null,
-    Latitude:   null,   // filled by the OSM layer
-    Longitude:  null,
+    Latitude:   hasCoords ? lat : null,   // golfcourseapi v1.1 returns coords in location
+    Longitude:  hasCoords ? lng : null,
     Par:        totalPar || null,
     Rating:     mainMale?.course_rating ?? mainFemale?.course_rating ?? null,
     Slope:      mainMale?.slope_rating  ?? mainFemale?.slope_rating  ?? null,
-    hasGPS:     0,
+    hasGPS:     hasCoords ? 1 : 0,
     CourseType: null,
     NumHoles:   scorecardTee.number_of_holes ?? Holes.length ?? null,
     Architect:  null,

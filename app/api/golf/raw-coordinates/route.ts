@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 18  // v18: fallback OpenGolfAPI /features lookup for unpaired scorecard courses
+const CACHE_VERSION    = 19  // v19: golfcourseapi v1.1 coords used as primary map anchor
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -130,15 +130,19 @@ export async function GET(req: NextRequest) {
       targetName = [clubName, courseName].filter(Boolean).join(' ')
       gcCity  = loc.city  ?? ''
       gcState = loc.state ?? ''
-      // Geocode two ways and search near BOTH: the precise course-name geocode
-      // (can drift to a same-named town in another state) and the state-respecting
-      // region (a town name like "Fairfield" is itself ambiguous). Name matching
-      // then picks the course, robust to either geocode being off.
+      // golfcourseapi v1.1 returns the course's own coordinates — use them as the
+      // primary, authoritative anchor (no geocoding drift). Then geocode two more
+      // ways as backup: the precise course-name geocode (can drift to a same-named
+      // town) and the state-respecting region. Name matching picks the course,
+      // robust to any single anchor being off.
+      const apiAnchor: LatLng | null = (loc.latitude != null && loc.longitude != null)
+        ? { latitude: Number(loc.latitude), longitude: Number(loc.longitude) }
+        : null
       const [nameAnchor, region] = await Promise.all([
         geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? ''),
         geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? ''),
       ])
-      anchors = [nameAnchor, region].filter(Boolean) as LatLng[]
+      anchors = [apiAnchor, nameAnchor, region].filter(Boolean) as LatLng[]
     }
 
     if (!anchors.length) {
