@@ -9,7 +9,7 @@ import { searchOpenGolf } from '@/lib/opengolf'
 // Longitude come back null and hasGPS is 0 (the OSM layer fills GPS in later).
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 7
-const CACHE_VERSION   = 6  // bumped: gc results now carry a matched OpenGolfAPI oglId
+const CACHE_VERSION   = 7  // bumped: gc results now carry lat/lng from golfcourseapi v1.1
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -51,6 +51,8 @@ function regionMatches(course: any, region: string): boolean {
 // golfcourseapi Course → the PascalCase shape the app already expects.
 function normaliseCourse(c: any) {
   const loc = c.location ?? {}
+  const lat = loc.latitude, lng = loc.longitude
+  const hasCoords = lat != null && lng != null
   return {
     CourseID:   c.id          ?? '',
     ClubName:   c.club_name   ?? '',
@@ -58,9 +60,9 @@ function normaliseCourse(c: any) {
     City:       loc.city      ?? '',
     StateCode:  loc.state     ?? '',
     Country:    loc.country   ?? '',
-    Latitude:   null,   // golfcourseapi has no coordinates; filled by the OSM layer
-    Longitude:  null,
-    hasGPS:     0,
+    Latitude:   hasCoords ? lat : null,   // golfcourseapi v1.1 returns coords in location
+    Longitude:  hasCoords ? lng : null,
+    hasGPS:     hasCoords ? 1 : 0,
     numHoles:   18,
   }
 }
