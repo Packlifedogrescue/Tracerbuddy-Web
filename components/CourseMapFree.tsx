@@ -168,7 +168,7 @@ function sameColor(a?: string, b?: string) {
 }
 
 export default function CourseMapFree({
-  center, holes, greens, bunkers, water, matchedCourse, teeColors, selectedTeeColor, selectedHole, onHoleClick,
+  center, holes, greens, bunkers, water, matchedCourse, courseName, teeColors, selectedTeeColor, selectedHole, onHoleClick,
   wind, holeElevations, teeYardages, editable, customGreens, onSaveGreens,
 }: {
   center: GpsCoord
@@ -176,7 +176,8 @@ export default function CourseMapFree({
   greens?: GpsCoord[]         // every mapped green's centroid (flags drawn here)
   bunkers?: GpsCoord[][]      // sand hazard outlines
   water?: GpsCoord[][]        // water hazard outlines
-  matchedCourse?: string | null   // OSM course name this map locked onto
+  matchedCourse?: string | null   // OSM course name this map locked onto (can be stale)
+  courseName?: string             // the course's real name (from the scorecard provider)
   teeColors?: string[]        // real scorecard tee colors, back → forward
   selectedTeeColor?: string   // the tee chosen in the scorecard panel
   selectedHole?: number
@@ -532,11 +533,13 @@ export default function CourseMapFree({
         </div>
       )}
 
-      {/* Which OSM course this map locked onto (glanceable confidence check). */}
-      {matchedCourse && (
+      {/* The course this map is showing. Prefer the provider's course name — OSM's
+          area name can be stale (old name / renamed course) — falling back to the
+          matched OSM name only when we don't have the real one. */}
+      {(courseName || matchedCourse) && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[900] pointer-events-none select-none max-w-[70%]">
           <div className="rounded-full bg-[#0d0d0d]/80 backdrop-blur-sm text-white/80 text-[10.5px] font-semibold px-3 py-1 shadow truncate">
-            ⛳ {matchedCourse}
+            ⛳ {courseName || matchedCourse}
           </div>
         </div>
       )}
