@@ -836,6 +836,7 @@ export default function CoursesPage() {
                     bunkers={gps.bunkers}
                     water={gps.water}
                     matchedCourse={gps.matchedCourse}
+                    courseName={name}
                     wind={wind}
                     holeElevations={holeElev}
                     teeColors={teeColorsForMap}
