@@ -31,7 +31,23 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 23  // v23: dogleg points restored
+// A result can satisfy `source: 'osm'` on tee boxes alone and still be unable to produce a single
+// distance — Oakmont Country Club comes back with 58 tees, 0 greens and 0 hole-ways, because
+// neither OpenStreetMap nor OpenGolfAPI has its greens. Holding that for the full 120 days means
+// not noticing for four months when OSM finally maps them, so a result with nothing to aim at is
+// kept only briefly. Still cached, though: re-running a cold Overpass lookup on every load would
+// make the course slow as well as unmapped.
+const CACHE_TTL_DAYS_NO_TARGET = 3
+
+// Does this payload contain anything a distance can be measured TO? Tees and cart paths don't
+// count — a green, a pin, or a mapped hole does.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasAimPoint(payload: any): boolean {
+  if ((payload?.greens?.length ?? 0) > 0) return true
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (payload?.holes ?? []).some((h: any) => h?.green || h?.pin)
+}
+const CACHE_VERSION    = 24  // v24: short TTL for results with nothing to aim at
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -143,7 +159,8 @@ export async function GET(req: NextRequest) {
     // through and retry the lookup instead.
     if (cached && cached.data?.source === 'osm') {
       const age = (Date.now() - new Date(cached.cached_at).getTime()) / 86_400_000
-      if (age < CACHE_TTL_DAYS) return NextResponse.json({ ...(await withPlacedGreens(sb, courseId, cached.data)), cached: true })
+      const ttl = hasAimPoint(cached.data) ? CACHE_TTL_DAYS : CACHE_TTL_DAYS_NO_TARGET
+      if (age < ttl) return NextResponse.json({ ...(await withPlacedGreens(sb, courseId, cached.data)), cached: true })
     }
   } catch { /* table may not exist yet — fall through */ }
 
