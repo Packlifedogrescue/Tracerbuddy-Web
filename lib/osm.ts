@@ -49,6 +49,7 @@ export interface OsmHole {
   green: LatLng | null        // green centroid
   greenPolygon: LatLng[]      // the green's outline (for app-side front/back); [] if unmapped
   pin: LatLng | null          // exact flag position when OSM maps it (else use green centroid)
+  dogleg: LatLng | null       // the bend, where the hole-way actually bends; null on a straight hole
 }
 export interface OsmResult {
   center: LatLng | null
@@ -63,6 +64,37 @@ export interface OsmResult {
 }
 
 // ── geometry helpers ───────────────────────────────────────────────────────
+
+// A hole-way that deviates less than this from a straight tee->green line is straight in
+// practice; anything more and the play line should bend through it. ~20 yards.
+const DOGLEG_MIN_M = 18
+
+// Perpendicular distance in metres from p to the line through a and b, on a local planar
+// projection (accurate to well under a metre at the scale of one golf hole).
+function perpDistance(p: LatLng, a: LatLng, b: LatLng): number {
+  const mPerLat = 111_320
+  const mPerLng = 111_320 * Math.cos((a.latitude * Math.PI) / 180)
+  const px = p.longitude * mPerLng, py = p.latitude * mPerLat
+  const ax = a.longitude * mPerLng, ay = a.latitude * mPerLat
+  const bx = b.longitude * mPerLng, by = b.latitude * mPerLat
+  const dx = bx - ax, dy = by - ay
+  const len = Math.hypot(dx, dy)
+  if (len === 0) return Math.hypot(px - ax, py - ay)
+  return Math.abs(dy * px - dx * py + bx * ay - by * ax) / len
+}
+
+// The vertex of the hole-way furthest off the straight tee->green line — the corner of the
+// dogleg, and the control point the clients bend the play line through. Null when the hole runs
+// essentially straight, so a straight hole is never given a spurious bend.
+function doglegPoint(path: LatLng[], tee: LatLng | null, green: LatLng | null): LatLng | null {
+  if (!tee || !green || path.length < 3) return null
+  let best: { pt: LatLng; d: number } | null = null
+  for (const pt of path.slice(1, -1)) {
+    const d = perpDistance(pt, tee, green)
+    if (!best || d > best.d) best = { pt, d }
+  }
+  return best && best.d >= DOGLEG_MIN_M ? best.pt : null
+}
 
 export function distanceMeters(a: LatLng, b: LatLng): number { return haversine(a, b) }
 
@@ -352,7 +384,7 @@ out geom tags;`
 }
 
 function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 'matchedCourse'> {
-  const holeWays: { ref: number | null; par: number | null; tee: LatLng | null; green: LatLng | null }[] = []
+  const holeWays: { ref: number | null; par: number | null; tee: LatLng | null; green: LatLng | null; path: LatLng[] }[] = []
   const greens: LatLng[] = []
   const tees: LatLng[] = []
   const pins: LatLng[] = []
@@ -388,6 +420,9 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
         par: Number.isNaN(par) ? null : par,
         tee:   geom[0] ?? null,
         green: geom[geom.length - 1] ?? null,
+        // The intermediate vertices are what describe a dogleg; keeping only the endpoints
+        // straightens every hole on the map.
+        path:  geom,
       })
     }
   }
@@ -476,7 +511,12 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
       ? teeBoxesNear.reduce((a, b) => haversine(teeRaw!, b) < haversine(teeRaw!, a) ? b : a)
       : (teeRaw ?? null)
 
-    return { ref: hw.ref, par: hw.par, tee, tees: teeBoxes, green: greenPt, greenPolygon, pin }
+    // Orient the way tee->green before measuring the bend: o=1 means the stored path runs
+    // green->tee, so the slice(1,-1) walk would otherwise read it backwards.
+    const orientedPath = o === 0 ? hw.path : [...hw.path].reverse()
+    const dogleg = doglegPoint(orientedPath, tee, greenPt)
+
+    return { ref: hw.ref, par: hw.par, tee, tees: teeBoxes, green: greenPt, greenPolygon, pin, dogleg }
   })
 
   // Dedup duplicate hole numbers. At interleaved multi-course sites a stray
