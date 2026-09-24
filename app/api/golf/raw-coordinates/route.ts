@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 20  // v20: paired courses keep their gc anchors; resort-wide OGL greens rejected
+const CACHE_VERSION    = 21  // v21: admin-placed greens merged into holes[]
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -47,6 +47,66 @@ function emptyPayload(courseId: string) {
     tees:           [],
     pins:           [],
     coordinates:    [] as FlatPoi[],
+  }
+}
+
+// ── Admin-placed greens ────────────────────────────────────────────────────
+// The "Place greens" tool exists for courses OSM hasn't mapped, but it lived on its own endpoint
+// that only the web dashboard called — so a rescued course still opened to "GPS map not available"
+// on the phone, the device actually carried round the course. Merged in here instead, so every
+// client gets it off the one call.
+//
+// Applied per response and deliberately NOT cached: the OSM payload has a 120-day TTL, so baking
+// placements into it would mean a green placed today didn't reach the app until the cache expired.
+//
+// Merged only into `holes` and the flat POI list. The dashboard draws its own customGreens layer
+// from the separate endpoint, so adding them to `greens` as well would double-draw every flag.
+// Only for holes OSM didn't map, so a placement can never displace real geometry.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function withPlacedGreens(sb: any, courseId: string, payload: any) {
+  try {
+    const { data: override } = await sb
+      .from('course_greens_override')
+      .select('greens')
+      .eq('course_id', courseId)
+      .maybeSingle()
+    const rows: unknown[] = Array.isArray(override?.greens) ? override.greens : []
+    if (!rows.length) return payload
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mapped = new Set((payload.holes ?? []).filter((h: any) => h.green).map((h: any) => h.hole))
+    const placed = rows
+      .map((g) => {
+        const r = g as { latitude?: unknown; longitude?: unknown; hole?: unknown }
+        return { hole: Number(r?.hole), latitude: Number(r?.latitude), longitude: Number(r?.longitude) }
+      })
+      // Rows saved before the tool recorded hole numbers hold only a click order, with nothing to
+      // infer the hole from — dropped rather than guessed onto a hole and reported as a distance.
+      .filter(g => Number.isInteger(g.hole) && g.hole >= 1 && g.hole <= 18 &&
+                   Number.isFinite(g.latitude) && Number.isFinite(g.longitude) && !mapped.has(g.hole))
+    if (!placed.length) return payload
+
+    // A placement is a single point: no tee, outline or par goes with it. The client gets a green
+    // (and a pin at the same spot) and falls back to scorecard yardage for the rest of the hole.
+    const holes = [
+      ...(payload.holes ?? []),
+      ...placed.map(g => ({
+        hole: g.hole, par: null, tee: null, tees: [] as LatLng[],
+        green: { latitude: g.latitude, longitude: g.longitude },
+        greenPolygon: [] as LatLng[],
+        pin: { latitude: g.latitude, longitude: g.longitude },
+      })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ].sort((a: any, b: any) => (a.hole ?? 0) - (b.hole ?? 0))
+
+    const coordinates = [
+      ...(payload.coordinates ?? []),
+      ...placed.map(g => ({ type: 'green' as const, hole: g.hole, latitude: g.latitude, longitude: g.longitude })),
+    ]
+    // A course with nothing but placed greens still has real GPS to offer.
+    return { ...payload, source: 'osm' as const, holes, coordinates, numCoordinates: coordinates.length }
+  } catch {
+    return payload   // table may not exist yet — no overrides
   }
 }
 
@@ -83,7 +143,7 @@ export async function GET(req: NextRequest) {
     // through and retry the lookup instead.
     if (cached && cached.data?.source === 'osm') {
       const age = (Date.now() - new Date(cached.cached_at).getTime()) / 86_400_000
-      if (age < CACHE_TTL_DAYS) return NextResponse.json({ ...cached.data, cached: true })
+      if (age < CACHE_TTL_DAYS) return NextResponse.json({ ...(await withPlacedGreens(sb, courseId, cached.data)), cached: true })
     }
   } catch { /* table may not exist yet — fall through */ }
 
@@ -158,7 +218,7 @@ export async function GET(req: NextRequest) {
 
     if (!anchors.length) {
       // Nothing to anchor on — return a null center; don't cache, retry next time.
-      return NextResponse.json({ ...emptyPayload(courseId), center: null, centerSource: null })
+      return NextResponse.json(await withPlacedGreens(sb, courseId, { ...emptyPayload(courseId), center: null, centerSource: null }))
     }
 
     // ── 3. Overpass → green / tee / pin positions (scoped to this course) ──
@@ -225,15 +285,17 @@ export async function GET(req: NextRequest) {
       matchedCourse:  osm.matchedCourse,
       center:         osm.center,
       numCoordinates: flat.length,
-      holes:          osm.holes.map(h => ({
-        hole:         h.ref,
-        par:          h.par,
-        tee:          h.tee,          // primary (back) tee
-        tees:         h.tees,         // every tee box, back → forward
-        green:        h.green,        // centroid
-        greenPolygon: h.greenPolygon, // outline → app computes front/center/back
-        pin:          h.pin,          // exact flag when mapped (else green centroid)
-      })),
+      holes:          [
+        ...osm.holes.map(h => ({
+          hole:         h.ref,
+          par:          h.par,
+          tee:          h.tee,          // primary (back) tee
+          tees:         h.tees,         // every tee box, back → forward
+          green:        h.green,        // centroid
+          greenPolygon: h.greenPolygon, // outline → app computes front/center/back
+          pin:          h.pin,          // exact flag when mapped (else green centroid)
+        })),
+      ],
       greens:         greens,        // Overpass ∪ OpenGolfAPI (flags drawn here)
       tees:           osm.tees,
       pins:           osm.pins,
@@ -245,7 +307,7 @@ export async function GET(req: NextRequest) {
     // Cache only real GPS hits — never a "none", so a transient Overpass failure
     // can't poison a course that actually has data.
     if (payload.source === 'osm') await writeCache(sb, cacheKey, payload)
-    return NextResponse.json(payload)
+    return NextResponse.json(await withPlacedGreens(sb, courseId, payload))
   } catch (e) {
     // Never hard-fail — the app must be able to fall back to no-GPS.
     return NextResponse.json({ ...emptyPayload(courseId), error: String(e) })
