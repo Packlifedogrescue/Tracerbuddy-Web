@@ -31,23 +31,29 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-// A result can satisfy `source: 'osm'` on tee boxes alone and still be unable to produce a single
-// distance — Oakmont Country Club comes back with 58 tees, 0 greens and 0 hole-ways, because
-// neither OpenStreetMap nor OpenGolfAPI has its greens. Holding that for the full 120 days means
-// not noticing for four months when OSM finally maps them, so a result with nothing to aim at is
-// kept only briefly. Still cached, though: re-running a cold Overpass lookup on every load would
-// make the course slow as well as unmapped.
+// How long an incomplete result is held. A result can satisfy `source: 'osm'` on tee boxes or a
+// bare green set alone and still produce no per-hole distance — Oakmont Country Club returns 58
+// tees and 0 greens because neither source has its greens, and a partial Overpass answer can give
+// greens with no hole-ways. Holding either for the full 120 days makes a gap permanent, so they
+// are kept only briefly. Still cached, though: re-running a cold Overpass lookup on every load
+// would make the course slow as well as unmapped.
 const CACHE_TTL_DAYS_NO_TARGET = 3
 
-// Does this payload contain anything a distance can be measured TO? Tees and cart paths don't
-// count — a green, a pin, or a mapped hole does.
+// Is this payload complete enough to hold for the long TTL?
+//
+// Only a NUMBERED hole with something to aim at counts. A loose green set doesn't: Overpass can
+// answer partially — the area matches and greens come back while the hole-ways don't — and that is
+// indistinguishable from success by green count alone. Harbour Town cached exactly that way (15
+// greens, 0 holes) and would have served it for 120 days, having worked fine the call before.
+//
+// Such a result is still returned and still cached, just briefly, so the next load re-queries
+// instead of a transient gap becoming permanent.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function hasAimPoint(payload: any): boolean {
-  if ((payload?.greens?.length ?? 0) > 0) return true
+function isConfidentResult(payload: any): boolean {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (payload?.holes ?? []).some((h: any) => h?.green || h?.pin)
+  return (payload?.holes ?? []).some((h: any) => h?.hole != null && (h?.green || h?.pin))
 }
-const CACHE_VERSION    = 25  // v25: facility-wide results rejected rather than served as a course
+const CACHE_VERSION    = 26  // v26: only numbered holes earn the long cache TTL
 
 // A single course has at most ~27 greens (a 27-hole facility). Well past that, a green set is
 // describing a whole property rather than this course — Pebble Beach's /features came back with 91
@@ -164,7 +170,7 @@ export async function GET(req: NextRequest) {
     // through and retry the lookup instead.
     if (cached && cached.data?.source === 'osm') {
       const age = (Date.now() - new Date(cached.cached_at).getTime()) / 86_400_000
-      const ttl = hasAimPoint(cached.data) ? CACHE_TTL_DAYS : CACHE_TTL_DAYS_NO_TARGET
+      const ttl = isConfidentResult(cached.data) ? CACHE_TTL_DAYS : CACHE_TTL_DAYS_NO_TARGET
       if (age < ttl) return NextResponse.json({ ...(await withPlacedGreens(sb, courseId, cached.data)), cached: true })
     }
   } catch { /* table may not exist yet — fall through */ }
