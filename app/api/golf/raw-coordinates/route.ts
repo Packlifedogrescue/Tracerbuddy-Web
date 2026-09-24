@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 22  // v22: hazards attributed to holes
+const CACHE_VERSION    = 23  // v23: dogleg points restored
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -294,6 +294,7 @@ export async function GET(req: NextRequest) {
           green:        h.green,        // centroid
           greenPolygon: h.greenPolygon, // outline → app computes front/center/back
           pin:          h.pin,          // exact flag when mapped (else green centroid)
+          dogleg:       h.dogleg,       // the bend, for the play line; null on a straight hole
         })),
       ],
       greens:         greens,        // Overpass ∪ OpenGolfAPI (flags drawn here)
