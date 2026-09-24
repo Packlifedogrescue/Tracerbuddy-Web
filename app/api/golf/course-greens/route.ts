@@ -7,7 +7,10 @@ import { verifyAdmin } from '@/lib/adminAuth'
 // server-side against the caller's Supabase access token.
 export const runtime = 'nodejs'
 
-interface Pt { latitude: number; longitude: number }
+// A placed green carries the hole it belongs to when the admin tool recorded one. Rows saved
+// before numbering existed have no `hole`, and there is nothing in them to infer it from — the
+// tool stored a bare click order — so they stay unnumbered rather than being guessed at.
+interface Pt { latitude: number; longitude: number; hole?: number }
 
 const anon = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,8 +29,11 @@ function cleanGreens(input: unknown): Pt[] {
   for (const p of input) {
     const lat = Number((p as { latitude?: unknown })?.latitude)
     const lng = Number((p as { longitude?: unknown })?.longitude)
+    const hole = Number((p as { hole?: unknown })?.hole)
     if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
-      out.push({ latitude: lat, longitude: lng })
+      const pt: Pt = { latitude: lat, longitude: lng }
+      if (Number.isInteger(hole) && hole >= 1 && hole <= 18) pt.hole = hole
+      out.push(pt)
     }
     if (out.length >= 100) break
   }
