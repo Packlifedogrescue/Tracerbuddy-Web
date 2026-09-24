@@ -9,7 +9,7 @@ import { searchOpenGolf } from '@/lib/opengolf'
 // Longitude come back null and hasGPS is 0 (the OSM layer fills GPS in later).
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 7
-const CACHE_VERSION   = 8  // bumped: OGL twins paired by name-subset + proximity, not exact name
+const CACHE_VERSION   = 9  // bumped: same-town pairing for large multi-course facilities
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -179,9 +179,9 @@ function kmBetween(a: any, b: any): number | null {
   return 2 * R * Math.asin(Math.sqrt(s))
 }
 
-// How far apart two records can sit and still be the same course. Generous enough to absorb the
-// difference between a clubhouse pin and a course centroid, tight enough that the next course down
-// the road is never a candidate.
+// How far apart two records can sit and still be taken as the same course on coordinates alone,
+// when they aren't in the same town. Generous enough to absorb a clubhouse pin against a course
+// centroid, tight enough that the next course down the road is never a candidate on distance.
 const TWIN_MAX_KM = 1.5
 
 const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
@@ -223,13 +223,19 @@ const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
     for (const o of oglClean) {
       if (!sameDistinctiveName(tc, nameTokens(o))) continue
       const km = kmBetween(c, o)
-      if (km == null) {
-        // No coordinates on one side — fall back to the city, which is all that's left.
-        const oCity = String(o.City ?? '').toLowerCase().trim()
-        if (city && oCity && city === oCity) scored.push({ twin: o, km: Number.MAX_SAFE_INTEGER })
-        continue
+      const oCity = String(o.City ?? '').toLowerCase().trim()
+      const sameCity = !!city && !!oCity && city === oCity
+
+      // Same town is the stronger locality signal, and it has to be able to stand on its own.
+      // Distance alone was too strict across a large facility: golfcourseapi pins every course at
+      // one clubhouse while OpenGolfAPI gives each its own centroid, so Bethpage's Black and Green
+      // sat 1.65km and 1.57km from their twins and went unpaired while Yellow, Blue and Red (under
+      // 1.25km) matched. The names here are already an exact set match, so the town is enough.
+      if (sameCity || (km != null && km <= TWIN_MAX_KM)) {
+        // Score by real distance where we have it so the nearest same-name course in a town still
+        // wins; only a pair with no coordinates at all falls back to the bottom of the ordering.
+        scored.push({ twin: o, km: km ?? Number.MAX_SAFE_INTEGER })
       }
-      if (km <= TWIN_MAX_KM) scored.push({ twin: o, km })
     }
     if (!scored.length) return null
     scored.sort((a, b) => a.km - b.km)
