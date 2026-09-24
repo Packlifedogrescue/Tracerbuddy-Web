@@ -9,7 +9,7 @@ import { searchOpenGolf } from '@/lib/opengolf'
 // Longitude come back null and hasGPS is 0 (the OSM layer fills GPS in later).
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS  = 7
-const CACHE_VERSION   = 7  // bumped: gc results now carry lat/lng from golfcourseapi v1.1
+const CACHE_VERSION   = 8  // bumped: OGL twins paired by name-subset + proximity, not exact name
 
 function normalise(q: string) {
   return q.toLowerCase().trim().replace(/\s+/g, ' ')
@@ -136,7 +136,55 @@ export async function GET(req: NextRequest) {
 
   const [gc, ogl] = await Promise.all([gcPromise, oglPromise])
 
-  const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
+// Words that appear in half the course names on earth and so carry no identifying signal.
+// Stripping them lets "Chambers Bay Golf Club" (golfcourseapi) and "Chambers Bay" (OpenGolfAPI)
+// resolve to the same course, which an exact name match never could.
+const NOISE_TOKENS = new Set([
+  'golf', 'club', 'course', 'courses', 'links', 'country', 'cc', 'gc', 'the', 'at', 'of', 'and',
+  'resort', 'national', 'municipal', 'muni', 'public', 'private', 'the',
+])
+
+// The identifying words in a course's name, from the club and course name together — either
+// provider may carry the distinguishing part in either field.
+function nameTokens(c: any): Set<string> {
+  const words = `${c.ClubName ?? ''} ${c.CourseName ?? ''}`
+    .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean)
+  const distinctive = words.filter(w => !NOISE_TOKENS.has(w))
+  // A name that is nothing but noise ("The Golf Club") keeps its words — better a weak signal
+  // than an empty set that matches everything.
+  return new Set(distinctive.length ? distinctive : words)
+}
+
+// The same distinctive words on both sides, as a set — order and noise words don't matter, so
+// "Chambers Bay Golf Club" and "Chambers Bay" match, but nothing weaker than equality.
+//
+// Containment is tempting here and is wrong: "Oakmont Country Club" reduces to {oakmont}, which is
+// contained in every "Oakmont <something>" — it would pair the genuinely separate Oakmont Green
+// Golf Club a few hundred metres away. Requiring equality costs only the twins whose names differ
+// by a real word, and those are safer left unpaired.
+function sameDistinctiveName(a: Set<string>, b: Set<string>): boolean {
+  if (!a.size || a.size !== b.size) return false
+  return Array.from(a).every(t => b.has(t))
+}
+
+function kmBetween(a: any, b: any): number | null {
+  const la = Number(a?.Latitude), lo = Number(a?.Longitude)
+  const lb = Number(b?.Latitude), lob = Number(b?.Longitude)
+  if (![la, lo, lb, lob].every(Number.isFinite)) return null
+  const R = 6371
+  const dLat = ((lb - la) * Math.PI) / 180
+  const dLng = ((lob - lo) * Math.PI) / 180
+  const s = Math.sin(dLat / 2) ** 2 +
+    Math.cos((la * Math.PI) / 180) * Math.cos((lb * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(s))
+}
+
+// How far apart two records can sit and still be the same course. Generous enough to absorb the
+// difference between a clubhouse pin and a course centroid, tight enough that the next course down
+// the road is never a candidate.
+const TWIN_MAX_KM = 1.5
+
+const GENERIC = /^\d+[-\s]hole course$|^\d+[-\s]loch\b/i
   const clean = (c: any) => {
     const name = (c.CourseName || c.ClubName || '').trim()
     return c.CourseID && name.length > 0 && !GENERIC.test(name)
@@ -148,25 +196,73 @@ export async function GET(req: NextRequest) {
   // Where a golfcourseapi course also exists in OpenGolfAPI, we keep gc's card but
   // borrow the OGL id (ogl_<uuid>) onto it — the map route uses that to pull
   // /features green-flags + free GPS without losing the richer scorecard.
+  const oglClean = ogl.filter(clean)
   const oglByKey = new Map<string, any>()
-  for (const c of ogl) {
-    if (!clean(c)) continue
+  for (const c of oglClean) {
     const k = key(c)
     if (!oglByKey.has(k)) oglByKey.set(k, c)
   }
 
+  // Find the OpenGolfAPI record for a golfcourseapi course. An exact name+city key only ever
+  // matched when both providers spelled the course identically, which they routinely don't —
+  // Chambers Bay is "Chambers Bay Golf Club" to one and "Chambers Bay" to the other, 30m apart in
+  // the same town, and went unpaired.
+  //
+  // So: the distinctive words of one name must be contained in the other's, AND the two must be
+  // in the same place (within TWIN_MAX_KM, or the same city when either lacks coordinates).
+  // Both conditions are required. Name alone mis-pairs the many identically-named courses in
+  // different states; location alone mis-pairs the courses of a multi-course resort, which share
+  // a coordinate.
+  const findTwin = (c: any): any | null => {
+    const exact = oglByKey.get(key(c))
+    if (exact) return exact
+
+    const tc = nameTokens(c)
+    const city = String(c.City ?? '').toLowerCase().trim()
+    const scored: { twin: any; km: number }[] = []
+    for (const o of oglClean) {
+      if (!sameDistinctiveName(tc, nameTokens(o))) continue
+      const km = kmBetween(c, o)
+      if (km == null) {
+        // No coordinates on one side — fall back to the city, which is all that's left.
+        const oCity = String(o.City ?? '').toLowerCase().trim()
+        if (city && oCity && city === oCity) scored.push({ twin: o, km: Number.MAX_SAFE_INTEGER })
+        continue
+      }
+      if (km <= TWIN_MAX_KM) scored.push({ twin: o, km })
+    }
+    if (!scored.length) return null
+    scored.sort((a, b) => a.km - b.km)
+    // Two candidates equally close and equally plausible means we cannot tell which course this
+    // is — at a resort that would attach the wrong course's greens. Better unpaired than wrong.
+    if (scored.length > 1 && scored[1].km === scored[0].km) return null
+    return scored[0].twin
+  }
+
   const seen = new Set<string>()
+  const pairedOgl = new Set<string>()
   const courses: any[] = []
-  for (const c of [...gc, ...ogl]) {
+
+  // golfcourseapi first so its richer scorecard wins, borrowing the OGL id where there's a twin.
+  for (const c of gc) {
     if (!clean(c)) continue
     const k = key(c)
     if (seen.has(k)) continue
     seen.add(k)
-    // gc course with an OGL twin → attach its id for hybrid enrichment.
-    if (!c.CourseID?.startsWith('ogl_')) {
-      const twin = oglByKey.get(k)
-      if (twin?.CourseID) c.oglId = twin.CourseID
+    const twin = findTwin(c)
+    if (twin?.CourseID) {
+      c.oglId = twin.CourseID
+      // Remember it so the twin isn't also listed on its own — it is this same course, and
+      // listing both is how "Chambers Bay" and "Chambers Bay Golf Club" came back as two results.
+      pairedOgl.add(twin.CourseID)
     }
+    courses.push(c)
+  }
+  // Then OpenGolfAPI-only courses, which fill gaps golfcourseapi doesn't cover at all.
+  for (const c of oglClean) {
+    const k = key(c)
+    if (seen.has(k) || pairedOgl.has(c.CourseID)) continue
+    seen.add(k)
     courses.push(c)
   }
 
