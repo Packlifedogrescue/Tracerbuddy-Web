@@ -270,7 +270,7 @@ interface OverpassElement {
   geometry?: { lat: number; lon: number }[]
 }
 
-async function runOverpass(query: string): Promise<OverpassElement[] | null> {
+async function raceOverpassMirrors(query: string): Promise<OverpassElement[] | null> {
   // Race all mirrors at once and take the first that answers, so latency is the
   // fastest server rather than the sum of slow ones timing out in series.
   const attempts = OVERPASS_ENDPOINTS.map(async (endpoint): Promise<OverpassElement[]> => {
@@ -281,7 +281,7 @@ async function runOverpass(query: string): Promise<OverpassElement[] | null> {
         'User-Agent': USER_AGENT,
       },
       body: `data=${encodeURIComponent(query)}`,
-    }, 12000)
+    }, MIRROR_TIMEOUT_MS)
     if (!res || !res.ok) throw new Error('overpass mirror failed')
     const json = await res.json()
     if (!Array.isArray(json.elements)) throw new Error('overpass: no elements')
@@ -294,13 +294,41 @@ async function runOverpass(query: string): Promise<OverpassElement[] | null> {
   }
 }
 
+// Overpass is a free, heavily-shared service: every mirror rejecting a request at the same moment
+// is common and usually momentary (429/504 under load). The result was never cached — a "none" is
+// deliberately not stored — but the caller still has nothing to return, so the player was shown a
+// blank map and "GPS map not available" for what was a few seconds of congestion. Sampling
+// production hit this twice in eight requests.
+//
+// So a total failure gets one more race after a short pause. Retrying only when every mirror
+// failed keeps this off the normal path entirely: a request that succeeds is unaffected, and the
+// worst case adds one mirror timeout (~12s) plus the pause, which the 60s function budget covers.
+const RETRY_PAUSE_MS = 750
+const MIRROR_TIMEOUT_MS = 12_000
+
+// `deadline` is an absolute epoch-ms cutoff for this request's Overpass work, threaded from
+// fetchGolfFeatures rather than held in module scope — one serverless instance serves concurrent
+// requests, and a shared deadline would be whichever request wrote it last.
+//
+// A request makes up to three Overpass calls (area lookup, in-area features, radius fallback).
+// Retrying each unconditionally could stack past the 60s function budget and get the whole thing
+// killed, which is the very outcome the retry exists to avoid — so a retry only happens when
+// there is demonstrably room for one.
+async function runOverpass(query: string, deadline = Infinity): Promise<OverpassElement[] | null> {
+  const first = await raceOverpassMirrors(query)
+  if (first) return first
+  if (Date.now() + RETRY_PAUSE_MS + MIRROR_TIMEOUT_MS > deadline) return null
+  await new Promise(r => setTimeout(r, RETRY_PAUSE_MS))
+  return raceOverpassMirrors(query)
+}
+
 interface CourseArea { kind: 'way' | 'relation'; id: number; name: string; center: LatLng | null }
 
 // Enumerate golf_course areas near ANY of the anchors and pick the one matching
 // the target course. Passing both the course-name geocode and the region anchor
 // means the right course is found whichever geocode was accurate — and name
 // matching disambiguates. Returns null if none are found (→ radius fallback).
-async function findCourseArea(anchors: LatLng[], targetName: string): Promise<CourseArea | null> {
+async function findCourseArea(anchors: LatLng[], targetName: string, deadline: number): Promise<CourseArea | null> {
   const pts = anchors.filter(Boolean)
   if (!pts.length) return null
   // Wide radius around each anchor: a geocoder can land on a same-named town, so
@@ -312,7 +340,7 @@ async function findCourseArea(anchors: LatLng[], targetName: string): Promise<Co
 (${clauses}
 );
 out tags center;`
-  const els = await runOverpass(q)
+  const els = await runOverpass(q, deadline)
   if (!els || !els.length) return null
 
   // Dedup by id (an area can be within range of more than one anchor).
@@ -349,7 +377,7 @@ out tags center;`
   return best
 }
 
-async function fetchFeaturesInArea(area: CourseArea): Promise<OverpassElement[] | null> {
+async function fetchFeaturesInArea(area: CourseArea, deadline: number): Promise<OverpassElement[] | null> {
   const selector = area.kind === 'way' ? `way(${area.id})` : `relation(${area.id})`
   const q = `[out:json][timeout:40];
 ${selector};
@@ -365,7 +393,7 @@ map_to_area->.ca;
   way(area.ca)[natural=water];
 );
 out geom tags;`
-  return runOverpass(q)
+  return runOverpass(q, deadline)
 }
 
 function radiusQuery(lat: number, lng: number): string {
@@ -556,13 +584,16 @@ function parseElements(elements: OverpassElement[]): Omit<OsmResult, 'center' | 
 }
 
 export async function fetchGolfFeatures(anchors: LatLng[], targetName: string): Promise<OsmResult> {
+  // The route is allotted 60s and has already spent some of it geocoding. Leave headroom at the
+  // end for assembling the response, and let runOverpass retry only inside what's left.
+  const deadline = Date.now() + 45_000
   let elements: OverpassElement[] | null = null
   let matchedCourse: string | null = null
   let center = anchors[0]
 
-  const area = await findCourseArea(anchors, targetName)
+  const area = await findCourseArea(anchors, targetName, deadline)
   if (area) {
-    elements = await fetchFeaturesInArea(area)
+    elements = await fetchFeaturesInArea(area, deadline)
     matchedCourse = area.name || null
     if (area.center) center = area.center
   }
@@ -570,7 +601,7 @@ export async function fetchGolfFeatures(anchors: LatLng[], targetName: string): 
   // the recentered location (the matched course) when we have it, not the
   // original anchor which may be a same-named town.
   if (!elements || elements.length === 0) {
-    elements = await runOverpass(radiusQuery(center.latitude, center.longitude))
+    elements = await runOverpass(radiusQuery(center.latitude, center.longitude), deadline)
   }
   if (!elements) return { center, matchedCourse, holes: [], greens: [], greenPolys: [], tees: [], pins: [], bunkers: [], water: [] }
   return { center, matchedCourse, ...parseElements(elements) }
