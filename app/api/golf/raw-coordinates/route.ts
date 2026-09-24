@@ -47,7 +47,12 @@ function hasAimPoint(payload: any): boolean {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (payload?.holes ?? []).some((h: any) => h?.green || h?.pin)
 }
-const CACHE_VERSION    = 24  // v24: short TTL for results with nothing to aim at
+const CACHE_VERSION    = 25  // v25: facility-wide results rejected rather than served as a course
+
+// A single course has at most ~27 greens (a 27-hole facility). Well past that, a green set is
+// describing a whole property rather than this course — Pebble Beach's /features came back with 91
+// — and adopting it scatters flags across the neighbouring courses.
+const MAX_COURSE_GREENS = 30
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -257,11 +262,6 @@ export async function GET(req: NextRequest) {
     // mis-tagged or neighbouring-course shapes that flag off in the rough; using
     // OGL as the source drops those strays. No size/shape filtering — just source
     // preference — so a real green is never dropped for being an odd shape.
-    // A single course has at most ~27 greens (a 27-hole facility). Well past that, /features is
-    // describing a whole resort rather than this course — Pebble Beach came back with 91 — and
-    // adopting it scatters flags across neighbouring courses. In that case keep the area-scoped
-    // Overpass greens, unless Overpass found nothing at all, where too many beats none.
-    const MAX_COURSE_GREENS = 30
     let greens = osm.greens
     let bunkers = osm.bunkers
     let water = osm.water
@@ -275,6 +275,26 @@ export async function GET(req: NextRequest) {
       // resort-wide feature set doesn't paint bunkers over the neighbouring course either.
       if (oglFeatures.bunkers.length && !resortWide) bunkers = oglFeatures.bunkers
       if (oglFeatures.water.length   && !resortWide) water   = oglFeatures.water
+    }
+
+    // Guard against a facility-wide result standing in for one course.
+    //
+    // At a multi-course park the area query can only scope to the whole property, and OSM's
+    // hole-ways there often carry no `ref`, so nothing says which course a green belongs to.
+    // Bethpage State Park comes back with up to 96 greens and 90 unnumbered holes for whichever of
+    // its five courses was asked for. The app drops unnumbered holes outright, so it gains nothing,
+    // while the dashboard would paint every flag in the park onto one course's map — worse than
+    // showing no GPS, which is what these courses did before they paired to an OpenGolfAPI twin.
+    //
+    // Numbered holes are the thing that makes a green attributable. With none of them, a green
+    // count beyond what a single course could have (MAX_COURSE_GREENS) means the query resolved to
+    // the property, not the course — so report nothing found rather than something wrong.
+    const numberedHoles = osm.holes.filter(h => h.ref != null).length
+    const facilityWide = numberedHoles === 0 && greens.length > MAX_COURSE_GREENS
+    if (facilityWide) {
+      return NextResponse.json(await withPlacedGreens(sb, courseId, {
+        ...emptyPayload(courseId), center: osm.center, centerSource: 'course' as const,
+      }))
     }
 
     const hasGeo = greens.length + osm.tees.length + osm.pins.length + osm.holes.length > 0
