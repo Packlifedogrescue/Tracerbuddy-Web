@@ -9,7 +9,9 @@ import L from 'leaflet'
 // this stays $0/month. Rendered imperatively (not react-leaflet) so it's immune
 // to React-version / SSR quirks; the page mounts it with ssr:false.
 
-export interface GpsCoord { latitude: number; longitude: number }
+export interface GpsCoord { latitude: number; longitude: number
+  // Set on manually-placed greens: which hole this green belongs to. Placement order supplies it.
+  hole?: number }
 export interface GpsHole {
   hole: number | null
   par: number | null
@@ -96,15 +98,22 @@ function flagIcon() {
   })
 }
 
-// Editable draft flag (gold, tap-to-remove) shown while placing greens.
-function flagIconEdit() {
+// Editable draft flag (gold, tap-to-remove) shown while placing greens. Labelled with the hole
+// it will be saved as: the order of placement IS the hole number, so it has to be visible to
+// place them correctly — an unnumbered list can't be turned into per-hole distances later.
+function flagIconEdit(hole?: number) {
+  const label = hole == null ? '' :
+    `<text x="11" y="6" font-family="ui-sans-serif,system-ui,sans-serif" font-size="8"
+       font-weight="700" fill="#C9A84C" stroke="#20160a" stroke-width="2.2"
+       paint-order="stroke" dominant-baseline="middle">${hole}</text>`
   return L.divIcon({
     className: '',
-    html: `<svg width="12" height="13" viewBox="0 0 12 13" xmlns="http://www.w3.org/2000/svg">
+    html: `<svg width="26" height="13" viewBox="0 0 26 13" xmlns="http://www.w3.org/2000/svg">
       <line x1="1.5" y1="12.5" x2="1.5" y2="1" stroke="#ffffff" stroke-width="1.4"/>
       <path d="M1.5 1 L9 2.8 L1.5 4.6 Z" fill="#C9A84C"/>
+      ${label}
     </svg>`,
-    iconSize: [12, 13],
+    iconSize: [26, 13],
     iconAnchor: [1.5, 12],
   })
 }
@@ -442,7 +451,7 @@ export default function CourseMapFree({
         L.circleMarker([g.latitude, g.longitude],
           { radius: 6, color: '#20160a', weight: 1.5, fillColor: '#C9A84C', fillOpacity: 0.9 })
           .addTo(lg).on('click', remove)
-        L.marker([g.latitude, g.longitude], { icon: flagIconEdit() }).addTo(lg).on('click', remove)
+        L.marker([g.latitude, g.longitude], { icon: flagIconEdit(g.hole ?? i + 1) }).addTo(lg).on('click', remove)
       } else {
         L.circleMarker([g.latitude, g.longitude],
           { radius: 2.5, color: '#0b0b0b', weight: 1, fillColor: '#ffffff', fillOpacity: 1, interactive: false }).addTo(lg)
@@ -458,7 +467,9 @@ export default function CourseMapFree({
     if (!editingGreens) { map.getContainer().style.cursor = ''; return }
     map.getContainer().style.cursor = 'crosshair'
     const onClick = (e: L.LeafletMouseEvent) => {
-      setDraftGreens(d => [...d, { latitude: e.latlng.lat, longitude: e.latlng.lng }])
+      // Placement order is the hole number — stamp it now so removing an earlier flag renumbers
+      // the rest (the effect below re-derives from index), and a save always carries real holes.
+      setDraftGreens(d => [...d, { latitude: e.latlng.lat, longitude: e.latlng.lng, hole: d.length + 1 }])
     }
     map.on('click', onClick)
     return () => { map.off('click', onClick); map.getContainer().style.cursor = '' }
@@ -468,7 +479,10 @@ export default function CourseMapFree({
   const savePlacedGreens = async () => {
     if (!onSaveGreens) { setEditingGreens(false); return }
     setSavingGreens(true)
-    try { await onSaveGreens(draftGreens); setEditingGreens(false) }
+    // Renumber by position on the way out, so removing a flag mid-list leaves the saved holes
+    // contiguous rather than carrying the gap from whichever draft entry was dropped.
+    const numbered = draftGreens.map((g, i) => ({ latitude: g.latitude, longitude: g.longitude, hole: i + 1 }))
+    try { await onSaveGreens(numbered); setEditingGreens(false) }
     catch { /* keep the draft open so work isn't lost */ }
     finally { setSavingGreens(false) }
   }
