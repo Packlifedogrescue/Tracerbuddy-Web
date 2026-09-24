@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 19  // v19: golfcourseapi v1.1 coords used as primary map anchor
+const CACHE_VERSION    = 20  // v20: paired courses keep their gc anchors; resort-wide OGL greens rejected
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -112,22 +112,32 @@ export async function GET(req: NextRequest) {
       targetName = raw?.name || raw?.course_name || ''
     }
 
-    // golfcourseapi geocoding — for a pure gc course, or as a fallback when the
-    // matched OGL record carried no coordinates. Skipped once we already have an
-    // OGL anchor above.
-    if (!anchors.length && !isOgl(courseId)) {
-      if (!GOLF_KEY) return NextResponse.json(emptyPayload(courseId))
-      const detailRes = await fetch(`${GOLFCOURSE_BASE}/courses/${encodeURIComponent(courseId)}`, {
-        headers: { Authorization: `Bearer ${GOLF_KEY}` },
-      })
-      if (!detailRes.ok) return NextResponse.json(emptyPayload(courseId))
-      const detailJson = await detailRes.json()
+    // golfcourseapi geocoding. Runs for every gc course — including one we paired to an OGL twin.
+    // It used to be skipped as soon as the OGL record supplied an anchor, which left Overpass
+    // scoped by OGL's single point and OGL's name. At a multi-course resort that reads as the whole
+    // property: Pebble Beach came back with 14 holes instead of 18. The gc name/city/state are what
+    // the user actually picked, so gather those anchors too and let name matching choose.
+    if (!isOgl(courseId)) {
+      // Only fatal when the OGL leg gave us nothing to fall back on.
+      const bail = () => anchors.length ? null : NextResponse.json(emptyPayload(courseId))
+      const detailRes = GOLF_KEY
+        ? await fetch(`${GOLFCOURSE_BASE}/courses/${encodeURIComponent(courseId)}`, {
+            headers: { Authorization: `Bearer ${GOLF_KEY}` },
+          })
+        : null
+      if (!detailRes || !detailRes.ok) {
+        const out = bail()
+        if (out) return out
+      }
+      const detailJson = detailRes?.ok ? await detailRes.json() : {}
       const course = detailJson.course ?? detailJson
       const loc = course.location ?? {}
       const clubName   = course.club_name || ''
       const courseName = course.course_name || ''
       const name       = clubName || courseName
-      targetName = [clubName, courseName].filter(Boolean).join(' ')
+      // Prefer the golfcourseapi name for scoping — it's the course the user chose. Keep OGL's
+      // only if gc gave us nothing.
+      targetName = [clubName, courseName].filter(Boolean).join(' ') || targetName
       gcCity  = loc.city  ?? ''
       gcState = loc.state ?? ''
       // golfcourseapi v1.1 returns the course's own coordinates — use them as the
@@ -142,7 +152,8 @@ export async function GET(req: NextRequest) {
         geocodeCourse(name, loc.city ?? '', loc.state ?? '', loc.country ?? ''),
         geocodeRegion(loc.city ?? '', loc.state ?? '', loc.country ?? ''),
       ])
-      anchors = [apiAnchor, nameAnchor, region].filter(Boolean) as LatLng[]
+      // Keep any OGL anchor from above, but put the gc ones alongside it.
+      anchors = [...anchors, apiAnchor, nameAnchor, region].filter(Boolean) as LatLng[]
     }
 
     if (!anchors.length) {
@@ -169,15 +180,24 @@ export async function GET(req: NextRequest) {
     // mis-tagged or neighbouring-course shapes that flag off in the rough; using
     // OGL as the source drops those strays. No size/shape filtering — just source
     // preference — so a real green is never dropped for being an odd shape.
+    // A single course has at most ~27 greens (a 27-hole facility). Well past that, /features is
+    // describing a whole resort rather than this course — Pebble Beach came back with 91 — and
+    // adopting it scatters flags across neighbouring courses. In that case keep the area-scoped
+    // Overpass greens, unless Overpass found nothing at all, where too many beats none.
+    const MAX_COURSE_GREENS = 30
     let greens = osm.greens
     let bunkers = osm.bunkers
     let water = osm.water
     if (oglFeatures) {
-      if (oglFeatures.greens.length) {
-        greens = oglFeatures.greens.map(g => g.center)
+      const oglGreens = oglFeatures.greens.map(g => g.center)
+      const resortWide = oglGreens.length > MAX_COURSE_GREENS
+      if (oglGreens.length && (!resortWide || osm.greens.length === 0)) {
+        greens = oglGreens
       }
-      if (oglFeatures.bunkers.length) bunkers = oglFeatures.bunkers
-      if (oglFeatures.water.length)   water = oglFeatures.water
+      // Hazards are only ever additive detail on the map, but scope them the same way so a
+      // resort-wide feature set doesn't paint bunkers over the neighbouring course either.
+      if (oglFeatures.bunkers.length && !resortWide) bunkers = oglFeatures.bunkers
+      if (oglFeatures.water.length   && !resortWide) water   = oglFeatures.water
     }
 
     const hasGeo = greens.length + osm.tees.length + osm.pins.length + osm.holes.length > 0
