@@ -53,12 +53,30 @@ function isConfidentResult(payload: any): boolean {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (payload?.holes ?? []).some((h: any) => h?.hole != null && (h?.green || h?.pin))
 }
-const CACHE_VERSION    = 26  // v26: only numbered holes earn the long cache TTL
+const CACHE_VERSION    = 27  // v27: facility-wide detected by green spread, not count
 
 // A single course has at most ~27 greens (a 27-hole facility). Well past that, a green set is
 // describing a whole property rather than this course — Pebble Beach's /features came back with 91
 // — and adopting it scatters flags across the neighbouring courses.
 const MAX_COURSE_GREENS = 30
+
+// Corner-to-corner reach of one course's greens. Generous: a long links routed out-and-back still
+// folds back on itself, so even a 7,000-yard course rarely exceeds ~2km end to end.
+const MAX_COURSE_SPAN_KM = 2.2
+
+// Diagonal of the bounding box around a set of greens, in km.
+function greensSpanKm(greens: LatLng[]): number {
+  if (greens.length < 2) return 0
+  let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity
+  for (const g of greens) {
+    minLat = Math.min(minLat, g.latitude);  maxLat = Math.max(maxLat, g.latitude)
+    minLng = Math.min(minLng, g.longitude); maxLng = Math.max(maxLng, g.longitude)
+  }
+  const midLat = (minLat + maxLat) / 2
+  const dLatKm = (maxLat - minLat) * 111.32
+  const dLngKm = (maxLng - minLng) * 111.32 * Math.cos((midLat * Math.PI) / 180)
+  return Math.hypot(dLatKm, dLngKm)
+}
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -296,7 +314,12 @@ export async function GET(req: NextRequest) {
     // count beyond what a single course could have (MAX_COURSE_GREENS) means the query resolved to
     // the property, not the course — so report nothing found rather than something wrong.
     const numberedHoles = osm.holes.filter(h => h.ref != null).length
-    const facilityWide = numberedHoles === 0 && greens.length > MAX_COURSE_GREENS
+    // Count alone missed it. Bethpage came back with 96 greens one call and 20 the next, and the
+    // 20 still spanned the whole park. How far apart the greens sit is the property that actually
+    // separates one course from several: a single 18 holes covers roughly 1.2-1.6km corner to
+    // corner (Chambers Bay 1.20km), while Bethpage's supposedly-single course spread 2.68km.
+    const facilityWide = numberedHoles === 0 &&
+      (greens.length > MAX_COURSE_GREENS || greensSpanKm(greens) > MAX_COURSE_SPAN_KM)
     if (facilityWide) {
       return NextResponse.json(await withPlacedGreens(sb, courseId, {
         ...emptyPayload(courseId), center: osm.center, centerSource: 'course' as const,
