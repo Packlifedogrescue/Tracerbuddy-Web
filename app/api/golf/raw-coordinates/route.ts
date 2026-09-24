@@ -31,7 +31,7 @@ export const maxDuration = 60
 // `holes` powers per-hole distance where hole numbers are available.
 const GOLFCOURSE_BASE = 'https://api.golfcourseapi.com/v1'
 const CACHE_TTL_DAYS   = 120
-const CACHE_VERSION    = 21  // v21: admin-placed greens merged into holes[]
+const CACHE_VERSION    = 22  // v22: hazards attributed to holes
 
 interface FlatPoi { type: 'green' | 'tee' | 'pin'; hole: number | null; latitude: number; longitude: number }
 
@@ -299,8 +299,11 @@ export async function GET(req: NextRequest) {
       greens:         greens,        // Overpass ∪ OpenGolfAPI (flags drawn here)
       tees:           osm.tees,
       pins:           osm.pins,
-      bunkers:        bunkers,       // sand hazard outlines
-      water:          water,         // water hazard outlines
+      bunkers:        bunkers,       // sand hazard outlines (flat, as the dashboard reads them)
+      water:          water,         // water hazard outlines (flat)
+      // The same outlines with a hole attached, for clients that warn per hole. Kept alongside
+      // rather than replacing the flat lists, which the dashboard renders directly.
+      hazards:        attributeHazards(bunkers, water, osm.holes),
       coordinates:    flat,
     }
 
@@ -312,6 +315,70 @@ export async function GET(req: NextRequest) {
     // Never hard-fail — the app must be able to fall back to no-GPS.
     return NextResponse.json({ ...emptyPayload(courseId), error: String(e) })
   }
+}
+
+// ── Hazard attribution ─────────────────────────────────────────────────────
+// Overpass and OpenGolfAPI both hand back bunkers and water as a flat list of outlines for the
+// whole course, with no hole attached. The clients need them per hole — the caddie warns about
+// "hazards ahead" on the hole being played, and the watch works out the carry over them — so each
+// outline is assigned to the hole it actually sits on.
+//
+// Nearest by distance to the hole's tee->green SEGMENT, not to either endpoint: a fairway bunker
+// halfway down a long par 5 can be 250yd from both the tee and the green while sitting squarely on
+// the hole. Anything beyond MAX_HAZARD_YDS of every hole corridor is left unattributed rather than
+// forced onto whichever hole happened to be least far away.
+const MAX_HAZARD_YDS = 120
+
+// Local planar projection, good to well under a yard at course scale.
+function toXY(p: LatLng, originLat: number): { x: number; y: number } {
+  const mPerDegLat = 111_320
+  const mPerDegLng = 111_320 * Math.cos((originLat * Math.PI) / 180)
+  return { x: p.longitude * mPerDegLng, y: p.latitude * mPerDegLat }
+}
+
+// Metres from point p to segment ab.
+function distToSegment(p: LatLng, a: LatLng, b: LatLng): number {
+  const o = a.latitude
+  const P = toXY(p, o), A = toXY(a, o), B = toXY(b, o)
+  const dx = B.x - A.x, dy = B.y - A.y
+  const len2 = dx * dx + dy * dy
+  // Degenerate segment (tee and green at the same point, or only one known) — fall back to point
+  // distance rather than dividing by zero.
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((P.x - A.x) * dx + (P.y - A.y) * dy) / len2))
+  const cx = A.x + t * dx, cy = A.y + t * dy
+  return Math.hypot(P.x - cx, P.y - cy)
+}
+
+function centroid(points: LatLng[]): LatLng | null {
+  if (!points.length) return null
+  const lat = points.reduce((a, p) => a + p.latitude, 0) / points.length
+  const lng = points.reduce((a, p) => a + p.longitude, 0) / points.length
+  return { latitude: lat, longitude: lng }
+}
+
+interface Hazard { type: 'bunker' | 'water'; hole: number | null; points: LatLng[] }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function attributeHazards(bunkers: LatLng[][], water: LatLng[][], holes: any[]): Hazard[] {
+  const corridors = holes
+    .map(h => ({ hole: h.ref ?? h.hole, a: h.tee ?? h.green, b: h.green ?? h.tee }))
+    .filter(c => c.hole != null && c.a && c.b)
+
+  const assign = (outline: LatLng[]): number | null => {
+    const c = centroid(outline)
+    if (!c || !corridors.length) return null
+    let best: { hole: number; d: number } | null = null
+    for (const cor of corridors) {
+      const d = distToSegment(c, cor.a, cor.b)
+      if (!best || d < best.d) best = { hole: cor.hole, d }
+    }
+    return best && best.d <= MAX_HAZARD_YDS / 1.09361 ? best.hole : null
+  }
+
+  return [
+    ...bunkers.map(o => ({ type: 'bunker' as const, hole: assign(o), points: o })),
+    ...water.map(o   => ({ type: 'water'  as const, hole: assign(o), points: o })),
+  ].filter(h => h.points.length > 0)
 }
 
 function near(a: LatLng, b: LatLng): boolean {
