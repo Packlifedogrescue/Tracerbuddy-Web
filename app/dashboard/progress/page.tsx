@@ -2,7 +2,11 @@
 import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts'
 import { fetchRounds, fetchHandicapHistory, fetchUserProfile } from '@/lib/supabase'
+import { useRealtime } from '@/lib/useRealtime'
 import { format } from 'date-fns'
+import ProGate from '@/components/ProGate'
+import LiveBadge from '@/components/LiveBadge'
+import { Flag, Trophy, Hash, Calendar, Target, TrendingUp } from 'lucide-react'
 
 export default function ProgressPage() {
   const [rounds, setRounds]     = useState<any[]>([])
@@ -10,7 +14,7 @@ export default function ProgressPage() {
   const [profile, setProfile]   = useState<any>(null)
   const [loading, setLoading]   = useState(true)
 
-  useEffect(() => {
+  function load() {
     Promise.all([fetchRounds(50), fetchHandicapHistory(), fetchUserProfile()])
       .then(([r, h, p]) => {
         setRounds(r)
@@ -21,7 +25,10 @@ export default function ProgressPage() {
         setProfile(p)
         setLoading(false)
       })
-  }, [])
+  }
+
+  useEffect(load, [])
+  const live = useRealtime(['rounds'], load)
 
   const scoreData = [...rounds].reverse().map(r => ({
     date:  format(new Date(r.created_at), 'M/d'),
@@ -34,20 +41,24 @@ export default function ProgressPage() {
   const improvement = firstHdcp && lastHdcp ? (firstHdcp - lastHdcp).toFixed(1) : null
 
   const milestones = [
-    { label: 'First Round',     value: rounds.length > 0 ? format(new Date(rounds[rounds.length-1]?.created_at), 'MMM d, yyyy') : '—', icon: '🏌️' },
-    { label: 'Best Round',      value: rounds.length ? `${Math.min(...rounds.map(r => r.total_score))}` : '—',                          icon: '⭐' },
-    { label: 'Current Handicap',value: profile?.handicap_index?.toFixed(1) ?? '—',                                                         icon: '#️⃣' },
-    { label: 'Total Rounds',    value: `${rounds.length}`,                                                                                  icon: '📅' },
-    { label: 'Total Shots',     value: `${rounds.reduce((a,r) => a + (r.shot_count||0), 0)}`,                                               icon: '🏹' },
-    { label: 'Improvement',     value: improvement ? `${improvement} strokes` : 'Keep playing',                                             icon: '📈' },
+    { label: 'First Round',     value: rounds.length > 0 ? format(new Date(rounds[rounds.length-1]?.created_at), 'MMM d, yyyy') : '—', icon: Flag },
+    { label: 'Best Round',      value: rounds.length ? `${Math.min(...rounds.map(r => r.total_score))}` : '—',                          icon: Trophy },
+    { label: 'Current Handicap',value: profile?.handicap_index?.toFixed(1) ?? '—',                                                         icon: Hash },
+    { label: 'Total Rounds',    value: `${rounds.length}`,                                                                                  icon: Calendar },
+    { label: 'Total Shots',     value: `${rounds.reduce((a,r) => a + (r.shot_count||0), 0)}`,                                               icon: Target },
+    { label: 'Improvement',     value: improvement ? `${improvement} strokes` : 'Keep playing',                                             icon: TrendingUp },
   ]
 
   if (loading) return <div className="p-8 text-gray-500">Loading progress...</div>
 
   return (
+    <ProGate feature="Golf Journey" description="Your complete handicap history, score trends, best rounds, and milestone tracking — every improvement documented.">
     <div className="p-8 max-w-5xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">My Golf Journey</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-black text-[#111]">My Golf Journey</h1>
+          <LiveBadge live={live} />
+        </div>
         <p className="text-gray-500 mt-1">Every round. Every improvement. Your complete golf history.</p>
       </div>
 
@@ -55,7 +66,9 @@ export default function ProgressPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         {milestones.map(m => (
           <div key={m.label} className="card p-5">
-            <div className="text-2xl mb-2">{m.icon}</div>
+            <div className="w-9 h-9 rounded-xl bg-[#FFD700]/10 flex items-center justify-center mb-2.5">
+              <m.icon className="w-4 h-4 text-[#FFD700]" />
+            </div>
             <div className="text-xl font-black text-[#FFD700]">{m.value}</div>
             <div className="stat-label mt-1">{m.label}</div>
           </div>
@@ -73,7 +86,7 @@ export default function ProgressPage() {
         {handicap.length >= 2 ? (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={handicap}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1F1F1F" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#EDE8DC" />
               <XAxis dataKey="date" tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} reversed />
               {profile?.goal_settings?.target_handicap && (
@@ -99,7 +112,7 @@ export default function ProgressPage() {
         {scoreData.length >= 3 ? (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={scoreData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1F1F1F" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#EDE8DC" />
               <XAxis dataKey="date" tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill:'#666', fontSize:10 }} axisLine={false} tickLine={false} reversed domain={['auto','auto']} />
               <Tooltip contentStyle={{ background:'#111', border:'1px solid #1F1F1F', borderRadius:8 }}
@@ -113,5 +126,6 @@ export default function ProgressPage() {
         )}
       </div>
     </div>
+    </ProGate>
   )
 }

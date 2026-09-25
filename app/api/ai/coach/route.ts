@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { logError } from '@/lib/logError'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -79,6 +80,7 @@ Respond with ONLY valid JSON, no markdown, no explanation outside the JSON:
     return NextResponse.json({ analysis: json })
   } catch (e: any) {
     console.error('AI coach error:', e)
+    await logError('/api/ai/coach', e.message ?? 'Analysis failed', 500)
     return NextResponse.json({ error: e.message ?? 'Analysis failed' }, { status: 500 })
   }
 }
